@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <packaging>jar</packaging>
+
+    <groupId>io.verbit</groupId>
+    <artifactId>orp</artifactId>
+    <version>0.1-SNAPSHOT</version>
+
+    <profiles>
+        <profile>
+            <id>myMavenRepo</id>
+            <activation>
+                <property>
+                    <name>!doNotUseMyMavenRepo</name>
+                </property>
+            </activation>
+            <properties>
+                <myMavenRepo.read.url>https://mymavenrepo.com/repo/e7KWYhcXfOoQvLF3035f/</myMavenRepo.read.url>
+                <myMavenRepo.write.url>https://mymavenrepo.com/repo/5SOxvoaWHbBdlUQv1nIZ/</myMavenRepo.write.url>
+            </properties>
+        </profile>
+    </profiles>
+
+    <repositories>
+        <repository>
+            <id>myMavenRepo.read</id>
+            <url>${myMavenRepo.read.url}</url>
+        </repository>
+    </repositories>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.verbit</groupId>
+            <artifactId>ski-core</artifactId>
+            <version>0.1-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>io.verbit</groupId>
+            <artifactId>ski-akka</artifactId>
+            <version>0.1-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.esotericsoftware</groupId>
+            <artifactId>kryo</artifactId>
+            <version>3.0.1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.mashape.unirest</groupId>
+            <artifactId>unirest-java</artifactId>
+            <version>1.4.5</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>1.4.0</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <mainClass>io.verbit.orp.Orp</mainClass>
+                    <arguments>
+                        <argument>0.0.0.0:9000</argument>
+                    </arguments>
+                </configuration>
+            </plugin>
+            <!--
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>2.5.5</version>
+                <configuration>
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+                    <archive>
+                        <manifest>
+                            <mainClass>io.verbit.ski.examples.orp.Orp</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>make-assembly</id> &lt;!&ndash; this is used for inheritance merges &ndash;&gt;
+                        <phase>package</phase> &lt;!&ndash; bind to the packaging phase &ndash;&gt;
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            -->
+        </plugins>
+    </build>
+</project>
