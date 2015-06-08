@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright (c) 2015 Ilya Verbitskiy
+ * Copyright (c) 2015 Ilya Verbitskiy, Patrick Probst
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package io.verbit.orp.akka.actors;
+package de.tuberlin.orp.akka.actors;
 
 import java.util.Comparator;
 import java.util.LinkedHashMap;

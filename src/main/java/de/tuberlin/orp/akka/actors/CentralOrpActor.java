@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright (c) 2015 Ilya Verbitskiy
+ * Copyright (c) 2015 Ilya Verbitskiy, Patrick Probst
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package io.verbit.orp.akka.actors;
+package de.tuberlin.orp.akka.actors;
 
 import akka.actor.ActorRef;
 import akka.actor.Props;
@@ -30,7 +30,7 @@ import akka.actor.UntypedActor;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.routing.RoundRobinPool;
-import io.verbit.orp.core.Context;
+import de.tuberlin.orp.core.Context;
 
 /**
  * This actor is the entry point for the Akka application. All Requests received over HTTP are transformed to Akka

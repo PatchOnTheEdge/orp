@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright (c) 2015 Ilya Verbitskiy
+ * Copyright (c) 2015 Ilya Verbitskiy, Patrick Probst
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,53 +22,39 @@
  * SOFTWARE.
  */
 
-package io.verbit.orp.core;
+package de.tuberlin.orp.core;
 
-import io.verbit.orp.akka.actors.Utils;
+import com.fasterxml.jackson.databind.JsonNode;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
+public class Context {
+  private String publisherId;
+  private String itemId;
+  private String userId;
+  private int limit;
 
-public class Ranking {
-  private LinkedHashMap<String, Long> ranking;
-
-
-  public Ranking() {
-    ranking = new LinkedHashMap<>();
+  public Context() {
   }
 
-  public Ranking(Map<String, Long> ranking) {
-    this.ranking = new LinkedHashMap<>(ranking);
+  public Context(JsonNode jsonNode) {
+    this.publisherId = jsonNode.at("/context/simple/27").asText();
+    this.itemId = jsonNode.at("/context/simple/25").asText();
+    this.userId = jsonNode.at("/context/simple/57").asText();
+    this.limit = jsonNode.path("limit").asInt(20);
   }
 
-  public LinkedHashMap<String, Long> getRanking() {
-    return ranking;
+  public String getPublisherId() {
+    return publisherId;
   }
 
-  public void merge(Ranking ranking) {
-    LinkedHashMap<String, Long> newRanking = ranking.getRanking();
-    for (String key : newRanking.keySet()) {
-      this.ranking.merge(key, newRanking.get(key), Long::sum);
-    }
+  public String getItemId() {
+    return itemId;
   }
 
-  public void filter(Set<String> keys) {
-    for (String key : keys) {
-      ranking.remove(key);
-    }
+  public String getUserId() {
+    return userId;
   }
 
-  public void sort() {
-    ranking = Utils.sortMapByEntry(ranking, (o1, o2) -> (int) (o2.getValue() - o1.getValue()));
-  }
-
-  public void slice(int limit) {
-    ranking = Utils.sliceMap(ranking, limit);
-  }
-
-  @Override
-  public String toString() {
-    return ranking.toString();
+  public int getLimit() {
+    return limit;
   }
 }

@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright (c) 2015 Ilya Verbitskiy
+ * Copyright (c) 2015 Ilya Verbitskiy, Patrick Probst
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,12 +22,11 @@
  * SOFTWARE.
  */
 
-package io.verbit.orp;
+package de.tuberlin.orp;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.Unirest;
-import com.mashape.unirest.http.exceptions.UnirestException;
 import io.verbit.ski.core.json.Json;
 
 import java.io.File;

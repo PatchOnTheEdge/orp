@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright (c) 2015 Ilya Verbitskiy
+ * Copyright (c) 2015 Ilya Verbitskiy, Patrick Probst
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package io.verbit.orp;
+package de.tuberlin.orp;
 
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
@@ -30,9 +30,9 @@ import akka.pattern.Patterns;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import io.verbit.orp.akka.actors.CentralOrpActor;
-import io.verbit.orp.core.Context;
-import io.verbit.orp.core.Ranking;
+import de.tuberlin.orp.akka.actors.CentralOrpActor;
+import de.tuberlin.orp.core.Context;
+import de.tuberlin.orp.core.Ranking;
 import io.verbit.ski.akka.AkkaUtils;
 import io.verbit.ski.core.Ski;
 import io.verbit.ski.core.json.Json;
