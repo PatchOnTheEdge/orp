@@ -29,9 +29,9 @@ import akka.actor.Props;
 import akka.actor.UntypedActor;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
-import de.tuberlin.orp.core.Context;
+import de.tuberlin.orp.core.OrpContext;
 import de.tuberlin.orp.core.Ranking;
-import de.tuberlin.orp.core.ContextCounter;
+import de.tuberlin.orp.core.OrpContextCounter;
 import scala.concurrent.duration.Duration;
 
 import java.util.Map;
@@ -44,7 +44,7 @@ import java.util.concurrent.TimeUnit;
 public class MostPopularActor extends UntypedActor {
   private LoggingAdapter log = Logging.getLogger(getContext().system(), this);
 
-  private ContextCounter contextCounter;
+  private OrpContextCounter contextCounter;
   private ActorRef mostPopularMerger;
 
   private long lastRanking = 0;
@@ -70,7 +70,7 @@ public class MostPopularActor extends UntypedActor {
    */
   public MostPopularActor(ActorRef mostPopularMerger, int contextWindowSize, int topListSize) {
     this.mostPopularMerger = mostPopularMerger;
-    this.contextCounter = new ContextCounter(contextWindowSize, topListSize);
+    this.contextCounter = new OrpContextCounter(contextWindowSize, topListSize);
   }
 
 
@@ -99,8 +99,8 @@ public class MostPopularActor extends UntypedActor {
 
   @Override
   public void onReceive(Object message) throws Exception {
-    if (message instanceof Context) {
-      Context context = (Context) message;
+    if (message instanceof OrpContext) {
+      OrpContext context = (OrpContext) message;
 
 //      log.info(String.format("Received Item from Publisher: %s with ID: %s",
 //          context.getContext(), context.getItemId()));

@@ -28,7 +28,7 @@ import akka.actor.ActorSelection;
 import akka.actor.UntypedActor;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
-import de.tuberlin.orp.core.Context;
+import de.tuberlin.orp.core.OrpContext;
 import scala.concurrent.duration.Duration;
 
 import java.util.ArrayList;
@@ -43,8 +43,8 @@ public class UserItemBasedActor extends UntypedActor {
 
   @Override
   public void onReceive(Object message) throws Exception {
-    if (message instanceof Context) {
-      Context context = (Context) message;
+    if (message instanceof OrpContext) {
+      OrpContext context = (OrpContext) message;
       String itemId = context.getItemId();
       String publisher = context.getPublisherId();
       String userId = context.getUserId();

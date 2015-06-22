@@ -30,7 +30,7 @@ import akka.actor.UntypedActor;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.routing.RoundRobinPool;
-import de.tuberlin.orp.core.Context;
+import de.tuberlin.orp.core.OrpContext;
 
 /**
  * This actor is the entry point for the Akka application. All Requests received over HTTP are transformed to Akka
@@ -57,12 +57,12 @@ public class CentralOrpActor extends UntypedActor {
 
   public static class OrpNotification {
     private String type;
-    private Context context;
+    private OrpContext context;
 
     public OrpNotification() {
     }
 
-    public OrpNotification(String type, Context context) {
+    public OrpNotification(String type, OrpContext context) {
       this.type = type;
       this.context = context;
     }
@@ -71,7 +71,7 @@ public class CentralOrpActor extends UntypedActor {
       return type;
     }
 
-    public Context getContext() {
+    public OrpContext getContext() {
       return context;
     }
   }
@@ -98,16 +98,16 @@ public class CentralOrpActor extends UntypedActor {
   }
 
   public static class OrpRequest {
-    private Context context;
+    private OrpContext context;
 
     public OrpRequest() {
     }
 
-    public OrpRequest(Context context) {
+    public OrpRequest(OrpContext context) {
       this.context = context;
     }
 
-    public Context getContext() {
+    public OrpContext getContext() {
       return context;
     }
   }
@@ -130,7 +130,7 @@ public class CentralOrpActor extends UntypedActor {
 
 //      log.info(String.format("Received notification of type \"%s\"", notificationType));
 
-      Context context = notification.getContext();
+      OrpContext context = notification.getContext();
 
       String publisher = context.getPublisherId();
       String itemId = context.getItemId();
@@ -154,7 +154,7 @@ public class CentralOrpActor extends UntypedActor {
       }
 
     } else if (message instanceof OrpRequest) {
-      Context context = ((OrpRequest) message).getContext();
+      OrpContext context = ((OrpRequest) message).getContext();
 
       String publisher = context.getPublisherId();
       int limit = context.getLimit();

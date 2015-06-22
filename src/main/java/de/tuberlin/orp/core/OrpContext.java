@@ -26,16 +26,16 @@ package de.tuberlin.orp.core;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-public class Context {
+public class OrpContext {
   private String publisherId;
   private String itemId;
   private String userId;
   private int limit;
 
-  public Context() {
+  public OrpContext() {
   }
 
-  public Context(JsonNode jsonNode) {
+  public OrpContext(JsonNode jsonNode) {
     this.publisherId = jsonNode.at("/context/simple/27").asText();
     this.itemId = jsonNode.at("/context/simple/25").asText();
     this.userId = jsonNode.at("/context/simple/57").asText();

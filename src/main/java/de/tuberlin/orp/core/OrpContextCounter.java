@@ -29,12 +29,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class ContextCounter {
+public class OrpContextCounter {
   private int contextWindowSize;
-  private ArrayDeque<Context> contextWindow;
+  private ArrayDeque<OrpContext> contextWindow;
   private int topListSize;
 
-  public ContextCounter(int contextWindowSize, int topListSize) {
+  public OrpContextCounter(int contextWindowSize, int topListSize) {
     this.contextWindowSize = contextWindowSize;
     this.contextWindow = new ArrayDeque<>(contextWindowSize);
     this.topListSize = topListSize;
@@ -44,7 +44,7 @@ public class ContextCounter {
     return contextWindow.size() == contextWindowSize;
   }
 
-  public void add(Context context) {
+  public void add(OrpContext context) {
     if (contextWindow.size() >= contextWindowSize) {
       contextWindow.removeFirst();
     }
@@ -72,8 +72,8 @@ public class ContextCounter {
     return contextWindow.stream()
         .collect(
             Collectors.groupingBy(
-                Context::getPublisherId,
-                Collectors.groupingBy(Context::getItemId, Collectors.counting())
+                OrpContext::getPublisherId,
+                Collectors.groupingBy(OrpContext::getItemId, Collectors.counting())
             ));
   }
 }

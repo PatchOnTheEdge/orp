@@ -28,7 +28,7 @@ import akka.actor.Props;
 import akka.actor.UntypedActor;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
-import de.tuberlin.orp.core.Context;
+import de.tuberlin.orp.core.OrpContext;
 import de.tuberlin.orp.core.Ranking;
 import de.tuberlin.orp.core.RankingMerger;
 
@@ -115,18 +115,18 @@ public class MostPopularMerger extends UntypedActor {
   }
 
   public static class Retrieve {
-    private Context context;
+    private OrpContext context;
     private int limit;
 
     public Retrieve() {
     }
 
-    public Retrieve(Context context, int limit) {
+    public Retrieve(OrpContext context, int limit) {
       this.context = context;
       this.limit = limit;
     }
 
-    public Context getContext() {
+    public OrpContext getContext() {
       return context;
     }
 
@@ -164,7 +164,7 @@ public class MostPopularMerger extends UntypedActor {
 
       cleanRecommended();
 
-      Context context = ((Retrieve) message).getContext();
+      OrpContext context = ((Retrieve) message).getContext();
       int limit = ((Retrieve) message).getLimit();
 //      log.info(String.format("Received GetMessage Message. Publisher-ID = %s", publisher));
 
