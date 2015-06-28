@@ -60,6 +60,10 @@ public class OrpTestOfflineData {
   private static void postJson(JsonNode json) {
 //    System.out.println("json: " + json.toString());
     String eventType = json.get("event_type").asText();
+    switch (eventType) {
+      case "impression":
+        eventType = "event_notification";
+    }
 //    System.out.println("sending " + eventType);
     Future<HttpResponse<String>> httpResponseFuture = Unirest.post("http://localhost:9000/orp")
 				.field("type", eventType)

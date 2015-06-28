@@ -29,6 +29,7 @@ import akka.actor.Props;
 import akka.actor.UntypedActor;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
+import akka.routing.FromConfig;
 import akka.routing.RoundRobinPool;
 import de.tuberlin.orp.core.OrpContext;
 
@@ -116,9 +117,8 @@ public class CentralOrpActor extends UntypedActor {
   @Override
   public void preStart() throws Exception {
     super.preStart();
-    mostPopularMerger = getContext().actorOf(MostPopularMerger.create(), "merger");
-    mostPopularWorker = getContext().actorOf(
-        MostPopularActor.create(mostPopularMerger, 500, 50).withRouter(new RoundRobinPool(noOfWorkers)), "mp");
+    mostPopularWorker = getContext().actorOf(FromConfig.getInstance().props(MostPopularActor.create(500, 50)), "mp");
+    mostPopularMerger = getContext().actorOf(MostPopularMerger.create(mostPopularWorker), "merger");
   }
 
   @Override

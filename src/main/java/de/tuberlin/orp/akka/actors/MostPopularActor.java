@@ -29,6 +29,7 @@ import akka.actor.Props;
 import akka.actor.UntypedActor;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
+import akka.routing.Broadcast;
 import de.tuberlin.orp.core.OrpContext;
 import de.tuberlin.orp.core.Ranking;
 import de.tuberlin.orp.core.OrpContextCounter;
@@ -45,57 +46,30 @@ public class MostPopularActor extends UntypedActor {
   private LoggingAdapter log = Logging.getLogger(getContext().system(), this);
 
   private OrpContextCounter contextCounter;
-  private ActorRef mostPopularMerger;
 
   private long lastRanking = 0;
   private int receivedImpressions = 0;
 
 
   /**
-   * @see #MostPopularActor(ActorRef, int, int)
+   * @see #MostPopularActor(int, int)
    */
-  public static Props create(ActorRef mostPopularMerger, int contextWindowSize, int topListSize) {
+  public static Props create(int contextWindowSize, int topListSize) {
     return Props.create(MostPopularActor.class, () -> {
-      return new MostPopularActor(mostPopularMerger, contextWindowSize, topListSize);
+      return new MostPopularActor(contextWindowSize, topListSize);
     });
   }
 
   /**
-   * @param mostPopularMerger
-   *     A reference to the actor which will merge the intermediate rankings to a total ranking.
    * @param contextWindowSize
    *     The window size which defines of how many contexts a window should consist.
    * @param topListSize
    *     The maximum size of the rankings for the publishers.
    */
-  public MostPopularActor(ActorRef mostPopularMerger, int contextWindowSize, int topListSize) {
-    this.mostPopularMerger = mostPopularMerger;
+  public MostPopularActor(int contextWindowSize, int topListSize) {
     this.contextCounter = new OrpContextCounter(contextWindowSize, topListSize);
   }
 
-
-  public void preStart() throws Exception {
-    super.preStart();
-
-    getContext().system().scheduler().schedule(
-        Duration.Zero(),
-        Duration.create(2, TimeUnit.SECONDS), () -> {
-
-          if (lastRanking != 0) {
-            double throughput = 1000.0 * receivedImpressions / (System.currentTimeMillis() - lastRanking);
-            log.info(String.format("Throughput: %.2f impressions/sec", throughput));
-          }
-
-          lastRanking = System.currentTimeMillis();
-          receivedImpressions = 0;
-
-          Map<String, Ranking> rankings = contextCounter.getRankings();
-//          log.info(rankings.toString());
-
-          mostPopularMerger.tell(new MostPopularMerger.Merge(rankings), getSelf());
-
-        }, getContext().dispatcher());
-  }
 
   @Override
   public void onReceive(Object message) throws Exception {
@@ -108,6 +82,20 @@ public class MostPopularActor extends UntypedActor {
       ++receivedImpressions;
       contextCounter.add(context);
 
+    } else if (message.equals("getRankings")) {
+      log.debug("received Broadcast message");
+      if (lastRanking != 0) {
+        double throughput = 1000.0 * receivedImpressions / (System.currentTimeMillis() - lastRanking);
+        log.info(String.format("Throughput: %.2f impressions/sec", throughput));
+      }
+
+      lastRanking = System.currentTimeMillis();
+      receivedImpressions = 0;
+
+      Map<String, Ranking> rankings = contextCounter.getRankings();
+//          log.info(rankings.toString());
+
+      getSender().tell(new MostPopularMerger.Merge(rankings), getSelf());
     }
   }
 }

@@ -24,24 +24,31 @@
 
 package de.tuberlin.orp.akka.actors;
 
+import akka.actor.ActorRef;
 import akka.actor.Props;
 import akka.actor.UntypedActor;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
+import akka.routing.Broadcast;
 import de.tuberlin.orp.core.OrpContext;
 import de.tuberlin.orp.core.Ranking;
 import de.tuberlin.orp.core.RankingMerger;
+import scala.concurrent.duration.Duration;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 public class MostPopularMerger extends UntypedActor {
   private LoggingAdapter log = Logging.getLogger(getContext().system(), this);
 
+  private ActorRef worker;
   private RankingMerger merger;
 
   private Set<String> removed;
@@ -49,13 +56,14 @@ public class MostPopularMerger extends UntypedActor {
   private Map<String, Set<String>> recommended;
 
 
-  public static Props create() {
+  public static Props create(ActorRef mostPopularWorker) {
     return Props.create(MostPopularMerger.class, () -> {
-      return new MostPopularMerger(50);
+      return new MostPopularMerger(mostPopularWorker, 50);
     });
   }
 
-  public MostPopularMerger(int windowSize) {
+  public MostPopularMerger(ActorRef mostPopularWorker, int windowSize) {
+    worker = mostPopularWorker;
     merger = new RankingMerger(windowSize);
     removed = new HashSet<>();
     lastUpdated = new HashMap<>();
@@ -139,6 +147,14 @@ public class MostPopularMerger extends UntypedActor {
   @Override
   public void preStart() throws Exception {
     super.preStart();
+
+    getContext().system().scheduler().schedule(
+        Duration.Zero(),
+        Duration.create(2, TimeUnit.SECONDS), () -> {
+
+          worker.tell(new Broadcast("getRankings"), getSelf());
+
+        }, getContext().dispatcher());
   }
 
   @Override
@@ -169,6 +185,8 @@ public class MostPopularMerger extends UntypedActor {
 //      log.info(String.format("Received GetMessage Message. Publisher-ID = %s", publisher));
 
       Ranking ranking = merger.getRanking(context.getPublisherId(), Integer.MAX_VALUE);
+
+//      log.debug("ranking = " + Objects.toString(ranking));
 
       if (ranking == null) {
         getSender().tell(new Ranking(), getSelf());
