@@ -29,6 +29,7 @@ import akka.actor.Props;
 import akka.actor.UntypedActor;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
+import akka.japi.Creator;
 import akka.routing.Broadcast;
 import de.tuberlin.orp.core.OrpContext;
 import de.tuberlin.orp.core.Ranking;
@@ -51,13 +52,27 @@ public class MostPopularActor extends UntypedActor {
   private int receivedImpressions = 0;
 
 
+  static class MostPopularActorCreator implements Creator<MostPopularActor> {
+
+    private int contextWindowSize;
+    private int topListSize;
+
+    public MostPopularActorCreator(int contextWindowSize, int topListSize) {
+      this.contextWindowSize = contextWindowSize;
+      this.topListSize = topListSize;
+    }
+
+    @Override
+    public MostPopularActor create() throws Exception {
+      return new MostPopularActor(contextWindowSize, topListSize);
+    }
+  }
+
   /**
    * @see #MostPopularActor(int, int)
    */
   public static Props create(int contextWindowSize, int topListSize) {
-    return Props.create(MostPopularActor.class, () -> {
-      return new MostPopularActor(contextWindowSize, topListSize);
-    });
+    return Props.create(MostPopularActor.class, new MostPopularActorCreator(contextWindowSize, topListSize));
   }
 
   /**
