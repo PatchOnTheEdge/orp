@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package de.tuberlin.orp.akka.actors;
+package de.tuberlin.orp.worker;
 
 import akka.actor.ActorRef;
 import akka.actor.Props;
@@ -30,7 +30,7 @@ import akka.actor.UntypedActor;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.routing.FromConfig;
-import akka.routing.RoundRobinPool;
+import de.tuberlin.orp.merger.MostPopularMerger;
 import de.tuberlin.orp.core.OrpContext;
 
 /**
@@ -41,18 +41,11 @@ public class CentralOrpActor extends UntypedActor {
   private LoggingAdapter log = Logging.getLogger(getContext().system(), this);
 
   private ActorRef mostPopularMerger;
-  private final int noOfWorkers;
   private ActorRef mostPopularWorker;
 
 
-  public static Props props(int noOfWorkers) {
-    return Props.create(CentralOrpActor.class, () -> {
-      return new CentralOrpActor(noOfWorkers);
-    });
-  }
-
-  public CentralOrpActor(int noOfWorkers) {
-    this.noOfWorkers = noOfWorkers;
+  public static Props create() {
+    return Props.create(CentralOrpActor.class, CentralOrpActor::new);
   }
 
 
@@ -117,8 +110,8 @@ public class CentralOrpActor extends UntypedActor {
   @Override
   public void preStart() throws Exception {
     super.preStart();
-    mostPopularWorker = getContext().actorOf(FromConfig.getInstance().props(MostPopularActor.create(500, 50)), "mp");
-    mostPopularMerger = getContext().actorOf(MostPopularMerger.create(mostPopularWorker), "merger");
+    mostPopularWorker = getContext().actorOf(MostPopularActor.create(500, 50), "mp");
+    mostPopularMerger = getContext().actorOf(FromConfig.getInstance().props(MostPopularMerger.create()), "merger");
   }
 
   @Override

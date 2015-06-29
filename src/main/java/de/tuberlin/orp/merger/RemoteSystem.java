@@ -22,53 +22,17 @@
  * SOFTWARE.
  */
 
-package de.tuberlin.orp.core;
+package de.tuberlin.orp.merger;
 
-import de.tuberlin.orp.Utils;
+import akka.actor.ActorSystem;
+import com.typesafe.config.ConfigFactory;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
-
-public class Ranking {
-  private LinkedHashMap<String, Long> ranking;
-
-
-  public Ranking() {
-    ranking = new LinkedHashMap<>();
-  }
-
-  public Ranking(Map<String, Long> ranking) {
-    this.ranking = new LinkedHashMap<>(ranking);
-  }
-
-  public LinkedHashMap<String, Long> getRanking() {
-    return ranking;
-  }
-
-  public void merge(Ranking ranking) {
-    LinkedHashMap<String, Long> newRanking = ranking.getRanking();
-    for (String key : newRanking.keySet()) {
-      this.ranking.merge(key, newRanking.get(key), Long::sum);
-    }
-  }
-
-  public void filter(Set<String> keys) {
-    for (String key : keys) {
-      ranking.remove(key);
-    }
-  }
-
-  public void sort() {
-    ranking = Utils.sortMapByEntry(ranking, (o1, o2) -> (int) (o2.getValue() - o1.getValue()));
-  }
-
-  public void slice(int limit) {
-    ranking = Utils.sliceMap(ranking, limit);
-  }
-
-  @Override
-  public String toString() {
-    return ranking.toString();
+public class RemoteSystem {
+  public static void main(String[] args) {
+    ActorSystem remoteSystem = ActorSystem.create("RemoteSystem", ConfigFactory.load("remote_application.conf"));
+    //TODO
+//    remoteSystem.actorOf(MostPopularActor.create(0, 0), "mp");
+//    remoteSystem.actorOf(CentralOrpActor.create(), "orp");
+    remoteSystem.actorOf(MostPopularMerger.create(), "merger");
   }
 }

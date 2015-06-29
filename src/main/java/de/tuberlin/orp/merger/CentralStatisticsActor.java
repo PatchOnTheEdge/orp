@@ -22,25 +22,22 @@
  * SOFTWARE.
  */
 
-package de.tuberlin.orp.akka.actors;
+package de.tuberlin.orp.merger;
 
-import java.util.Comparator;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.stream.Collectors;
+import akka.actor.UntypedActor;
 
-public class Utils {
-  public static <K, V> LinkedHashMap<K, V> sortMapByEntry(Map<K, V> unsortedMap,
-      Comparator<Map.Entry<K, V>> comparator) {
-    return unsortedMap.entrySet().stream()
-        .sorted(comparator)
-        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (o, o2) -> o, LinkedHashMap::new));
+public class CentralStatisticsActor extends UntypedActor {
+  public static class Statistics {
+
   }
 
-  public static <K, V> LinkedHashMap<K, V> sliceMap(LinkedHashMap<K, V> map, int n) {
-    return map.entrySet().stream()
-        .limit(n)
-        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (o, o2) -> o, LinkedHashMap::new));
+
+
+  @Override
+  public void onReceive(Object message) throws Exception {
+    if (message instanceof Statistics) {
+
+    }
   }
 
 }

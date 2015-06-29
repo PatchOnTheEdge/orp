@@ -22,13 +22,25 @@
  * SOFTWARE.
  */
 
-package de.tuberlin.orp.akka.actors;
+package de.tuberlin.orp;
 
-import akka.actor.ActorSystem;
-import com.typesafe.config.ConfigFactory;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
 
-public class RemoteSystem {
-  public static void main(String[] args) {
-    ActorSystem remoteSystem = ActorSystem.create("RemoteSystem", ConfigFactory.load("remote_application.conf"));
+public class Utils {
+  public static <K, V> LinkedHashMap<K, V> sortMapByEntry(Map<K, V> unsortedMap,
+      Comparator<Map.Entry<K, V>> comparator) {
+    return unsortedMap.entrySet().stream()
+        .sorted(comparator)
+        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (o, o2) -> o, LinkedHashMap::new));
   }
+
+  public static <K, V> LinkedHashMap<K, V> sliceMap(LinkedHashMap<K, V> map, int n) {
+    return map.entrySet().stream()
+        .limit(n)
+        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (o, o2) -> o, LinkedHashMap::new));
+  }
+
 }

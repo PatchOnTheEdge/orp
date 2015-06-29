@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package de.tuberlin.orp.akka.actors;
+package de.tuberlin.orp.merger;
 
 import akka.actor.ActorRef;
 import akka.actor.Props;
@@ -30,9 +30,11 @@ import akka.actor.UntypedActor;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.routing.Broadcast;
+import akka.routing.FromConfig;
 import de.tuberlin.orp.core.OrpContext;
 import de.tuberlin.orp.core.Ranking;
 import de.tuberlin.orp.core.RankingMerger;
+import de.tuberlin.orp.worker.MostPopularActor;
 import scala.concurrent.duration.Duration;
 
 import java.util.Arrays;
@@ -40,9 +42,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 public class MostPopularMerger extends UntypedActor {
@@ -56,14 +56,13 @@ public class MostPopularMerger extends UntypedActor {
   private Map<String, Set<String>> recommended;
 
 
-  public static Props create(ActorRef mostPopularWorker) {
+  public static Props create() {
     return Props.create(MostPopularMerger.class, () -> {
-      return new MostPopularMerger(mostPopularWorker, 50);
+      return new MostPopularMerger(50);
     });
   }
 
-  public MostPopularMerger(ActorRef mostPopularWorker, int windowSize) {
-    worker = mostPopularWorker;
+  public MostPopularMerger(int windowSize) {
     merger = new RankingMerger(windowSize);
     removed = new HashSet<>();
     lastUpdated = new HashMap<>();
@@ -148,11 +147,13 @@ public class MostPopularMerger extends UntypedActor {
   public void preStart() throws Exception {
     super.preStart();
 
+    worker = getContext().actorOf(FromConfig.getInstance().props(MostPopularActor.create(500, 50)), "worker");
+
     getContext().system().scheduler().schedule(
         Duration.Zero(),
         Duration.create(2, TimeUnit.SECONDS), () -> {
 
-          worker.tell(new Broadcast("getRankings"), getSelf());
+          this.worker.tell(new Broadcast("getRankings"), getSelf());
 
         }, getContext().dispatcher());
   }

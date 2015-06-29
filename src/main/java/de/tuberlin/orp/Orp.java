@@ -31,7 +31,7 @@ import akka.pattern.Patterns;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import de.tuberlin.orp.akka.actors.CentralOrpActor;
+import de.tuberlin.orp.worker.CentralOrpActor;
 import de.tuberlin.orp.core.OrpContext;
 import de.tuberlin.orp.core.Ranking;
 import io.verbit.ski.akka.Akka;
@@ -51,8 +51,8 @@ import static io.verbit.ski.core.route.RouteBuilder.get;
 import static io.verbit.ski.core.route.RouteBuilder.post;
 
 public class Orp {
-  private static final ActorSystem system = ActorSystem.create("MySystem");
-  private static ActorRef centralOrpActor = system.actorOf(CentralOrpActor.props(2), "orp");
+  private static final ActorSystem system = ActorSystem.create("OrpSystem");
+  private static ActorRef centralOrpActor = system.actorOf(CentralOrpActor.create(), "orp");
 
   public static void main(String[] args) throws Exception {
     String host = "0.0.0.0";

@@ -22,22 +22,19 @@
  * SOFTWARE.
  */
 
-package de.tuberlin.orp.akka.actors;
+package de.tuberlin.orp.worker;
 
-import akka.actor.ActorRef;
 import akka.actor.Props;
 import akka.actor.UntypedActor;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.japi.Creator;
-import akka.routing.Broadcast;
+import de.tuberlin.orp.merger.MostPopularMerger;
 import de.tuberlin.orp.core.OrpContext;
 import de.tuberlin.orp.core.Ranking;
 import de.tuberlin.orp.core.OrpContextCounter;
-import scala.concurrent.duration.Duration;
 
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 /**
  * An actor that can receive items and store them per publisher in a private Hashmap. The top n entries will be send to
