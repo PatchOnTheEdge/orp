@@ -25,11 +25,14 @@
 package de.tuberlin.orp.worker;
 
 import akka.actor.ActorRef;
+import akka.actor.ActorSelection;
 import akka.actor.Props;
 import akka.actor.UntypedActor;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import de.tuberlin.orp.core.OrpContext;
+import de.tuberlin.orp.merger.MostPopularMerger;
+import de.tuberlin.orp.merger.RecommendationFilter;
 
 /**
  * This actor is the entry point for the Akka application. All Requests received over HTTP are transformed to Akka
@@ -38,8 +41,9 @@ import de.tuberlin.orp.core.OrpContext;
 public class JettyGatewayActor extends UntypedActor {
   private LoggingAdapter log = Logging.getLogger(getContext().system(), this);
 
-  private ActorRef mostPopularMerger;
   private ActorRef mostPopularWorker;
+  private ActorSelection mergerSelection;
+  private ActorSelection filterSelection;
 
 
   public static Props create() {
@@ -108,7 +112,11 @@ public class JettyGatewayActor extends UntypedActor {
   @Override
   public void preStart() throws Exception {
     super.preStart();
+    mergerSelection = getContext().actorSelection("akka.tcp://OrpSystem@10.135.231.152:2552/user/merger");
+    filterSelection = getContext().actorSelection("akka.tcp://OrpSystem@10.135.231.152:2552/user/filter");
+//    mergerSelection.tell(new Identify(0), getSelf());
     mostPopularWorker = getContext().actorOf(MostPopularWorker.create(500, 50), "mp");
+    mergerSelection.tell(new MostPopularMerger.Register(mostPopularWorker), getSelf());
 //    mostPopularMerger = getContext().actorOf(FromConfig.getInstance().props(MostPopularMergerOld.create()), "merger");
   }
 
@@ -141,7 +149,7 @@ public class JettyGatewayActor extends UntypedActor {
 
       OrpItemUpdate itemUpdate = (OrpItemUpdate) message;
       if (!itemUpdate.isItemRecommendable()) {
-//        mostPopularMerger.tell(new MostPopularMergerOld.Remove(itemUpdate.getItemId()), getSelf());
+        filterSelection.tell(new RecommendationFilter.Removed(itemUpdate.getItemId()), getSelf());
       }
 
     } else if (message instanceof OrpRequest) {
@@ -153,7 +161,7 @@ public class JettyGatewayActor extends UntypedActor {
 //      log.info(String.format("Received Recommendation Request. Publisher = %s. Limit = %d", publisher, limit));
 
       if (!publisher.equals("")) {
-//        mostPopularMerger.tell(new MostPopularMergerOld.Retrieve(context, limit), getSender());
+        mergerSelection.tell(new MostPopularMerger.Retrieve(context, limit), getSender());
       }
     }
   }
