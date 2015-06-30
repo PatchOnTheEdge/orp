@@ -32,9 +32,11 @@ import akka.event.LoggingAdapter;
 import akka.japi.Creator;
 import akka.routing.ActorRefRoutee;
 import akka.routing.BroadcastRoutingLogic;
+import akka.routing.Routee;
 import akka.routing.Router;
 import de.tuberlin.orp.core.OrpContext;
 import de.tuberlin.orp.core.Ranking;
+import scala.collection.immutable.IndexedSeq;
 import scala.concurrent.duration.Duration;
 
 import java.util.Map;
@@ -64,8 +66,10 @@ public class MostPopularMerger extends UntypedActor {
 
     // asks every 2 seconds for the intermediate rankings
     getContext().system().scheduler().schedule(Duration.Zero(), Duration.create(2, TimeUnit.SECONDS), () -> {
-      log.info("Asking for intermediate rankings");
-      router.route("getRankings", getSelf());
+      if (!router.routees().isEmpty()) {
+        log.info("Asking for intermediate rankings");
+        router.route("getRankings", getSelf());
+      }
     }, getContext().dispatcher());
 
   }
