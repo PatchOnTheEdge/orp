@@ -61,6 +61,7 @@ public class MostPopularMerger extends UntypedActor {
 
   @Override
   public void preStart() throws Exception {
+    log.info("Merger started");
     router = new Router(new BroadcastRoutingLogic());
     merger = new RankingMerger(50);
 

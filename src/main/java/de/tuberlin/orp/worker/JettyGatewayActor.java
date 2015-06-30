@@ -29,8 +29,6 @@ import akka.actor.Props;
 import akka.actor.UntypedActor;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
-import akka.routing.FromConfig;
-import de.tuberlin.orp.merger.MostPopularMergerOld;
 import de.tuberlin.orp.core.OrpContext;
 
 /**
@@ -111,7 +109,7 @@ public class JettyGatewayActor extends UntypedActor {
   public void preStart() throws Exception {
     super.preStart();
     mostPopularWorker = getContext().actorOf(MostPopularWorker.create(500, 50), "mp");
-    mostPopularMerger = getContext().actorOf(FromConfig.getInstance().props(MostPopularMergerOld.create()), "merger");
+//    mostPopularMerger = getContext().actorOf(FromConfig.getInstance().props(MostPopularMergerOld.create()), "merger");
   }
 
   @Override
@@ -143,7 +141,7 @@ public class JettyGatewayActor extends UntypedActor {
 
       OrpItemUpdate itemUpdate = (OrpItemUpdate) message;
       if (!itemUpdate.isItemRecommendable()) {
-        mostPopularMerger.tell(new MostPopularMergerOld.Remove(itemUpdate.getItemId()), getSelf());
+//        mostPopularMerger.tell(new MostPopularMergerOld.Remove(itemUpdate.getItemId()), getSelf());
       }
 
     } else if (message instanceof OrpRequest) {
@@ -155,7 +153,7 @@ public class JettyGatewayActor extends UntypedActor {
 //      log.info(String.format("Received Recommendation Request. Publisher = %s. Limit = %d", publisher, limit));
 
       if (!publisher.equals("")) {
-        mostPopularMerger.tell(new MostPopularMergerOld.Retrieve(context, limit), getSender());
+//        mostPopularMerger.tell(new MostPopularMergerOld.Retrieve(context, limit), getSender());
       }
     }
   }
