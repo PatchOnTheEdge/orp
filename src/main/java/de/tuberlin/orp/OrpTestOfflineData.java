@@ -65,7 +65,8 @@ public class OrpTestOfflineData {
         eventType = "event_notification";
     }
 //    System.out.println("sending " + eventType);
-    Future<HttpResponse<String>> httpResponseFuture = Unirest.post("http://localhost:9000/orp")
+    String host = "irs1.verbit.io";
+    Future<HttpResponse<String>> httpResponseFuture = Unirest.post("http://" + host + "/orp")
 				.field("type", eventType)
 				.field("body", json.toString())
 				.asStringAsync();
