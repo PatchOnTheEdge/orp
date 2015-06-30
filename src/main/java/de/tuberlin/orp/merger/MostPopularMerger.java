@@ -29,46 +29,63 @@ import akka.actor.Props;
 import akka.actor.UntypedActor;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
-import akka.routing.Broadcast;
-import akka.routing.FromConfig;
+import akka.japi.Creator;
+import akka.routing.ActorRefRoutee;
+import akka.routing.BroadcastRoutingLogic;
+import akka.routing.Router;
 import de.tuberlin.orp.core.OrpContext;
 import de.tuberlin.orp.core.Ranking;
-import de.tuberlin.orp.core.RankingMerger;
-import de.tuberlin.orp.worker.MostPopularActor;
 import scala.concurrent.duration.Duration;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 public class MostPopularMerger extends UntypedActor {
   private LoggingAdapter log = Logging.getLogger(getContext().system(), this);
 
-  private ActorRef worker;
+  private Router router;
+
   private RankingMerger merger;
 
-  private Set<String> removed;
-  private Map<String, Long> lastUpdated;
-  private Map<String, Set<String>> recommended;
+  private ActorRef filterActor;
 
+  public MostPopularMerger(ActorRef filterActor) {
+    this.filterActor = filterActor;
+  }
 
-  public static Props create() {
+  public static Props create(ActorRef filterActor) {
     return Props.create(MostPopularMerger.class, () -> {
-      return new MostPopularMerger(50);
+      return new MostPopularMerger(filterActor);
     });
   }
 
-  public MostPopularMerger(int windowSize) {
-    merger = new RankingMerger(windowSize);
-    removed = new HashSet<>();
-    lastUpdated = new HashMap<>();
-    recommended = new HashMap<>();
+  @Override
+  public void preStart() throws Exception {
+    router = new Router(new BroadcastRoutingLogic());
+    merger = new RankingMerger(50);
+
+    // asks every 2 seconds for the intermediate rankings
+    getContext().system().scheduler().schedule(Duration.Zero(), Duration.create(2, TimeUnit.SECONDS), () -> {
+      log.info("Asking for intermediate rankings");
+      router.route("getRankings", getSelf());
+    }, getContext().dispatcher());
+
   }
 
+  public static class Register {
+    private ActorRef worker;
+
+    public Register() {
+    }
+
+    public Register(ActorRef worker) {
+      this.worker = worker;
+    }
+
+    public ActorRef getWorker() {
+      return worker;
+    }
+  }
 
   public static class Merge {
     private Map<String, Ranking> rankings;
@@ -82,42 +99,6 @@ public class MostPopularMerger extends UntypedActor {
 
     public Map<String, Ranking> getRankings() {
       return rankings;
-    }
-  }
-
-  public static class Remove {
-    private String itemId;
-
-    public Remove() {
-    }
-
-    public Remove(String itemId) {
-      this.itemId = itemId;
-    }
-
-    public String getItemId() {
-      return itemId;
-    }
-  }
-
-  public static class Clicked {
-    private String userId;
-    private String itemId;
-
-    public Clicked() {
-    }
-
-    public Clicked(String userId, String itemId) {
-      this.userId = userId;
-      this.itemId = itemId;
-    }
-
-    public String getUserId() {
-      return userId;
-    }
-
-    public String getItemId() {
-      return itemId;
     }
   }
 
@@ -142,86 +123,29 @@ public class MostPopularMerger extends UntypedActor {
     }
   }
 
-
-  @Override
-  public void preStart() throws Exception {
-    super.preStart();
-
-    worker = getContext().actorOf(FromConfig.getInstance().props(MostPopularActor.create(500, 50)), "worker");
-
-    getContext().system().scheduler().schedule(
-        Duration.Zero(),
-        Duration.create(2, TimeUnit.SECONDS), () -> {
-
-          this.worker.tell(new Broadcast("getRankings"), getSelf());
-
-        }, getContext().dispatcher());
-  }
-
   @Override
   public void onReceive(Object message) throws Exception {
-    if (message instanceof Merge) {
+    if (message instanceof Register) {
 
+      ActorRef worker = ((Register) message).getWorker();
+      log.info("Registration of actor " + worker.toString());
+      router.addRoutee(new ActorRefRoutee(worker));
+
+    } else if (message instanceof Merge) {
+
+      log.info("Received intermediate rankings from " + getSender().toString());
       merger.merge(((Merge) message).getRankings());
-
-    } else if (message instanceof Remove) {
-
-      removed.add(((Remove) message).getItemId());
-
-    } else if (message instanceof Clicked) {
-
-      Clicked clicked = (Clicked) message;
-      recommended.putIfAbsent(clicked.getUserId(), new HashSet<>());
-      Set<String> itemsRecommended = recommended.get(clicked.getUserId());
-      itemsRecommended.add(clicked.getItemId());
-
-      lastUpdated.put(clicked.getUserId(), System.currentTimeMillis());
 
     } else if (message instanceof Retrieve) {
 
-      cleanRecommended();
-
       OrpContext context = ((Retrieve) message).getContext();
       int limit = ((Retrieve) message).getLimit();
-//      log.info(String.format("Received GetMessage Message. Publisher-ID = %s", publisher));
-
       Ranking ranking = merger.getRanking(context.getPublisherId(), Integer.MAX_VALUE);
 
-//      log.debug("ranking = " + Objects.toString(ranking));
-
-      if (ranking == null) {
-        getSender().tell(new Ranking(), getSelf());
-      } else {
-        ranking.filter(removed);
-        ranking.filter(recommended.getOrDefault(context.getUserId(), Collections.emptySet()));
-        ranking.filter(new HashSet<>(Arrays.asList(context.getItemId())));
-        ranking.slice(limit);
-//        log.info("GetMessage Map");
-//        log.info(ranking.toString());
-
-        getSender().tell(ranking, getSelf());
-      }
-
-      removed.clear();
+      RecommendationFilter.Filter filter = new RecommendationFilter.Filter(context, ranking, limit, getSender());
+      filterActor.tell(filter, getSelf());
     }
   }
 
-  /**
-   * For a fixed time period recommended items for users are remembered in a map. Such a map will be cleaned so that its
-   * size won't explode.
-   */
-  private void cleanRecommended() {
-    long now = System.currentTimeMillis();
-    Set<String> toRemove = new HashSet<>();
-    for (String key : lastUpdated.keySet()) {
-      long userLastUpdated = lastUpdated.get(key);
-      if (now - userLastUpdated > 1000 * 60 * 30) {
-        toRemove.add(key);
-      }
-    }
-    for (String key : toRemove) {
-      lastUpdated.remove(key);
-      recommended.remove(key);
-    }
-  }
+
 }

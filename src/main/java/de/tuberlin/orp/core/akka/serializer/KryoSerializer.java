@@ -22,14 +22,13 @@
  * SOFTWARE.
  */
 
-package de.tuberlin.orp.akka.serializer;
+package de.tuberlin.orp.core.akka.serializer;
 
 import akka.serialization.JSerializer;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.Serializer;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-import com.esotericsoftware.kryo.pool.KryoCallback;
 import com.esotericsoftware.kryo.pool.KryoFactory;
 import com.esotericsoftware.kryo.pool.KryoPool;
 import com.fasterxml.jackson.databind.JsonNode;

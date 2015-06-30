@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package de.tuberlin.orp;
+package de.tuberlin.orp.core;
 
 import java.util.Comparator;
 import java.util.LinkedHashMap;

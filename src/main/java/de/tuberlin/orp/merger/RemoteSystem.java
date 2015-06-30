@@ -24,6 +24,7 @@
 
 package de.tuberlin.orp.merger;
 
+import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import com.typesafe.config.ConfigFactory;
 
@@ -33,6 +34,7 @@ public class RemoteSystem {
     //TODO
 //    remoteSystem.actorOf(MostPopularActor.create(0, 0), "mp");
 //    remoteSystem.actorOf(CentralOrpActor.create(), "orp");
-    remoteSystem.actorOf(MostPopularMerger.create(), "merger");
+    ActorRef filterActor = remoteSystem.actorOf(RecommendationFilter.create(), "filter");
+    ActorRef mergerActor = remoteSystem.actorOf(MostPopularMerger.create(filterActor), "merger");
   }
 }

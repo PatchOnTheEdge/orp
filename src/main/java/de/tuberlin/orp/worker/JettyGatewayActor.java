@@ -30,14 +30,14 @@ import akka.actor.UntypedActor;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.routing.FromConfig;
-import de.tuberlin.orp.merger.MostPopularMerger;
+import de.tuberlin.orp.merger.MostPopularMergerOld;
 import de.tuberlin.orp.core.OrpContext;
 
 /**
  * This actor is the entry point for the Akka application. All Requests received over HTTP are transformed to Akka
  * messages and sent to this actor.
  */
-public class CentralOrpActor extends UntypedActor {
+public class JettyGatewayActor extends UntypedActor {
   private LoggingAdapter log = Logging.getLogger(getContext().system(), this);
 
   private ActorRef mostPopularMerger;
@@ -45,7 +45,7 @@ public class CentralOrpActor extends UntypedActor {
 
 
   public static Props create() {
-    return Props.create(CentralOrpActor.class, CentralOrpActor::new);
+    return Props.create(JettyGatewayActor.class, JettyGatewayActor::new);
   }
 
 
@@ -110,8 +110,8 @@ public class CentralOrpActor extends UntypedActor {
   @Override
   public void preStart() throws Exception {
     super.preStart();
-    mostPopularWorker = getContext().actorOf(MostPopularActor.create(500, 50), "mp");
-    mostPopularMerger = getContext().actorOf(FromConfig.getInstance().props(MostPopularMerger.create()), "merger");
+    mostPopularWorker = getContext().actorOf(MostPopularWorker.create(500, 50), "mp");
+    mostPopularMerger = getContext().actorOf(FromConfig.getInstance().props(MostPopularMergerOld.create()), "merger");
   }
 
   @Override
@@ -143,7 +143,7 @@ public class CentralOrpActor extends UntypedActor {
 
       OrpItemUpdate itemUpdate = (OrpItemUpdate) message;
       if (!itemUpdate.isItemRecommendable()) {
-        mostPopularMerger.tell(new MostPopularMerger.Remove(itemUpdate.getItemId()), getSelf());
+        mostPopularMerger.tell(new MostPopularMergerOld.Remove(itemUpdate.getItemId()), getSelf());
       }
 
     } else if (message instanceof OrpRequest) {
@@ -155,7 +155,7 @@ public class CentralOrpActor extends UntypedActor {
 //      log.info(String.format("Received Recommendation Request. Publisher = %s. Limit = %d", publisher, limit));
 
       if (!publisher.equals("")) {
-        mostPopularMerger.tell(new MostPopularMerger.Retrieve(context, limit), getSender());
+        mostPopularMerger.tell(new MostPopularMergerOld.Retrieve(context, limit), getSender());
       }
     }
   }

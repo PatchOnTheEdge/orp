@@ -29,10 +29,9 @@ import akka.actor.UntypedActor;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.japi.Creator;
-import de.tuberlin.orp.merger.MostPopularMerger;
+import de.tuberlin.orp.merger.MostPopularMergerOld;
 import de.tuberlin.orp.core.OrpContext;
 import de.tuberlin.orp.core.Ranking;
-import de.tuberlin.orp.core.OrpContextCounter;
 
 import java.util.Map;
 
@@ -40,7 +39,7 @@ import java.util.Map;
  * An actor that can receive items and store them per publisher in a private Hashmap. The top n entries will be send to
  * the MostPopularMerger in a defined interval.
  */
-public class MostPopularActor extends UntypedActor {
+public class MostPopularWorker extends UntypedActor {
   private LoggingAdapter log = Logging.getLogger(getContext().system(), this);
 
   private OrpContextCounter contextCounter;
@@ -49,7 +48,7 @@ public class MostPopularActor extends UntypedActor {
   private int receivedImpressions = 0;
 
 
-  static class MostPopularActorCreator implements Creator<MostPopularActor> {
+  static class MostPopularActorCreator implements Creator<MostPopularWorker> {
 
     private int contextWindowSize;
     private int topListSize;
@@ -60,16 +59,16 @@ public class MostPopularActor extends UntypedActor {
     }
 
     @Override
-    public MostPopularActor create() throws Exception {
-      return new MostPopularActor(contextWindowSize, topListSize);
+    public MostPopularWorker create() throws Exception {
+      return new MostPopularWorker(contextWindowSize, topListSize);
     }
   }
 
   /**
-   * @see #MostPopularActor(int, int)
+   * @see #MostPopularWorker(int, int)
    */
   public static Props create(int contextWindowSize, int topListSize) {
-    return Props.create(MostPopularActor.class, new MostPopularActorCreator(contextWindowSize, topListSize));
+    return Props.create(MostPopularWorker.class, new MostPopularActorCreator(contextWindowSize, topListSize));
   }
 
   /**
@@ -78,7 +77,7 @@ public class MostPopularActor extends UntypedActor {
    * @param topListSize
    *     The maximum size of the rankings for the publishers.
    */
-  public MostPopularActor(int contextWindowSize, int topListSize) {
+  public MostPopularWorker(int contextWindowSize, int topListSize) {
     this.contextCounter = new OrpContextCounter(contextWindowSize, topListSize);
   }
 
@@ -107,7 +106,7 @@ public class MostPopularActor extends UntypedActor {
       Map<String, Ranking> rankings = contextCounter.getRankings();
 //          log.info(rankings.toString());
 
-      getSender().tell(new MostPopularMerger.Merge(rankings), getSelf());
+      getSender().tell(new MostPopularMergerOld.Merge(rankings), getSelf());
     }
   }
 }

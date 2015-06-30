@@ -73,7 +73,7 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <mainClass>de.tuberlin.orp.Orp</mainClass>
+                    <mainClass>de.tuberlin.orp.worker.WorkerServer</mainClass>
                     <arguments>
                         <argument>0.0.0.0:9000</argument>
                     </arguments>

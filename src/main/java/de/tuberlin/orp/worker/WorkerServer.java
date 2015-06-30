@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package de.tuberlin.orp;
+package de.tuberlin.orp.worker;
 
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
@@ -31,7 +31,7 @@ import akka.pattern.Patterns;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import de.tuberlin.orp.worker.CentralOrpActor;
+import de.tuberlin.orp.worker.JettyGatewayActor;
 import de.tuberlin.orp.core.OrpContext;
 import de.tuberlin.orp.core.Ranking;
 import io.verbit.ski.akka.Akka;
@@ -50,9 +50,9 @@ import static io.verbit.ski.core.http.SimpleResult.ok;
 import static io.verbit.ski.core.route.RouteBuilder.get;
 import static io.verbit.ski.core.route.RouteBuilder.post;
 
-public class Orp {
+public class WorkerServer {
   private static final ActorSystem system = ActorSystem.create("OrpSystem");
-  private static ActorRef centralOrpActor = system.actorOf(CentralOrpActor.create(), "orp");
+  private static ActorRef centralOrpActor = system.actorOf(JettyGatewayActor.create(), "orp");
 
   public static void main(String[] args) throws Exception {
     String host = "0.0.0.0";
@@ -84,8 +84,8 @@ public class Orp {
               if (messageType.isPresent() && jsonBody.isPresent()) {
 
                 OrpContext orpContext = new OrpContext(jsonBody.get());
-                CentralOrpActor.OrpNotification notification =
-                    new CentralOrpActor.OrpNotification(messageType.get(), orpContext);
+                JettyGatewayActor.OrpNotification notification =
+                    new JettyGatewayActor.OrpNotification(messageType.get(), orpContext);
 
                 switch (messageType.get()) {
                   //The three subtypes of an event notification:
@@ -94,7 +94,7 @@ public class Orp {
                     centralOrpActor.tell(notification, ActorRef.noSender());
                     return async(noContent());
                   case "recommendation_request":
-                    CentralOrpActor.OrpRequest request = new CentralOrpActor.OrpRequest(orpContext);
+                    JettyGatewayActor.OrpRequest request = new JettyGatewayActor.OrpRequest(orpContext);
 
                     Future<Result> ask = Patterns.ask(centralOrpActor, request, 80)
                         .map(new Mapper<Object, Result>() {

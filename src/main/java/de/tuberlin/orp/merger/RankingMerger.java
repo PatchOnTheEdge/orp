@@ -22,7 +22,9 @@
  * SOFTWARE.
  */
 
-package de.tuberlin.orp.core;
+package de.tuberlin.orp.merger;
+
+import de.tuberlin.orp.core.Ranking;
 
 import java.util.ArrayDeque;
 import java.util.HashMap;
