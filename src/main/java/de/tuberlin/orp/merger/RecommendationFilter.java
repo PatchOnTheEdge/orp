@@ -48,9 +48,7 @@ public class RecommendationFilter extends UntypedActor {
   private Map<String, Set<String>> recommended;
 
   public static Props create() {
-    return Props.create(RecommendationFilter.class, () -> {
-      return new RecommendationFilter();
-    });
+    return Props.create(RecommendationFilter.class, new RecommendationFilterCreator());
   }
 
   public RecommendationFilter() {
@@ -181,6 +179,13 @@ public class RecommendationFilter extends UntypedActor {
     for (String key : toRemove) {
       lastUpdated.remove(key);
       recommended.remove(key);
+    }
+  }
+
+  private static class RecommendationFilterCreator implements Creator<RecommendationFilter> {
+    @Override
+    public RecommendationFilter create() throws Exception {
+      return new RecommendationFilter();
     }
   }
 }

@@ -54,9 +54,7 @@ public class MostPopularMerger extends UntypedActor {
   }
 
   public static Props create(ActorRef filterActor) {
-    return Props.create(MostPopularMerger.class, () -> {
-      return new MostPopularMerger(filterActor);
-    });
+    return Props.create(MostPopularMerger.class, new MostPopularMergerCreator(filterActor));
   }
 
   @Override
@@ -148,4 +146,16 @@ public class MostPopularMerger extends UntypedActor {
   }
 
 
+  private static class MostPopularMergerCreator implements Creator<MostPopularMerger> {
+    private final ActorRef filterActor;
+
+    public MostPopularMergerCreator(ActorRef filterActor) {
+      this.filterActor = filterActor;
+    }
+
+    @Override
+    public MostPopularMerger create() throws Exception {
+      return new MostPopularMerger(filterActor);
+    }
+  }
 }
