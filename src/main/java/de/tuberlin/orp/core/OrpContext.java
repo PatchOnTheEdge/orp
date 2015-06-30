@@ -26,7 +26,9 @@ package de.tuberlin.orp.core;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-public class OrpContext {
+import java.io.Serializable;
+
+public class OrpContext implements Serializable {
   private String publisherId;
   private String itemId;
   private String userId;

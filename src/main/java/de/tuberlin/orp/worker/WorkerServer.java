@@ -31,6 +31,8 @@ import akka.pattern.Patterns;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import de.tuberlin.orp.worker.JettyGatewayActor;
 import de.tuberlin.orp.core.OrpContext;
 import de.tuberlin.orp.core.Ranking;
@@ -51,20 +53,27 @@ import static io.verbit.ski.core.route.RouteBuilder.get;
 import static io.verbit.ski.core.route.RouteBuilder.post;
 
 public class WorkerServer {
-  private static final ActorSystem system = ActorSystem.create("OrpSystem");
-  private static ActorRef centralOrpActor = system.actorOf(JettyGatewayActor.create(), "orp");
 
   public static void main(String[] args) throws Exception {
     String host = "0.0.0.0";
     int port = 9000;
-    for (String arg : args) {
-      System.out.println(arg);
-    }
+//    for (String arg : args) {
+//      System.out.println(arg);
+//    }
+//    if (args.length == 1) {
+//      String[] split = args[0].split(":");
+//      host = split[0];
+//      port = Integer.parseInt(split[1]);
+//    }
+
+    Config config = ConfigFactory.empty();
     if (args.length == 1) {
-      String[] split = args[0].split(":");
-      host = split[0];
-      port = Integer.parseInt(split[1]);
+      config = ConfigFactory.parseString(args[0]);
     }
+    config = config.withFallback(ConfigFactory.load().getConfig("node"));
+
+    ActorSystem system = ActorSystem.create("OrpSystem", config);
+    ActorRef centralOrpActor = system.actorOf(JettyGatewayActor.create(), "orp");
 
     Ski.builder()
         .setHost(host)

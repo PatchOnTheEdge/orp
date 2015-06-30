@@ -27,6 +27,7 @@ package de.tuberlin.orp.merger;
 import de.tuberlin.orp.core.Ranking;
 
 import java.util.ArrayDeque;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -69,7 +70,7 @@ public class RankingMerger {
     Ranking ranking = mergedRankings.get(key);
 
     if (ranking == null) {
-      return null;
+      return new Ranking(new HashMap<>());
     }
 
     ranking.sort();

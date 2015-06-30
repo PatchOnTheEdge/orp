@@ -26,11 +26,19 @@ package de.tuberlin.orp.merger;
 
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
+import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 
 public class RemoteSystem {
   public static void main(String[] args) {
-    ActorSystem remoteSystem = ActorSystem.create("RemoteSystem", ConfigFactory.load("remote_application.conf"));
+
+    Config config = ConfigFactory.empty();
+    if (args.length == 1) {
+      config = ConfigFactory.parseString(args[0]);
+    }
+    config = config.withFallback(ConfigFactory.load().getConfig("master"));
+
+    ActorSystem remoteSystem = ActorSystem.create("RemoteSystem", config);
     //TODO
 //    remoteSystem.actorOf(MostPopularActor.create(0, 0), "mp");
 //    remoteSystem.actorOf(CentralOrpActor.create(), "orp");

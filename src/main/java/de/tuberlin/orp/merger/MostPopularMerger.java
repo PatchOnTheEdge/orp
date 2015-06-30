@@ -39,6 +39,7 @@ import de.tuberlin.orp.core.Ranking;
 import scala.collection.immutable.IndexedSeq;
 import scala.concurrent.duration.Duration;
 
+import java.io.Serializable;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -75,7 +76,7 @@ public class MostPopularMerger extends UntypedActor {
 
   }
 
-  public static class Register {
+  public static class Register implements Serializable {
     private ActorRef worker;
 
     public Register() {
@@ -90,7 +91,7 @@ public class MostPopularMerger extends UntypedActor {
     }
   }
 
-  public static class Merge {
+  public static class Merge implements Serializable {
     private Map<String, Ranking> rankings;
 
     public Merge() {
@@ -105,7 +106,7 @@ public class MostPopularMerger extends UntypedActor {
     }
   }
 
-  public static class Retrieve {
+  public static class Retrieve implements Serializable {
     private OrpContext context;
     private int limit;
 
@@ -132,7 +133,8 @@ public class MostPopularMerger extends UntypedActor {
 
       ActorRef worker = ((Register) message).getWorker();
       log.info("Registration of actor " + worker.toString());
-      router.addRoutee(new ActorRefRoutee(worker));
+      router = router.addRoutee(new ActorRefRoutee(worker));
+      log.info("Routees count: " + router.routees().size());
 
     } else if (message instanceof Merge) {
 

@@ -33,6 +33,7 @@ import akka.japi.Creator;
 import de.tuberlin.orp.core.OrpContext;
 import de.tuberlin.orp.core.Ranking;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -57,7 +58,7 @@ public class RecommendationFilter extends UntypedActor {
     recommended = new HashMap<>();
   }
 
-  public static class Removed {
+  public static class Removed implements Serializable {
     private String itemId;
 
     public Removed() {
@@ -72,7 +73,7 @@ public class RecommendationFilter extends UntypedActor {
     }
   }
 
-  public static class Clicked {
+  public static class Clicked implements Serializable {
     private String userId;
     private String itemId;
 
@@ -93,7 +94,7 @@ public class RecommendationFilter extends UntypedActor {
     }
   }
 
-  public static class Filter {
+  public static class Filter implements Serializable {
     private OrpContext context;
     private Ranking ranking;
     private int limit;

@@ -24,11 +24,12 @@
 
 package de.tuberlin.orp.core;
 
+import java.io.Serializable;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
-public class Ranking {
+public class Ranking implements Serializable {
   private LinkedHashMap<String, Long> ranking;
 
 

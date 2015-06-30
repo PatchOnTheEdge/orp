@@ -26,13 +26,17 @@ package de.tuberlin.orp.worker;
 
 import akka.actor.ActorRef;
 import akka.actor.ActorSelection;
+import akka.actor.AddressFromURIString;
 import akka.actor.Props;
 import akka.actor.UntypedActor;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
+import com.typesafe.config.Config;
 import de.tuberlin.orp.core.OrpContext;
 import de.tuberlin.orp.merger.MostPopularMerger;
 import de.tuberlin.orp.merger.RecommendationFilter;
+
+import java.io.Serializable;
 
 /**
  * This actor is the entry point for the Akka application. All Requests received over HTTP are transformed to Akka
@@ -51,7 +55,7 @@ public class JettyGatewayActor extends UntypedActor {
   }
 
 
-  public static class OrpNotification {
+  public static class OrpNotification implements Serializable {
     private String type;
     private OrpContext context;
 
@@ -72,7 +76,7 @@ public class JettyGatewayActor extends UntypedActor {
     }
   }
 
-  public static class OrpItemUpdate {
+  public static class OrpItemUpdate implements Serializable {
     private String itemId;
     private int flag;
 
@@ -93,7 +97,7 @@ public class JettyGatewayActor extends UntypedActor {
     }
   }
 
-  public static class OrpRequest {
+  public static class OrpRequest implements Serializable {
     private OrpContext context;
 
     public OrpRequest() {
@@ -112,8 +116,10 @@ public class JettyGatewayActor extends UntypedActor {
   @Override
   public void preStart() throws Exception {
     super.preStart();
-    mergerSelection = getContext().actorSelection("akka.tcp://OrpSystem@10.135.231.152:2552/user/merger");
-    filterSelection = getContext().actorSelection("akka.tcp://OrpSystem@10.135.231.152:2552/user/filter");
+    Config config = getContext().system().settings().config();
+    String master = config.getString("master");
+    mergerSelection = getContext().actorSelection(master + "/user/merger");
+    filterSelection = getContext().actorSelection(master + "/user/filter");
 //    mergerSelection.tell(new Identify(0), getSelf());
     mostPopularWorker = getContext().actorOf(MostPopularWorker.create(500, 50), "mp");
     mergerSelection.tell(new MostPopularMerger.Register(mostPopularWorker), getSelf());

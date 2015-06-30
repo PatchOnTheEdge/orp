@@ -31,6 +31,7 @@ import akka.event.LoggingAdapter;
 import akka.japi.Creator;
 import de.tuberlin.orp.core.OrpContext;
 import de.tuberlin.orp.core.Ranking;
+import de.tuberlin.orp.merger.MostPopularMerger;
 
 import java.util.Map;
 
@@ -105,7 +106,7 @@ public class MostPopularWorker extends UntypedActor {
       Map<String, Ranking> rankings = contextCounter.getRankings();
 //          log.info(rankings.toString());
 
-//      getSender().tell(new MostPopularMergerOld.Merge(rankings), getSelf());
+      getSender().tell(new MostPopularMerger.Merge(rankings), getSelf());
     }
   }
 }
