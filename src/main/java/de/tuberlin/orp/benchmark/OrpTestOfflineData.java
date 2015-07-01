@@ -42,11 +42,13 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class OrpTestOfflineData {
@@ -88,7 +90,8 @@ public class OrpTestOfflineData {
 
     File file = new File(filePath);
     Stream<String> stringStream = Files.lines(file.toPath(), Charset.defaultCharset());
-    stringStream.limit(limit).map(Json::parse).forEach(OrpTestOfflineData::postJson);
+    List<JsonNode> collect = stringStream.limit(limit).map(Json::parse).collect(Collectors.toList());
+    collect.forEach(OrpTestOfflineData::postJson);
 
     System.out.println("Done sending.");
 
