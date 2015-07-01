@@ -48,6 +48,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -59,7 +60,7 @@ public class OrpTestOfflineData {
 
   private static int warmupDelay = 10;
 
-  private static volatile int requestsCounter;
+  private static AtomicInteger requestsCounter;
 
 
   public static void main(String[] args) throws Exception {
@@ -83,8 +84,8 @@ public class OrpTestOfflineData {
         .scheduleAtFixedRate(new Runnable() {
           @Override
           public void run() {
-            System.out.println("Current throughput = " + (requestsCounter / (double) rate) * 1000 + " req/s");
-            OrpTestOfflineData.requestsCounter = 0;
+            System.out.println("Current throughput = " + (requestsCounter.get() / (double) rate) * 1000 + " req/s");
+            OrpTestOfflineData.requestsCounter.set(0);
           }
         }, 0, rate, TimeUnit.MILLISECONDS);
 
@@ -135,7 +136,7 @@ public class OrpTestOfflineData {
     }
 
 
-    ++requestsCounter;
+    requestsCounter.incrementAndGet();
 
     httpClient.newCall(request).enqueue(new Callback() {
       @Override
