@@ -60,7 +60,7 @@ public class OrpTestOfflineData {
 
   private static int warmupDelay = 10;
 
-  private static AtomicInteger requestsCounter;
+  private static AtomicInteger requestsCounter = new AtomicInteger(0);
 
 
   public static void main(String[] args) throws Exception {
