@@ -91,8 +91,11 @@ public class OrpTestOfflineData {
 
     File file = new File(filePath);
     Stream<String> stringStream = Files.lines(file.toPath(), Charset.defaultCharset());
-    List<JsonNode> collect = stringStream.limit(limit).map(Json::parse).collect(Collectors.toList());
-    collect.forEach(OrpTestOfflineData::postJson);
+    List<JsonNode> collect = stringStream.limit(1000).map(Json::parse).collect(Collectors.toList());
+
+    for (int i = 0; i < limit / 1000; i++) {
+      collect.forEach(OrpTestOfflineData::postJson);
+    }
 
     System.out.println("Done sending.");
 
