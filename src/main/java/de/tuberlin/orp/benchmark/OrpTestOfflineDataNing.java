@@ -25,13 +25,21 @@
 package de.tuberlin.orp.benchmark;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.util.concurrent.RateLimiter;
 import com.ning.http.client.AsyncHttpClient;
 import com.ning.http.client.Request;
+import com.squareup.okhttp.Callback;
+import com.squareup.okhttp.FormEncodingBuilder;
+import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.RequestBody;
+import com.squareup.okhttp.Response;
 import io.verbit.ski.core.json.Json;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -69,12 +77,10 @@ public class OrpTestOfflineDataNing {
           " \"404677\": 2}, \"3\": [50, 28, 34, 98, 28, 15], \"2\": [21, 11, 50, 74, 60, 23, 11], \"64\": {\"2\": " +
           "255}, \"65\": {\"1\": 255}, \"66\": {\"11\": 255}}, \"lists\": {\"11\": [1806758], \"8\": [18841, 18842], " +
           "\"10\": [4, 6, 1768, 1769, 1770]}}, \"timestamp\": 1404165599468}";
+
   private static AsyncHttpClient httpClient;
+  private static OkHttpClient okHttpClient;
 
-  private static int warmupSteps = 500;
-  private static int warmupStep = 0;
-
-  private static int warmupDelay = 10;
 
   private static AtomicInteger requestsCounter = new AtomicInteger(0);
 
@@ -84,69 +90,104 @@ public class OrpTestOfflineDataNing {
     // G:/json/CLEF-2015-Task2-Json07/Json-07/2014-07-01.data/2014-07-01.data
     // /Users/ilya/Desktop/2014-07-01.data
 
-    String filePath = args[0];
-    int limit = Integer.parseInt(args[1]);
+    String url = args[0];
+    int rate = Integer.parseInt(args[1]);
+    String filePath = args[2];
+    int limit = Integer.parseInt(args[3]);
 
+
+    RateLimiter rateLimiter = RateLimiter.create(rate, 5, TimeUnit.SECONDS);
 
     httpClient = new AsyncHttpClient();
+    okHttpClient = new OkHttpClient();
 
 //    Dispatcher dispatcher = new Dispatcher();
 //    dispatcher.setMaxRequestsPerHost(concurrentConnections);
 //    httpClient.setDispatcher(dispatcher);
 
-    int rate = 2000;
 
     Executors.newSingleThreadScheduledExecutor()
-        .scheduleAtFixedRate(new Runnable() {
-          @Override
-          public void run() {
-            System.out.println("Current throughput = " + (requestsCounter.get() / (double) rate) * 1000 + " req/s");
-            OrpTestOfflineDataNing.requestsCounter.set(0);
-          }
-        }, 0, rate, TimeUnit.MILLISECONDS);
+        .scheduleAtFixedRate(() -> {
+          System.out.println("Current throughput = " + requestsCounter.get() + " req/s");
+          OrpTestOfflineDataNing.requestsCounter.set(0);
+        }, 0, 1000, TimeUnit.MILLISECONDS);
 
     File file = new File(filePath);
     Stream<String> stringStream = Files.lines(file.toPath(), Charset.defaultCharset());
+    List<JsonNode> jsonNodes = stringStream.limit(1000).map(Json::parse).collect(Collectors.toList());
 
-    List<JsonNode> collect = stringStream.limit(1000).map(Json::parse).collect(Collectors.toList());
+    List<com.squareup.okhttp.Request> requests = prepareOkRequests(url, jsonNodes);
 
     for (int i = 0; i < limit / 1000; i++) {
-      collect.forEach(OrpTestOfflineDataNing::postJson);
+      for (com.squareup.okhttp.Request request : requests) {
+        rateLimiter.acquire();
+        requestsCounter.incrementAndGet();
+//        httpClient.executeRequest(request);
+        okHttpClient.newCall(request).enqueue(new Callback() {
+          @Override
+          public void onFailure(com.squareup.okhttp.Request request, IOException e) {
+
+          }
+
+          @Override
+          public void onResponse(Response response) throws IOException {
+
+          }
+        });
+      }
     }
 
     System.out.println("Done sending.");
 
   }
 
-  private static void postJson(JsonNode json) {
-//    System.out.println("json: " + json.toString());
-    String eventType = json.get("event_type").asText();
-    switch (eventType) {
-      case "impression":
-        eventType = "event_notification";
-    }
-//    System.out.println("sending " + eventType);
-    String host = "localhost:9000";
-//    String host = "irs1.verbit.io";
+  private static List<Request> prepareRequests(String url, List<JsonNode> jsonNodes) {
 
+    List<Request> requests = new ArrayList<>();
 
-    if (warmupStep < warmupSteps) {
-      double delay = (1 - (warmupStep++ / (double) warmupSteps)) * warmupDelay;
-      try {
-        Thread.sleep((long) delay);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
+    for (JsonNode json : jsonNodes) {
+      String eventType = json.get("event_type").asText();
+      switch (eventType) {
+        case "impression":
+          eventType = "event_notification";
       }
+
+      Request request = httpClient.preparePost(url)
+          .addFormParam("type", eventType)
+          .addFormParam("body", json.toString())
+          .build();
+
+      requests.add(request);
     }
 
+    return requests;
+  }
 
-    requestsCounter.incrementAndGet();
+  private static List<com.squareup.okhttp.Request> prepareOkRequests(String url, List<JsonNode> jsonNodes) {
 
-    Request request = httpClient.preparePost("http://" + host + "/orp")
-        .addFormParam("type", eventType)
-        .addFormParam("body", json.toString())
-        .build();
+    List<com.squareup.okhttp.Request> requests = new ArrayList<>();
 
-    httpClient.executeRequest(request);
+    for (JsonNode json : jsonNodes) {
+      String eventType = json.get("event_type").asText();
+      switch (eventType) {
+        case "impression":
+          eventType = "event_notification";
+      }
+
+      RequestBody body = new FormEncodingBuilder()
+          .add("type", eventType)
+          .add("body", json.toString())
+          .build();
+
+
+      com.squareup.okhttp.Request request = new com.squareup.okhttp.Request.Builder()
+          .url(url)
+          .post(body)
+          .build();
+
+      requests.add(request);
+    }
+
+    return requests;
   }
 }
