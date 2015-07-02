@@ -116,24 +116,24 @@ public class OrpTestOfflineDataNing {
     Stream<String> stringStream = Files.lines(file.toPath(), Charset.defaultCharset());
     List<JsonNode> jsonNodes = stringStream.limit(1000).map(Json::parse).collect(Collectors.toList());
 
-    List<com.squareup.okhttp.Request> requests = prepareOkRequests(url, jsonNodes);
+    List<Request> requests = prepareRequests(url, jsonNodes);
 
     for (int i = 0; i < limit / 1000; i++) {
-      for (com.squareup.okhttp.Request request : requests) {
+      for (Request request : requests) {
         rateLimiter.acquire();
         requestsCounter.incrementAndGet();
-//        httpClient.executeRequest(request);
-        okHttpClient.newCall(request).enqueue(new Callback() {
-          @Override
-          public void onFailure(com.squareup.okhttp.Request request, IOException e) {
-
-          }
-
-          @Override
-          public void onResponse(Response response) throws IOException {
-
-          }
-        });
+        httpClient.executeRequest(request);
+//        okHttpClient.newCall(request).enqueue(new Callback() {
+//          @Override
+//          public void onFailure(com.squareup.okhttp.Request request, IOException e) {
+//
+//          }
+//
+//          @Override
+//          public void onResponse(Response response) throws IOException {
+//
+//          }
+//        });
       }
     }
 
