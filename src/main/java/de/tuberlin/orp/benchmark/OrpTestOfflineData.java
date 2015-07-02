@@ -25,35 +25,22 @@
 package de.tuberlin.orp.benchmark;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.mashape.unirest.http.HttpResponse;
-import com.mashape.unirest.http.Unirest;
-import com.squareup.okhttp.Callback;
-import com.squareup.okhttp.ConnectionPool;
-import com.squareup.okhttp.Dispatcher;
-import com.squareup.okhttp.FormEncodingBuilder;
-import com.squareup.okhttp.MediaType;
-import com.squareup.okhttp.OkHttpClient;
-import com.squareup.okhttp.Request;
-import com.squareup.okhttp.RequestBody;
-import com.squareup.okhttp.Response;
+import com.ning.http.client.AsyncHttpClient;
+import com.ning.http.client.Request;
 import io.verbit.ski.core.json.Json;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class OrpTestOfflineData {
-  private static OkHttpClient httpClient;
+  private static AsyncHttpClient httpClient;
 
   private static int warmupSteps = 500;
   private static int warmupStep = 0;
@@ -72,8 +59,7 @@ public class OrpTestOfflineData {
     int limit = Integer.parseInt(args[1]);
 
 
-
-    httpClient = new OkHttpClient();
+    httpClient = new AsyncHttpClient();
 //    Dispatcher dispatcher = new Dispatcher();
 //    dispatcher.setMaxRequestsPerHost(concurrentConnections);
 //    httpClient.setDispatcher(dispatcher);
@@ -103,25 +89,15 @@ public class OrpTestOfflineData {
 
   private static void postJson(JsonNode json) {
 
-//    System.out.println("json: " + json.toString());
     String eventType = json.get("event_type").asText();
     switch (eventType) {
       case "impression":
         eventType = "event_notification";
     }
-//    System.out.println("sending " + eventType);
-//    String host = "localhost:9000";
-    String host = "irs1.verbit.io";
 
-
-    RequestBody body = new FormEncodingBuilder()
-        .add("type", eventType)
-        .add("body", json.toString())
-        .build();
-
-    Request request = new Request.Builder()
-        .url("http://" + host + "/orp")
-        .post(body)
+    Request request = httpClient.preparePost("http://irs1.verbit.io/orp")
+        .addFormParam("type", eventType)
+        .addFormParam("body", json.toString())
         .build();
 
 //    Future<HttpResponse<String>> httpResponseFuture = Unirest.post("http://" + host + "/orp")
@@ -141,37 +117,6 @@ public class OrpTestOfflineData {
 
     requestsCounter.incrementAndGet();
 
-    httpClient.newCall(request).enqueue(new Callback() {
-      @Override
-      public void onFailure(Request request, IOException e) {
-//        System.err.println(e.toString());
-      }
-
-      @Override
-      public void onResponse(Response response) throws IOException {
-//        System.out.println(response.toString());
-      }
-    });
-
-
-//    if (eventType.equalsIgnoreCase("recommendation_request")) {
-//      Runnable onCompleted = () -> {
-//				try {
-//					HttpResponse<String> httpResponse = httpResponseFuture.get();
-//					printResponse(httpResponse);
-//				} catch (InterruptedException | ExecutionException e) {
-//					e.printStackTrace();
-//				}
-//			};
-//      new Thread(onCompleted).start();
-//    }
-//    System.out.println("Http Respone Status: " + httpResponse.getStatus());
+    httpClient.executeRequest(request);
   }
-
-//  private synchronized static void printResponse(HttpResponse<?> response) {
-//    System.out.printf("%d - %s%n", response.getStatus(), response.getStatusText());
-//    System.out.println(response.getBody());
-//    System.out.println(response.getHeaders().toString());
-//    System.out.println();
-//  }
 }
