@@ -38,8 +38,9 @@ import io.verbit.ski.core.http.Result;
 import io.verbit.ski.core.json.Json;
 import scala.concurrent.Future;
 
+import java.util.ArrayDeque;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
 import static io.verbit.ski.core.http.SimpleResult.ok;
@@ -67,37 +68,98 @@ public class RemoteSystem {
         .setHost(host)
         .setPort(port)
         .addRoutes(
-            get("/statistics").routeAsync(context -> {
+            get("/report").routeAsync(context -> {
               Future<Result> result =
-                  Patterns.ask(statisticsActor, new CentralStatisticsActor.RetrieveStatistics(), 100)
+                  Patterns.ask(statisticsActor, new CentralStatisticsActor.RetrieveStatisticsReport(), 100)
                   .map(new Mapper<Object, Result>() {
                     @Override
                     public Result apply(Object parameter) {
+                      StringBuilder csv = new StringBuilder();
+                      CentralStatisticsActor.StatisticsReport report = (CentralStatisticsActor.StatisticsReport)
+                          parameter;
+                      LinkedHashMap<ActorRef, ArrayDeque<CentralStatisticsActor.WorkerStatistics>> workerStats =
+                          report.getWorkerStatistics();
+
+                      csv.append("Throughput\n");
+                      for (ActorRef actorRef : workerStats.keySet()) {
+                        csv.append(actorRef.toString());
+                        csv.append('\n');
+                        ArrayDeque<CentralStatisticsActor.WorkerStatistics> wStats = workerStats.get(actorRef);
+
+                        Iterator<CentralStatisticsActor.WorkerStatistics> it = wStats.descendingIterator();
+                        while (it.hasNext()) {
+                          CentralStatisticsActor.WorkerStatistics stat = it.next();
+                          csv.append(stat.getTimestamp());
+                          csv.append(';');
+                          csv.append((long) stat.getThroughput());
+                          csv.append('\n');
+                        }
+
+                        csv.append('\n');
+                        csv.append('\n');
+                      }
+
+
+                      csv.append("Response Time\n");
+                      ArrayDeque<CentralStatisticsActor.MergerStatistics> resStats = report.getResponseTimes();
+                      Iterator<CentralStatisticsActor.MergerStatistics> it = resStats.descendingIterator();
+                      while (it.hasNext()) {
+                        CentralStatisticsActor.MergerStatistics stat = it.next();
+                        csv.append(stat.getTimestamp());
+                        csv.append(';');
+                        csv.append(stat.getResponseTime());
+                        csv.append('\n');
+                      }
+
+                      return ok(csv.toString());
+                    }
+                  }, remoteSystem.dispatcher());
+              return Akka.wrap(result);
+            }),
+            get("/statistics").routeAsync(context -> {
+              Future<Result> result =
+                  Patterns.ask(statisticsActor, new CentralStatisticsActor.RetrieveStatistics(), 100)
+                      .map(new Mapper<Object, Result>() {
+                        @Override
+                        public Result apply(Object parameter) {
 //                      StringBuilder throughputRow = new StringBuilder();
 //                      List<CentralStatisticsActor.WorkerStatistics> statisticsList =
-//                          ((CentralStatisticsActor.StatisticsMessage) parameter).getStatistics();
-                      LinkedHashMap<ActorRef, CentralStatisticsActor.WorkerStatistics> stats = (
-                          (CentralStatisticsActor.StatisticsMessage) parameter).getStatistics();
+//                          ((CentralStatisticsActor.StatisticsMessage) parameter).getWorkerStatistics();
+                          CentralStatisticsActor.StatisticsMessage stats = (CentralStatisticsActor
+                              .StatisticsMessage) parameter;
+                          LinkedHashMap<ActorRef, CentralStatisticsActor.WorkerStatistics> workerStats =
+                              stats.getWorkerStatistics();
 
 //                      for (CentralStatisticsActor.WorkerStatistics statistics : statisticsList) {
 //                        throughputRow.append(statistics.getThroughput());
 //                        throughputRow.append('\n');
 //                      }
 
-                      ObjectNode result = Json.newObject();
-                      ArrayNode workers = result.putArray("workers");
-                      for (Map.Entry<ActorRef, CentralStatisticsActor.WorkerStatistics> statsEntries : stats.entrySet()) {
-                        workers.add(
-                            Json.newObject()
-                                .put("timestamp", statsEntries.getValue().getTimestamp())
-                                .put("cpu", statsEntries.getValue().getCpu())
-                                .put("throughput", statsEntries.getValue().getThroughput())
-                        );
-                      }
+                          ObjectNode result = Json.newObject();
+                          ArrayNode workers = result.putArray("workers");
+                          for (Map.Entry<ActorRef, CentralStatisticsActor.WorkerStatistics> statsEntries :
+                              workerStats.entrySet()) {
+                            workers.add(
+                                Json.newObject()
+                                    .put("timestamp", statsEntries.getValue().getTimestamp())
+                                    .put("cpu", statsEntries.getValue().getCpu())
+                                    .put("throughput", statsEntries.getValue().getThroughput())
+                            );
+                          }
 
-                      return ok(result);
-                    }
-                  }, remoteSystem.dispatcher());
+
+                          CentralStatisticsActor.MergerStatistics responseTimeStatistics = stats
+                              .getResponseTimeStatistics();
+                          if (responseTimeStatistics != null) {
+                            result.putObject("master")
+                                .put("timestamp", responseTimeStatistics.getTimestamp())
+                                .put("responseTime", responseTimeStatistics.getResponseTime());
+                          }
+
+
+                          return ok(result);
+                        }
+                      }, remoteSystem.dispatcher());
               return Akka.wrap(result);
             }),
             get("/").route(context -> render("templates/index.twig", Json.newObject()))

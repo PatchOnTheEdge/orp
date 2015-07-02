@@ -25,6 +25,7 @@
 package de.tuberlin.orp.worker;
 
 import akka.actor.ActorRef;
+import akka.actor.ActorSelection;
 import akka.actor.ActorSystem;
 import akka.dispatch.Mapper;
 import akka.pattern.Patterns;
@@ -33,6 +34,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import de.tuberlin.orp.merger.CentralStatisticsActor;
 import de.tuberlin.orp.worker.JettyGatewayActor;
 import de.tuberlin.orp.core.OrpContext;
 import de.tuberlin.orp.core.Ranking;
@@ -75,6 +77,9 @@ public class WorkerServer {
     ActorSystem system = ActorSystem.create("OrpSystem", config);
     ActorRef centralOrpActor = system.actorOf(JettyGatewayActor.create(), "orp");
 
+    String master = config.getString("master");
+    ActorSelection statisticsSelection = system.actorSelection(master + "/user/statistics");
+
     Ski.builder()
         .setHost(host)
         .setPort(port)
@@ -103,6 +108,7 @@ public class WorkerServer {
                     centralOrpActor.tell(notification, ActorRef.noSender());
                     return async(noContent());
                   case "recommendation_request":
+                    long start = System.currentTimeMillis();
                     JettyGatewayActor.OrpRequest request = new JettyGatewayActor.OrpRequest(orpContext);
 
                     Future<Result> ask = Patterns.ask(centralOrpActor, request, 80)
@@ -137,6 +143,11 @@ public class WorkerServer {
                               items.add(entry.getKey());
                               scores.add(entry.getValue() / max);
                             }
+
+                            long responseTime = System.currentTimeMillis() - start;
+                            statisticsSelection.tell(new CentralStatisticsActor.MergerStatistics(responseTime),
+                                centralOrpActor);
+
                             return ok(result);
                           }
                         }, system.dispatcher());

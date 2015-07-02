@@ -28,16 +28,20 @@ import akka.actor.ActorRef;
 import akka.actor.Props;
 import akka.actor.UntypedActor;
 import akka.japi.Creator;
+import scala.concurrent.duration.Duration;
 
 import java.io.Serializable;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.List;
+import java.util.Map;
+import java.util.OptionalDouble;
+import java.util.concurrent.TimeUnit;
 
 public class CentralStatisticsActor extends UntypedActor {
-  private HashMap<ActorRef, ArrayDeque<WorkerStatistics>> workerStatistics;
+  private LinkedHashMap<ActorRef, ArrayDeque<WorkerStatistics>> workerStatistics;
+  private ArrayDeque<MergerStatistics> responseTimes;
+  private ArrayDeque<Long> responseTimesAggregator;
+
   private int maxSize = 1000;
 
   public static Props create() {
@@ -45,7 +49,9 @@ public class CentralStatisticsActor extends UntypedActor {
   }
 
   public CentralStatisticsActor() {
-    workerStatistics = new HashMap<>();
+    workerStatistics = new LinkedHashMap<>();
+    responseTimes = new ArrayDeque<>();
+    responseTimesAggregator = new ArrayDeque<>();
   }
 
   public static class WorkerStatistics implements Serializable {
@@ -83,25 +89,92 @@ public class CentralStatisticsActor extends UntypedActor {
     private double cpu;
     private double memory;
     private long timestamp;
-  }
+    private long responseTime;
 
+
+    public MergerStatistics(long timestamp, long responseTime) {
+      this.timestamp = timestamp;
+      this.responseTime = responseTime;
+    }
+
+    public MergerStatistics(long responseTime) {
+      this.responseTime = responseTime;
+    }
+
+    public long getTimestamp() {
+      return timestamp;
+    }
+
+    public long getResponseTime() {
+      return responseTime;
+    }
+  }
 
   public static class RetrieveStatistics implements Serializable {
-
   }
+
+  public static class RetrieveStatisticsReport implements Serializable {
+  }
+
+  public static class StatisticsReport implements Serializable {
+    private LinkedHashMap<ActorRef, ArrayDeque<WorkerStatistics>> workerStatistics;
+    private ArrayDeque<MergerStatistics> responseTimes;
+
+    public StatisticsReport(LinkedHashMap<ActorRef, ArrayDeque<WorkerStatistics>> workerStatistics,
+        ArrayDeque<MergerStatistics> responseTimes) {
+      this.workerStatistics = workerStatistics;
+      this.responseTimes = responseTimes;
+    }
+
+    public LinkedHashMap<ActorRef, ArrayDeque<WorkerStatistics>> getWorkerStatistics() {
+      return workerStatistics;
+    }
+
+    public ArrayDeque<MergerStatistics> getResponseTimes() {
+      return responseTimes;
+    }
+  }
+
+
 
   public static class StatisticsMessage implements Serializable {
-    private LinkedHashMap<ActorRef, WorkerStatistics> statistics;
+    private LinkedHashMap<ActorRef, WorkerStatistics> workerStatistics;
+    private MergerStatistics responseTimeStatistics;
 
-    public StatisticsMessage(LinkedHashMap<ActorRef, WorkerStatistics> statistics) {
-      this.statistics = statistics;
+    public StatisticsMessage(LinkedHashMap<ActorRef, WorkerStatistics> workerStatistics,
+        MergerStatistics responseTimeStatistics) {
+      this.workerStatistics = workerStatistics;
+      this.responseTimeStatistics = responseTimeStatistics;
     }
 
-    public LinkedHashMap<ActorRef, WorkerStatistics> getStatistics() {
-      return statistics;
+    public LinkedHashMap<ActorRef, WorkerStatistics> getWorkerStatistics() {
+      return workerStatistics;
+    }
+
+    public MergerStatistics getResponseTimeStatistics() {
+      return responseTimeStatistics;
     }
   }
 
+
+  @Override
+  public void preStart() throws Exception {
+    super.preStart();
+    // aggregate response times
+    getContext().system().scheduler().schedule(Duration.Zero(), Duration.create(1, TimeUnit.SECONDS), () -> {
+
+      OptionalDouble optAvg = responseTimesAggregator.stream().mapToLong(d -> d).average();
+      if (optAvg.isPresent()) {
+        long average = (long) optAvg.getAsDouble();
+        responseTimesAggregator.clear();
+
+        responseTimes.addFirst(new MergerStatistics(System.currentTimeMillis(), average));
+        if (responseTimes.size() > maxSize) {
+          responseTimes.removeLast();
+        }
+      }
+    }, getContext().dispatcher());
+  }
 
   @Override
   public void onReceive(Object message) throws Exception {
@@ -116,14 +189,27 @@ public class CentralStatisticsActor extends UntypedActor {
       }
     } else if (message instanceof MergerStatistics) {
 
+      responseTimesAggregator.addFirst(((MergerStatistics) message).getResponseTime());
+
     } else if (message instanceof RetrieveStatistics) {
 
-      LinkedHashMap<ActorRef, WorkerStatistics> currentStats = new LinkedHashMap<>();
+      LinkedHashMap<ActorRef, WorkerStatistics> currentWorkerStats = new LinkedHashMap<>();
       for (ActorRef actorRef : workerStatistics.keySet()) {
-        currentStats.put(actorRef, workerStatistics.get(actorRef).getFirst());
+        currentWorkerStats.put(actorRef, workerStatistics.get(actorRef).getFirst());
       }
 
-      getSender().tell(new StatisticsMessage(currentStats), getSelf());
+
+      MergerStatistics currentResponseTimeStats = null;
+      if (!responseTimes.isEmpty()) {
+        currentResponseTimeStats = responseTimes.getFirst();
+      }
+
+      getSender().tell(new StatisticsMessage(currentWorkerStats, currentResponseTimeStats), getSelf());
+
+    } else if (message instanceof RetrieveStatisticsReport) {
+
+      getSender().tell(new StatisticsReport(workerStatistics, responseTimes), getSelf());
+
     }
   }
 

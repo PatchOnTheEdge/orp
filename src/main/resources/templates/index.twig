@@ -4,9 +4,7 @@
         <link href="http://getbootstrap.com/dist/css/bootstrap.min.css" rel="stylesheet">
         <link href="http://getbootstrap.com/examples/justified-nav/justified-nav.css" rel="stylesheet">
 
-        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/smoothie/1.27.0/smoothie.js"
-                charset="utf-8">
-        </script>
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/smoothie/1.27.0/smoothie.js" charset="utf-8"></script>
         <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.4.js"></script>
 
 
@@ -16,23 +14,34 @@
     <body>
         {#<h4>CPU</h4>#}
         {#<canvas id="cpu" width="600" height="400"></canvas>#}
+        <h4>Response Time</h4>
+        <canvas id="responseTime" width="600" height="400"></canvas>
         <h4>Throughput (request/s)</h4>
         <canvas id="throughput" width="600" height="400"></canvas>
         <script>
 //            var cpuChart = new SmoothieChart({millisPerPixel:100,maxValue:1,minValue:0});
 //            cpuChart.streamTo(document.getElementById("cpu"), 1000);
 
+            var responseTimeChart = new SmoothieChart({millisPerPixel:100,minValue:0});
+            responseTimeChart.streamTo(document.getElementById("responseTime"), 1000);
+
             var throughputChart = new SmoothieChart({millisPerPixel:100,minValue:0});
             throughputChart.streamTo(document.getElementById("throughput"), 1000);
 
 //            var cpuLine = new TimeSeries();
 
+            var responseTimeLine = new TimeSeries();
+
             var throughputLine1 = new TimeSeries();
             var throughputLine2 = new TimeSeries();
 
-            // Add a random value to each line every second
             setInterval(function() {
                 $.get('/statistics', function(data){
+
+                    if (data.master) {
+                        responseTimeLine.append(data.master.timestamp, data.master.responseTime);
+                    }
+
                     var workers = data.workers;
 
                     if (workers.length >= 1) {
@@ -44,12 +53,15 @@
                     }
 //                    cpuLine.append(data.timestamp, data.cpu);
                 });
+
             }, 250);
 
             // Add to SmoothieChart
 //            cpuChart.addTimeSeries(cpuLine);
-            throughputChart.addTimeSeries(throughputLine1);
-            throughputChart.addTimeSeries(throughputLine2);
+            responseTimeChart.addTimeSeries(responseTimeLine);
+
+            throughputChart.addTimeSeries(throughputLine1, {strokeStyle:'#ff2600'});
+            throughputChart.addTimeSeries(throughputLine2, {strokeStyle:'#00ff00'});
         </script>
 
     </body>
