@@ -111,7 +111,7 @@ public class WorkerServer {
                     long start = System.currentTimeMillis();
                     JettyGatewayActor.OrpRequest request = new JettyGatewayActor.OrpRequest(orpContext);
 
-                    Future<Result> ask = Patterns.ask(centralOrpActor, request, 80)
+                    Future<Result> ask = Patterns.ask(centralOrpActor, request, 1000)
                         .map(new Mapper<Object, Result>() {
                           @Override
                           public Result apply(Object o) {
