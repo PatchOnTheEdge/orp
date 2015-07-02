@@ -45,8 +45,6 @@ public class MostPopularWorker extends UntypedActor {
   private OrpContextCounter contextCounter;
 
   private long lastRanking = 0;
-  private int receivedImpressions = 0;
-
 
   static class MostPopularActorCreator implements Creator<MostPopularWorker> {
 
@@ -90,18 +88,11 @@ public class MostPopularWorker extends UntypedActor {
 //      log.info(String.format("Received Item from Publisher: %s with ID: %s",
 //          context.getContext(), context.getItemId()));
 
-      ++receivedImpressions;
       contextCounter.add(context);
 
     } else if (message.equals("getRankings")) {
       log.debug("received Broadcast message");
-      if (lastRanking != 0) {
-        double throughput = 1000.0 * receivedImpressions / (System.currentTimeMillis() - lastRanking);
-        log.info(String.format("Throughput: %.2f impressions/sec", throughput));
-      }
 
-      lastRanking = System.currentTimeMillis();
-      receivedImpressions = 0;
 
       Map<String, Ranking> rankings = contextCounter.getRankings();
 //          log.info(rankings.toString());

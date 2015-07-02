@@ -126,8 +126,8 @@ public class OrpTestOfflineDataNing {
         eventType = "event_notification";
     }
 //    System.out.println("sending " + eventType);
-//    String host = "localhost:9000";
-    String host = "irs1.verbit.io";
+    String host = "localhost:9000";
+//    String host = "irs1.verbit.io";
 
 
     if (warmupStep < warmupSteps) {

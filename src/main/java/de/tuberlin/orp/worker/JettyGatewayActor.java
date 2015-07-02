@@ -33,10 +33,19 @@ import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import com.typesafe.config.Config;
 import de.tuberlin.orp.core.OrpContext;
+import de.tuberlin.orp.merger.CentralStatisticsActor;
 import de.tuberlin.orp.merger.MostPopularMerger;
 import de.tuberlin.orp.merger.RecommendationFilter;
+import oshi.SystemInfo;
+import oshi.hardware.HardwareAbstractionLayer;
+import oshi.hardware.Processor;
+import scala.concurrent.duration.Duration;
 
 import java.io.Serializable;
+import java.util.Arrays;
+import java.util.OptionalDouble;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 /**
  * This actor is the entry point for the Akka application. All Requests received over HTTP are transformed to Akka
@@ -48,6 +57,12 @@ public class JettyGatewayActor extends UntypedActor {
   private ActorRef mostPopularWorker;
   private ActorSelection mergerSelection;
   private ActorSelection filterSelection;
+  private ActorSelection statisticsSelection;
+
+  private long lastRanking = 0;
+  private int receivedImpressions = 0;
+
+  private HardwareAbstractionLayer hardware = new SystemInfo().getHardware();
 
 
   public static Props create() {
@@ -120,10 +135,33 @@ public class JettyGatewayActor extends UntypedActor {
     String master = config.getString("master");
     mergerSelection = getContext().actorSelection(master + "/user/merger");
     filterSelection = getContext().actorSelection(master + "/user/filter");
+    statisticsSelection = getContext().actorSelection(master + "/user/statistics");
 //    mergerSelection.tell(new Identify(0), getSelf());
     mostPopularWorker = getContext().actorOf(MostPopularWorker.create(500, 50), "mp");
     mergerSelection.tell(new MostPopularMerger.Register(mostPopularWorker), getSelf());
 //    mostPopularMerger = getContext().actorOf(FromConfig.getInstance().props(MostPopularMergerOld.create()), "merger");
+
+    getContext().system().scheduler().schedule(Duration.Zero(), Duration.create(1, TimeUnit.SECONDS), () -> {
+      if (lastRanking != 0) {
+        long now = System.currentTimeMillis();
+        double throughput = 1000.0 * receivedImpressions / (now - lastRanking);
+
+        double cpu = Arrays.stream(hardware.getProcessors())
+            .mapToDouble(Processor::getSystemCpuLoadBetweenTicks)
+            .sum();
+
+        double memory = hardware.getMemory().getAvailable() / (double) hardware.getMemory().getTotal();
+
+
+        CentralStatisticsActor.WorkerStatistics statistics = new CentralStatisticsActor.WorkerStatistics
+            (throughput, cpu, memory, now);
+
+        statisticsSelection.tell(statistics, getSelf());
+      }
+
+      lastRanking = System.currentTimeMillis();
+      receivedImpressions = 0;
+    }, getContext().dispatcher());
   }
 
   @Override
@@ -143,6 +181,8 @@ public class JettyGatewayActor extends UntypedActor {
       switch (notificationType) {
         case "event_notification":
 //          log.info(String.format("Event Notification: Publisher = %s. Item ID = %s", publisher, itemId));
+
+          ++receivedImpressions;
 
           if (!publisher.equals("") && !itemId.equals("") && !itemId.equals("0")) {
             mostPopularWorker.tell(context, getSelf());
