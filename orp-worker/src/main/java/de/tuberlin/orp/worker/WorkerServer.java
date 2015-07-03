@@ -25,14 +25,28 @@
 package de.tuberlin.orp.worker;
 
 import akka.actor.ActorRef;
+import akka.actor.ActorSelection;
 import akka.actor.ActorSystem;
+import akka.dispatch.Mapper;
+import akka.pattern.Patterns;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import de.tuberlin.orp.common.Ranking;
 import de.tuberlin.orp.common.message.OrpContext;
 import de.tuberlin.orp.common.message.OrpNotification;
+import de.tuberlin.orp.common.message.OrpRequest;
+import de.tuberlin.orp.master.MostPopularMerger;
+import de.tuberlin.orp.master.StatisticsActor;
+import io.verbit.ski.akka.Akka;
 import io.verbit.ski.core.Ski;
+import io.verbit.ski.core.http.Result;
+import io.verbit.ski.core.json.Json;
+import scala.concurrent.Future;
 
+import java.util.Map;
 import java.util.Optional;
 
 import static io.verbit.ski.core.http.AsyncResult.async;
@@ -50,6 +64,11 @@ public class WorkerServer {
     ActorSystem system = ActorSystem.create("OrpSystem");
     ActorRef workerActor = system.actorOf(WorkerActor.create(), "orp");
 
+    Config config = system.settings().config();
+    String master = config.getString("master");
+    ActorSelection statisticsSelection = system.actorSelection(master + "/user/statistics");
+
+
     Ski.builder()
         .setHost(host)
         .setPort(port)
@@ -66,6 +85,59 @@ public class WorkerServer {
               workerActor.tell(notification, ActorRef.noSender());
 
               return noContent();
+            }),
+            post("/recommendation").routeAsync(context -> {
+              Optional<String> messageType = context.request().formParam("type").asText();
+              Optional<JsonNode> jsonBody = context.request().formParam("body").asJson();
+
+              OrpContext orpContext = new OrpContext(jsonBody.get());
+              OrpRequest orpRequest = new OrpRequest(jsonBody.get());
+
+              long start = System.currentTimeMillis();
+
+              Future<Result> future = Patterns.ask(workerActor, orpRequest, 1000)
+                  .map(new Mapper<Object, Result>() {
+                    @Override
+                    public Result apply(Object o) {
+                      if (o == null) {
+                        return ok(Json.newObject());
+                      }
+
+                      Ranking ranking = (Ranking) o;
+
+                      if (ranking.getRanking().isEmpty()) {
+                        return ok(Json.newObject());
+                      }
+
+                      ObjectNode result = Json.newObject();
+                      ObjectNode recs = result.putObject("recs");
+
+                      ArrayNode items = recs
+                          .putObject("ints")
+                          .putArray("3");
+
+                      ArrayNode scores = recs
+                          .putObject("floats")
+                          .putArray("2");
+
+
+                      double max = ranking.getRanking().values().stream().mapToLong(l -> l).max().getAsLong();
+
+                      for (Map.Entry<String, Long> entry : ranking.getRanking().entrySet()) {
+                        items.add(entry.getKey());
+                        scores.add(entry.getValue() / max);
+                      }
+
+                      long responseTime = System.currentTimeMillis() - start;
+                      statisticsSelection.tell(new StatisticsActor.MergerStatistics(responseTime),
+                          ActorRef.noSender());
+
+                      return ok(result);
+                    }
+                  }, system.dispatcher());
+
+
+              return Akka.wrap(future);
             })
         )
         .build()

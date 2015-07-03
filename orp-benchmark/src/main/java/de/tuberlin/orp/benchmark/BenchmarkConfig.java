@@ -45,6 +45,9 @@ public class BenchmarkConfig {
   @Parameter(names = "-request")
   private String requestUrl;
 
+  @Parameter(names = "-callbacks")
+  private boolean callback;
+
 
   public int getRate() {
     return rate;
@@ -64,5 +67,9 @@ public class BenchmarkConfig {
 
   public String getRequestUrl() {
     return requestUrl;
+  }
+
+  public boolean isCallback() {
+    return callback;
   }
 }

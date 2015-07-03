@@ -33,6 +33,7 @@ import akka.event.LoggingAdapter;
 import com.typesafe.config.Config;
 import de.tuberlin.orp.common.message.OrpContext;
 import de.tuberlin.orp.common.message.OrpNotification;
+import de.tuberlin.orp.common.message.OrpRequest;
 import de.tuberlin.orp.master.StatisticsActor;
 import de.tuberlin.orp.master.MostPopularMerger;
 import oshi.SystemInfo;
@@ -129,6 +130,8 @@ public class WorkerActor extends UntypedActor {
           break;
 
       }
+    } else if (message instanceof OrpRequest) {
+      mergerSelection.tell(message, getSender());
     }
   }
 }

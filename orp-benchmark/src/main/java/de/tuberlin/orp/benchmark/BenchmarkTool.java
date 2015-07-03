@@ -35,10 +35,13 @@ import com.ning.http.client.Response;
 import io.verbit.ski.core.json.Json;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -73,12 +76,13 @@ public class BenchmarkTool {
     RateLimiter rateLimiter = RateLimiter.create(rate, 5, TimeUnit.SECONDS);
 
     httpClient = new AsyncHttpClient();
-//    ExecutorService executorService = Executors.newFixedThreadPool(10);
 
-//    Dispatcher dispatcher = new Dispatcher();
-//    dispatcher.setMaxRequestsPerHost(concurrentConnections);
-//    httpClient.setDispatcher(dispatcher);
 
+    ExecutorService executorService = null;
+
+    if (config.isCallback()) {
+      executorService = Executors.newFixedThreadPool(10);
+    }
 
     Executors.newSingleThreadScheduledExecutor()
         .scheduleAtFixedRate(() -> {
@@ -97,14 +101,14 @@ public class BenchmarkTool {
         rateLimiter.acquire();
         requestsCounter.incrementAndGet();
         ListenableFuture<Response> requestFuture = httpClient.executeRequest(request);
-//        if (request.getFormParams().get(0).getValue().equals("recommendation_request")) {
-//          requestFuture.addListener(() -> {
-//            try {
-//              Response response = requestFuture.get();
-//              System.out.println(response.getResponseBody());
-//            } catch (InterruptedException | ExecutionException | IOException ignored) {}
-//          }, executorService);
-//        }
+        if (executorService != null && request.getFormParams().get(0).getValue().equals("recommendation_request")) {
+          requestFuture.addListener(() -> {
+            try {
+              Response response = requestFuture.get();
+              System.out.println(response.getResponseBody());
+            } catch (InterruptedException | ExecutionException | IOException ignored) {}
+          }, executorService);
+        }
       }
     }
 

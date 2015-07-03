@@ -182,63 +182,6 @@ public class MasterServer {
               }
 
               return noContent();
-            }),
-            post("/recommendation").routeAsync(context -> {
-              Optional<String> messageType = context.request().formParam("type").asText();
-              Optional<JsonNode> jsonBody = context.request().formParam("body").asJson();
-
-              OrpContext orpContext = new OrpContext(jsonBody.get());
-              OrpRequest orpRequest = new OrpRequest(jsonBody.get());
-
-              long start = System.currentTimeMillis();
-
-              MostPopularMerger.Retrieve msg = new MostPopularMerger.Retrieve(orpContext, orpContext.getLimit());
-
-
-
-
-              Future<Result> ask = Patterns.ask(mergerActor, orpRequest, 1000)
-                  .map(new Mapper<Object, Result>() {
-                    @Override
-                    public Result apply(Object o) {
-                      if (o == null) {
-                        return ok(Json.newObject());
-                      }
-
-                      Ranking ranking = (Ranking) o;
-
-                      if (ranking.getRanking().isEmpty()) {
-                        return ok(Json.newObject());
-                      }
-
-                      ObjectNode result = Json.newObject();
-                      ObjectNode recs = result.putObject("recs");
-
-                      ArrayNode items = recs
-                          .putObject("ints")
-                          .putArray("3");
-
-                      ArrayNode scores = recs
-                          .putObject("floats")
-                          .putArray("2");
-
-
-                      double max = ranking.getRanking().values().stream().mapToLong(l -> l).max().getAsLong();
-
-                      for (Map.Entry<String, Long> entry : ranking.getRanking().entrySet()) {
-                        items.add(entry.getKey());
-                        scores.add(entry.getValue() / max);
-                      }
-
-                      long responseTime = System.currentTimeMillis() - start;
-                      statisticsActor.tell(new StatisticsActor.MergerStatistics(responseTime),
-                          ActorRef.noSender());
-
-                      return ok(result);
-                    }
-                  }, system.dispatcher());
-
-              return Akka.wrap(ask);
             })
         )
         .build()
