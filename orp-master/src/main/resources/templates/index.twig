@@ -68,7 +68,7 @@
             var throughputLine2 = new TimeSeries();
 
             setInterval(function() {
-                $.get('/statistics', function(data){
+                $.get('/master/statistics', function(data){
 
                     if (data.master) {
                         responseTimeLine.append(data.master.timestamp, data.master.responseTime);

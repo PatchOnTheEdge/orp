@@ -39,6 +39,7 @@ import de.tuberlin.orp.common.message.OrpRequest;
 import scala.concurrent.duration.Duration;
 
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -48,7 +49,7 @@ public class MostPopularMerger extends UntypedActor {
   private Router router;
 
   private RankingMerger merger;
-  private Map<String, Ranking> mergerCache;
+  private Map<String, Ranking> mergerCache = new HashMap<>();
 
   private ActorRef filterActor;
 
