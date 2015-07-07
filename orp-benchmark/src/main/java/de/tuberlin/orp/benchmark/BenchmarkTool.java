@@ -75,7 +75,9 @@ public class BenchmarkTool {
     long warmupMillis = config.getWarmup();
     int warmupSteps = config.getWarmupSteps();
 
-    RateLimiter rateLimiter = RateLimiter.create(0);
+    double rateStep = rate / (double) warmupSteps;
+
+    RateLimiter rateLimiter = RateLimiter.create(rateStep);
 
     httpClient = new AsyncHttpClient();
 
@@ -86,31 +88,36 @@ public class BenchmarkTool {
       executorService = Executors.newFixedThreadPool(10);
     }
 
-    Executors.newSingleThreadScheduledExecutor()
-        .scheduleAtFixedRate(() -> {
-          System.out.println("Current throughput = " + requestsCounter.get() + " req/s");
-          BenchmarkTool.requestsCounter.set(0);
-        }, 0, 1000, TimeUnit.MILLISECONDS);
 
-    AtomicInteger stepsCounter = new AtomicInteger(0);
-    long period = warmupMillis / warmupSteps;
-    Executors.newSingleThreadScheduledExecutor()
-        .scheduleAtFixedRate(() -> {
 
-          int cnt = stepsCounter.incrementAndGet();
-          if (cnt <= warmupSteps) {
-            rateLimiter.setRate(period * cnt);
-          } else {
-            stepsCounter.decrementAndGet();
-          }
-
-        }, 0, period, TimeUnit.MILLISECONDS);
 
     File file = new File(filePath);
     Stream<String> stringStream = Files.lines(file.toPath(), Charset.defaultCharset());
     List<JsonNode> jsonNodes = stringStream.limit(1000).map(Json::parse).collect(Collectors.toList());
 
     List<Request> requests = prepareRequests(jsonNodes);
+
+    AtomicInteger stepsCounter = new AtomicInteger(1);
+    long period = warmupMillis / warmupSteps;
+    Executors.newSingleThreadScheduledExecutor()
+        .scheduleAtFixedRate(() -> {
+
+          int cnt = stepsCounter.incrementAndGet();
+          if (cnt <= warmupSteps) {
+            rateLimiter.setRate(rateStep * cnt);
+          } else {
+            stepsCounter.decrementAndGet();
+          }
+
+        }, period, period, TimeUnit.MILLISECONDS);
+
+
+
+    Executors.newSingleThreadScheduledExecutor()
+        .scheduleAtFixedRate(() -> {
+          System.out.println("Current throughput = " + requestsCounter.get() + " req/s");
+          BenchmarkTool.requestsCounter.set(0);
+        }, 0, 1000, TimeUnit.MILLISECONDS);
 
     for (int i = 0; i < limit / 1000 + limit % 1000; i++) {
       for (Request request : requests) {
