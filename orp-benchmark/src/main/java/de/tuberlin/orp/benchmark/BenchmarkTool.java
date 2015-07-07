@@ -91,7 +91,7 @@ public class BenchmarkTool {
   }
 
   private void startWarmupPhase(int warmupSteps, long warmupMillis, int maxRate, long duration) {
-    AtomicInteger stepsCounter = new AtomicInteger(0);
+    AtomicInteger stepsCounter = new AtomicInteger(1);
     long period = warmupMillis / warmupSteps;
     double rateStep = maxRate / (double) warmupSteps;
 
@@ -102,13 +102,14 @@ public class BenchmarkTool {
       int cnt = stepsCounter.getAndIncrement();
       if (cnt < warmupSteps) {
         rateLimiter.setRate(rateStep * (cnt + 1));
-      } else {
-        Executors.newSingleThreadScheduledExecutor()
-            .schedule((Runnable) () -> {
-              stopped.set(true);
-              System.out.println("Done sending.");
-            }, duration, TimeUnit.MILLISECONDS);
-        warmupService.shutdown();
+        if (cnt == warmupSteps - 1) {
+          Executors.newSingleThreadScheduledExecutor()
+              .schedule((Runnable) () -> {
+                stopped.set(true);
+                System.out.println("Done sending.");
+              }, duration, TimeUnit.MILLISECONDS);
+          warmupService.shutdown();
+        }
       }
     }, period, period, TimeUnit.MILLISECONDS);
 
