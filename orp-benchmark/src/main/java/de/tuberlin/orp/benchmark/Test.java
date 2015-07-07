@@ -24,59 +24,7 @@
 
 package de.tuberlin.orp.benchmark;
 
-import com.beust.jcommander.Parameter;
-
-public class BenchmarkConfig {
-  @Parameter(names = "-rate", description = "Rate with which requests should be sent [request/s].")
-  private int rate;
-
-  @Parameter(names = "-warmup", description = "Warmup Duration [ms].")
-  private String warmup;
-
-  @Parameter(names = "-file", description = "File with recorded requests.")
-  private String filePath;
-
-  @Parameter(names = "-n", description = "Amount of requests to send.")
-  private int requestsAmount;
-
-  @Parameter(names = "--help", help = true)
-  private boolean help;
-
-  @Parameter(names = "-event")
-  private String eventUrl;
-
-  @Parameter(names = "-request")
-  private String requestUrl;
-
-  @Parameter(names = "-callbacks")
-  private boolean callback;
-
-
-  public int getRate() {
-    return rate;
-  }
-
-  public String getWarmup() {
-    return warmup;
-  }
-
-  public String getFilePath() {
-    return filePath;
-  }
-
-  public int getRequestsAmount() {
-    return requestsAmount;
-  }
-
-  public String getEventUrl() {
-    return eventUrl;
-  }
-
-  public String getRequestUrl() {
-    return requestUrl;
-  }
-
-  public boolean isCallback() {
-    return callback;
+public class Test {
+  public static void main(String[] args) {
   }
 }

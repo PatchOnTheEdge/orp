@@ -38,6 +38,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -71,9 +72,12 @@ public class BenchmarkTool {
     int rate = config.getRate();
     int limit = config.getRequestsAmount();
     String filePath = config.getFilePath();
+    String warmup = config.getWarmup();
 
 
-    RateLimiter rateLimiter = RateLimiter.create(rate, 5, TimeUnit.SECONDS);
+    long warmupMillis = Long.parseLong(warmup);
+
+    RateLimiter rateLimiter = RateLimiter.create(rate, warmupMillis, TimeUnit.MILLISECONDS);
 
     httpClient = new AsyncHttpClient();
 

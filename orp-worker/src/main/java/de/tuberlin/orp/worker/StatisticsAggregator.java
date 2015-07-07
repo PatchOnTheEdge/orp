@@ -78,6 +78,7 @@ public class StatisticsAggregator extends UntypedActor {
       statisticsManager.tell(new StatisticsManager.WorkerStatistics(System.currentTimeMillis(),
           throughput, responseTimes), getSelf());
       requestCounter = 0;
+      responseTimes = new HashMap<>();
 
     }, getContext().dispatcher());
   }
