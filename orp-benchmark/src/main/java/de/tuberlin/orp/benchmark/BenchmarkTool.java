@@ -72,12 +72,10 @@ public class BenchmarkTool {
     int rate = config.getRate();
     int limit = config.getRequestsAmount();
     String filePath = config.getFilePath();
-    String warmup = config.getWarmup();
+    long warmupMillis = config.getWarmup();
+    int warmupSteps = config.getWarmupSteps();
 
-
-    long warmupMillis = Long.parseLong(warmup);
-
-    RateLimiter rateLimiter = RateLimiter.create(rate, warmupMillis, TimeUnit.MILLISECONDS);
+    RateLimiter rateLimiter = RateLimiter.create(0);
 
     httpClient = new AsyncHttpClient();
 
@@ -93,6 +91,20 @@ public class BenchmarkTool {
           System.out.println("Current throughput = " + requestsCounter.get() + " req/s");
           BenchmarkTool.requestsCounter.set(0);
         }, 0, 1000, TimeUnit.MILLISECONDS);
+
+    AtomicInteger stepsCounter = new AtomicInteger(0);
+    long period = warmupMillis / warmupSteps;
+    Executors.newSingleThreadScheduledExecutor()
+        .scheduleAtFixedRate(() -> {
+
+          int cnt = stepsCounter.incrementAndGet();
+          if (cnt <= warmupSteps) {
+            rateLimiter.setRate(period * cnt);
+          } else {
+            stepsCounter.decrementAndGet();
+          }
+
+        }, 0, period, TimeUnit.MILLISECONDS);
 
     File file = new File(filePath);
     Stream<String> stringStream = Files.lines(file.toPath(), Charset.defaultCharset());

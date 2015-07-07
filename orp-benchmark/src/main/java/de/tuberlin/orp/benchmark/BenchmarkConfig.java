@@ -31,7 +31,10 @@ public class BenchmarkConfig {
   private int rate;
 
   @Parameter(names = "-warmup", description = "Warmup Duration [ms].")
-  private String warmup;
+  private long warmup;
+
+  @Parameter(names = "-steps", description = "Steps")
+  private int warmupSteps;
 
   @Parameter(names = "-file", description = "File with recorded requests.")
   private String filePath;
@@ -56,8 +59,12 @@ public class BenchmarkConfig {
     return rate;
   }
 
-  public String getWarmup() {
+  public long getWarmup() {
     return warmup;
+  }
+
+  public int getWarmupSteps() {
+    return warmupSteps;
   }
 
   public String getFilePath() {
