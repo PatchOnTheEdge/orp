@@ -25,6 +25,7 @@
 package de.tuberlin.orp.benchmark;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.ning.http.client.AsyncHttpClient;
 import com.ning.http.client.Request;
 import com.ning.http.client.RequestBuilder;
 import io.verbit.ski.core.json.Json;
@@ -43,9 +44,11 @@ public class FileRequestProvider implements RequestProvider {
   private List<Request> requests;
   private Iterator<Request> requestIterator;
   private BenchmarkConfig config;
+  private AsyncHttpClient httpClient;
 
-  public FileRequestProvider(String filePath, BenchmarkConfig config) {
+  public FileRequestProvider(String filePath, BenchmarkConfig config, AsyncHttpClient httpClient) {
     this.config = config;
+    this.httpClient = httpClient;
     File file = new File(filePath);
     try {
       Stream<String> stringStream = Files.lines(file.toPath(), Charset.defaultCharset());
@@ -89,7 +92,7 @@ public class FileRequestProvider implements RequestProvider {
       new RequestBuilder();
 
 
-      Request request = new RequestBuilder("POST")
+      Request request = httpClient.preparePost(url)
           .addFormParam("type", eventType)
           .addFormParam("body", json.toString())
           .build();

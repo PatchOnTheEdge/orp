@@ -52,13 +52,13 @@ public class BenchmarkTool {
   private RateLimiter rateLimiter;
   private RequestProvider requestProvider;
 
-  private ExecutorService callbackService;
+  private ExecutorService callbackService ;// = Executors.newFixedThreadPool(10);
 
 
   public BenchmarkTool(BenchmarkConfig config) {
     this.config = config;
     httpClient = new AsyncHttpClient();
-    requestProvider = new FileRequestProvider(config.getFilePath(), config);
+    requestProvider = new FileRequestProvider(config.getFilePath(), config, httpClient);
   }
 
   private void sendRequest() {
@@ -71,6 +71,7 @@ public class BenchmarkTool {
       requestFuture.addListener(() -> {
         try {
           Response response = requestFuture.get();
+          System.out.println(response.getStatusText());
           System.out.println(response.getResponseBody());
         } catch (InterruptedException | ExecutionException | IOException ignored) {
         }
@@ -92,7 +93,7 @@ public class BenchmarkTool {
 
   private void startWarmupPhase(int warmupSteps, long warmupMillis, int maxRate, long duration) {
     AtomicInteger stepsCounter = new AtomicInteger(1);
-    long period = warmupMillis / warmupSteps;
+    long period = warmupMillis / (warmupSteps - 1);
     double rateStep = maxRate / (double) warmupSteps;
 
     rateLimiter = RateLimiter.create(rateStep);
