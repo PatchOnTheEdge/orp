@@ -39,8 +39,8 @@ public class BenchmarkConfig {
   @Parameter(names = "-file", description = "File with recorded requests.")
   private String filePath;
 
-  @Parameter(names = "-n", description = "Amount of requests to send.")
-  private int requestsAmount;
+  @Parameter(names = "-duration", description = "Duration of load phase [ms].")
+  private long loadDuration;
 
   @Parameter(names = "--help", help = true)
   private boolean help;
@@ -71,8 +71,8 @@ public class BenchmarkConfig {
     return filePath;
   }
 
-  public int getRequestsAmount() {
-    return requestsAmount;
+  public long getLoadDuration() {
+    return loadDuration;
   }
 
   public String getEventUrl() {

@@ -26,42 +26,113 @@ package de.tuberlin.orp.benchmark;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.RateLimiter;
 import com.ning.http.client.AsyncHttpClient;
 import com.ning.http.client.ListenableFuture;
 import com.ning.http.client.Request;
 import com.ning.http.client.Response;
-import io.verbit.ski.core.json.Json;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class BenchmarkTool {
 
-  private static AsyncHttpClient httpClient;
-  private static AtomicInteger requestsCounter = new AtomicInteger(0);
-  private static BenchmarkConfig config;
+  private AsyncHttpClient httpClient;
+  private BenchmarkConfig config;
 
+  private AtomicInteger requestsCounter = new AtomicInteger(0);
+  private AtomicBoolean stopped = new AtomicBoolean(false);
+
+  private RateLimiter rateLimiter;
+  private RequestProvider requestProvider;
+
+  private ExecutorService callbackService;
+
+
+  public BenchmarkTool(BenchmarkConfig config) {
+    this.config = config;
+    httpClient = new AsyncHttpClient();
+    requestProvider = new FileRequestProvider(config.getFilePath(), config);
+  }
+
+  private void sendRequest() {
+    Request request = requestProvider.getNext();
+
+    rateLimiter.acquire();
+    requestsCounter.incrementAndGet();
+    ListenableFuture<Response> requestFuture = httpClient.executeRequest(request);
+    if (callbackService != null && request.getFormParams().get(0).getValue().equals("recommendation_request")) {
+      requestFuture.addListener(() -> {
+        try {
+          Response response = requestFuture.get();
+          System.out.println(response.getResponseBody());
+        } catch (InterruptedException | ExecutionException | IOException ignored) {
+        }
+      }, callbackService);
+    }
+  }
+
+  private void startRequestCounter() {
+    ScheduledExecutorService requestCounterService = Executors.newSingleThreadScheduledExecutor();
+    requestCounterService
+        .scheduleAtFixedRate(() -> {
+          System.out.println("Current throughput = " + requestsCounter.get() + " req/s");
+          requestsCounter.set(0);
+          if (stopped.get()) {
+            requestCounterService.shutdown();
+          }
+        }, 0, 1000, TimeUnit.MILLISECONDS);
+  }
+
+  private void startWarmupPhase(int warmupSteps, long warmupMillis, int maxRate, long duration) {
+    AtomicInteger stepsCounter = new AtomicInteger(0);
+    long period = warmupMillis / warmupSteps;
+    double rateStep = maxRate / (double) warmupSteps;
+
+    rateLimiter = RateLimiter.create(rateStep);
+
+    ScheduledExecutorService warmupService = Executors.newSingleThreadScheduledExecutor();
+    warmupService.scheduleAtFixedRate(() -> {
+      int cnt = stepsCounter.getAndIncrement();
+      if (cnt < warmupSteps) {
+        rateLimiter.setRate(rateStep * (cnt + 1));
+      } else {
+        Executors.newSingleThreadScheduledExecutor()
+            .schedule((Runnable) () -> {
+              stopped.set(true);
+              System.out.println("Done sending.");
+            }, duration, TimeUnit.MILLISECONDS);
+        warmupService.shutdown();
+      }
+    }, period, period, TimeUnit.MILLISECONDS);
+
+  }
+
+
+  public void start() {
+
+    startWarmupPhase(config.getWarmupSteps(), config.getWarmup(), config.getRate(), config.getLoadDuration());
+
+    startRequestCounter();
+
+    while (!stopped.get()) {
+      sendRequest();
+    }
+
+  }
 
   public static void main(String[] args) throws Exception {
 
     // G:/json/CLEF-2015-Task2-Json07/Json-07/2014-07-01.data/2014-07-01.data
     // /Users/ilya/Desktop/2014-07-01.data
 
-    config = new BenchmarkConfig();
+    BenchmarkConfig config = new BenchmarkConfig();
     JCommander jCommander = new JCommander(config);
     try {
       jCommander.parse(args);
@@ -69,105 +140,7 @@ public class BenchmarkTool {
       jCommander.usage();
       System.exit(1);
     }
-    int rate = config.getRate();
-    int limit = config.getRequestsAmount();
-    String filePath = config.getFilePath();
-    long warmupMillis = config.getWarmup();
-    int warmupSteps = config.getWarmupSteps();
 
-    double rateStep = rate / (double) warmupSteps;
-
-    RateLimiter rateLimiter = RateLimiter.create(rateStep);
-
-    httpClient = new AsyncHttpClient();
-
-
-    ExecutorService executorService = null;
-
-    if (config.isCallback()) {
-      executorService = Executors.newFixedThreadPool(10);
-    }
-
-
-
-
-    File file = new File(filePath);
-    Stream<String> stringStream = Files.lines(file.toPath(), Charset.defaultCharset());
-    List<JsonNode> jsonNodes = stringStream.limit(1000).map(Json::parse).collect(Collectors.toList());
-
-    List<Request> requests = prepareRequests(jsonNodes);
-
-    AtomicInteger stepsCounter = new AtomicInteger(1);
-    long period = warmupMillis / warmupSteps;
-    Executors.newSingleThreadScheduledExecutor()
-        .scheduleAtFixedRate(() -> {
-
-          int cnt = stepsCounter.incrementAndGet();
-          if (cnt <= warmupSteps) {
-            rateLimiter.setRate(rateStep * cnt);
-          } else {
-            stepsCounter.decrementAndGet();
-          }
-
-        }, period, period, TimeUnit.MILLISECONDS);
-
-
-
-    Executors.newSingleThreadScheduledExecutor()
-        .scheduleAtFixedRate(() -> {
-          System.out.println("Current throughput = " + requestsCounter.get() + " req/s");
-          BenchmarkTool.requestsCounter.set(0);
-        }, 0, 1000, TimeUnit.MILLISECONDS);
-
-    for (int i = 0; i < limit / 1000 + limit % 1000; i++) {
-      for (Request request : requests) {
-        rateLimiter.acquire();
-        requestsCounter.incrementAndGet();
-        ListenableFuture<Response> requestFuture = httpClient.executeRequest(request);
-        if (executorService != null && request.getFormParams().get(0).getValue().equals("recommendation_request")) {
-          requestFuture.addListener(() -> {
-            try {
-              Response response = requestFuture.get();
-              System.out.println(response.getResponseBody());
-            } catch (InterruptedException | ExecutionException | IOException ignored) {}
-          }, executorService);
-        }
-      }
-    }
-
-    System.out.println("Done sending.");
-
+    new BenchmarkTool(config).start();
   }
-
-  private static List<Request> prepareRequests(List<JsonNode> jsonNodes) {
-    List<Request> requests = new ArrayList<>();
-
-    for (JsonNode json : jsonNodes) {
-      String url = null;
-
-      String eventType = json.get("event_type").asText();
-      switch (eventType) {
-        case "impression":
-          eventType = "event_notification";
-          url = config.getEventUrl();
-          break;
-        case "recommendation_request":
-          url = config.getRequestUrl();
-          break;
-        default:
-          assert false;
-
-      }
-
-      Request request = httpClient.preparePost(url)
-          .addFormParam("type", eventType)
-          .addFormParam("body", json.toString())
-          .build();
-
-      requests.add(request);
-    }
-
-    return requests;
-  }
-
 }
