@@ -22,24 +22,22 @@
  * SOFTWARE.
  */
 
-package de.tuberlin.orp.master;
+package de.tuberlin.orp.worker;
 
-import akka.actor.ActorRef;
 import akka.actor.Props;
 import akka.actor.UntypedActor;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.japi.Creator;
-import de.tuberlin.orp.common.message.OrpContext;
-import de.tuberlin.orp.common.Ranking;
+import de.tuberlin.orp.common.RankingFilter;
+import scala.concurrent.duration.Duration;
 
 import java.io.Serializable;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 public class RecommendationFilter extends UntypedActor {
   private LoggingAdapter log = Logging.getLogger(getContext().system(), this);
@@ -94,41 +92,13 @@ public class RecommendationFilter extends UntypedActor {
     }
   }
 
-  public static class Filter implements Serializable {
-    private OrpContext context;
-    private Ranking ranking;
-    private int limit;
-    private ActorRef sender;
-
-
-    public Filter(OrpContext context, Ranking ranking, int limit, ActorRef sender) {
-      this.context = context;
-      this.ranking = ranking;
-      this.limit = limit;
-      this.sender = sender;
-    }
-
-    public OrpContext getContext() {
-      return context;
-    }
-
-    public Ranking getRanking() {
-      return ranking;
-    }
-
-    public int getLimit() {
-      return limit;
-    }
-
-    public ActorRef getSender() {
-      return sender;
-    }
-  }
-
   @Override
   public void preStart() throws Exception {
     super.preStart();
     log.info("Recommendation filter started");
+    getContext().system().scheduler().schedule(Duration.Zero(), Duration.create(1, TimeUnit.MINUTES), () -> {
+      cleanRecommended();
+    }, getContext().dispatcher());
   }
 
   @Override
@@ -146,21 +116,12 @@ public class RecommendationFilter extends UntypedActor {
 
       lastUpdated.put(clicked.getUserId(), System.currentTimeMillis());
 
-    } else if (message instanceof Filter) {
-      cleanRecommended();
+    } else if (message.equals("getIntermediateFilter")) {
 
-      Ranking ranking = ((Filter) message).getRanking();
-      OrpContext context = ((Filter) message).getContext();
-      int limit = ((Filter) message).getLimit();
-      ActorRef sender = ((Filter) message).getSender();
+      getSender().tell(new WorkerCoordinator.IntermediateFilter(new RankingFilter(removed, recommended)), getSelf());
 
-      ranking.filter(removed);
-      ranking.filter(recommended.getOrDefault(context.getUserId(), Collections.emptySet()));
-      ranking.filter(new HashSet<>(Arrays.asList(context.getItemId())));
-      ranking.slice(limit);
-
-      sender.tell(ranking, getSelf());
-
+    } else {
+      unhandled(message);
     }
   }
 

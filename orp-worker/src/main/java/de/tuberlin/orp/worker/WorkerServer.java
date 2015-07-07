@@ -27,30 +27,28 @@ package de.tuberlin.orp.worker;
 import akka.actor.ActorRef;
 import akka.actor.ActorSelection;
 import akka.actor.ActorSystem;
+import akka.cluster.Cluster;
 import akka.dispatch.Mapper;
 import akka.pattern.Patterns;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
 import de.tuberlin.orp.common.Ranking;
 import de.tuberlin.orp.common.message.OrpContext;
+import de.tuberlin.orp.common.message.OrpItemUpdate;
 import de.tuberlin.orp.common.message.OrpNotification;
 import de.tuberlin.orp.common.message.OrpRequest;
-import de.tuberlin.orp.master.MostPopularMerger;
-import de.tuberlin.orp.master.StatisticsActor;
 import io.verbit.ski.akka.Akka;
 import io.verbit.ski.core.Ski;
 import io.verbit.ski.core.http.Result;
 import io.verbit.ski.core.json.Json;
 import scala.concurrent.Future;
+import scala.concurrent.duration.Duration;
+import scala.concurrent.duration.FiniteDuration;
 
 import java.util.Map;
 import java.util.Optional;
 
-import static io.verbit.ski.core.http.AsyncResult.async;
-import static io.verbit.ski.core.http.SimpleResult.badRequest;
 import static io.verbit.ski.core.http.SimpleResult.noContent;
 import static io.verbit.ski.core.http.SimpleResult.ok;
 import static io.verbit.ski.core.route.RouteBuilder.post;
@@ -61,12 +59,19 @@ public class WorkerServer {
     String host = "0.0.0.0";
     int port = 9000;
 
-    ActorSystem system = ActorSystem.create("OrpSystem");
-    ActorRef workerActor = system.actorOf(WorkerActor.create(), "orp");
 
-    Config config = system.settings().config();
-    String master = config.getString("master");
-    ActorSelection statisticsSelection = system.actorSelection(master + "/user/statistics");
+    ActorSystem system = ActorSystem.create("ClusterSystem");
+    Cluster cluster = Cluster.get(system);
+
+    String master = system.settings().config().getString("master");
+
+    // statistics
+    ActorSelection statManagerSel = system.actorSelection(master + "/user/statistics");
+    Future<ActorRef> actorRefFuture = statManagerSel.resolveOne((FiniteDuration) Duration.create("100ms"));
+    ActorRef statisticsActor = system.actorOf(StatisticsAggregator.create(statManagerSel), "statistics");
+
+
+    ActorRef workerActor = system.actorOf(WorkerActor.create(statisticsActor), "orp");
 
 
     Ski.builder()
@@ -78,8 +83,6 @@ public class WorkerServer {
               Optional<JsonNode> jsonBody = context.request().formParam("body").asJson();
 
               OrpContext orpContext = new OrpContext(jsonBody.get());
-
-
               OrpNotification notification = new OrpNotification(messageType.get(), orpContext);
 
               workerActor.tell(notification, ActorRef.noSender());
@@ -129,8 +132,7 @@ public class WorkerServer {
                       }
 
                       long responseTime = System.currentTimeMillis() - start;
-                      statisticsSelection.tell(new StatisticsActor.MergerStatistics(responseTime),
-                          ActorRef.noSender());
+                      statisticsActor.tell(new StatisticsAggregator.ResponseTime(responseTime), ActorRef.noSender());
 
                       return ok(result);
                     }
@@ -138,6 +140,20 @@ public class WorkerServer {
 
 
               return Akka.wrap(future);
+            }),
+            post("/item").route(context -> {
+              Optional<String> messageType = context.request().formParam("type").asText();
+              Optional<JsonNode> jsonBody = context.request().formParam("body").asJson();
+
+              JsonNode json = jsonBody.get();
+              String itemId = json.get("id").asText();
+              int flag = json.get("flag").asInt();
+
+              OrpItemUpdate itemUpdate = new OrpItemUpdate(itemId, flag);
+
+              workerActor.tell(itemUpdate, ActorRef.noSender());
+
+              return noContent();
             })
         )
         .build()

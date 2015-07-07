@@ -25,17 +25,14 @@
 package de.tuberlin.orp.worker;
 
 import akka.actor.ActorRef;
-import akka.actor.ActorSelection;
 import akka.actor.Props;
 import akka.actor.UntypedActor;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
-import com.typesafe.config.Config;
 import de.tuberlin.orp.common.message.OrpContext;
+import de.tuberlin.orp.common.message.OrpItemUpdate;
 import de.tuberlin.orp.common.message.OrpNotification;
 import de.tuberlin.orp.common.message.OrpRequest;
-import de.tuberlin.orp.master.StatisticsActor;
-import de.tuberlin.orp.master.MostPopularMerger;
 import oshi.SystemInfo;
 import oshi.hardware.HardwareAbstractionLayer;
 import oshi.hardware.Processor;
@@ -52,54 +49,43 @@ public class WorkerActor extends UntypedActor {
   private LoggingAdapter log = Logging.getLogger(getContext().system(), this);
 
   private ActorRef mostPopularWorker;
-  private ActorSelection mergerSelection;
-  private ActorSelection filterSelection;
-  private ActorSelection statisticsSelection;
+  private ActorRef filterActor;
+  private ActorRef statisticsAggregator;
 
-  private long lastRanking = 0;
-  private int receivedImpressions = 0;
+  private ActorRef workerCoordinator;
 
   private HardwareAbstractionLayer hardware = new SystemInfo().getHardware();
 
+  public WorkerActor(ActorRef statisticsAggregator) {
+    this.statisticsAggregator = statisticsAggregator;
+  }
 
-  public static Props create() {
-    return Props.create(WorkerActor.class, WorkerActor::new);
+
+  public static Props create(ActorRef statisticsAggregator) {
+    return Props.create(WorkerActor.class, () -> {
+      return new WorkerActor(statisticsAggregator);
+    });
   }
 
 
   @Override
   public void preStart() throws Exception {
     super.preStart();
-    Config config = getContext().system().settings().config();
-    String master = config.getString("master");
-    mergerSelection = getContext().actorSelection(master + "/user/merger");
-    filterSelection = getContext().actorSelection(master + "/user/filter");
-    statisticsSelection = getContext().actorSelection(master + "/user/statistics");
-//    mergerSelection.tell(new Identify(0), getSelf());
+
     mostPopularWorker = getContext().actorOf(MostPopularWorker.create(500, 50), "mp");
-    mergerSelection.tell(new MostPopularMerger.Register(mostPopularWorker), getSelf());
-//    mostPopularMerger = getContext().actorOf(FromConfig.getInstance().props(MostPopularMergerOld.create()), "merger");
+    filterActor = getContext().actorOf(RecommendationFilter.create(), "filter");
+
+    workerCoordinator = getContext().actorOf(WorkerCoordinator.create(mostPopularWorker, filterActor), "coordinator");
 
     getContext().system().scheduler().schedule(Duration.Zero(), Duration.create(1, TimeUnit.SECONDS), () -> {
-      if (lastRanking != 0) {
-        long now = System.currentTimeMillis();
-        double throughput = 1000.0 * receivedImpressions / (now - lastRanking);
 
-        double cpu = Arrays.stream(hardware.getProcessors())
-            .mapToDouble(Processor::getSystemCpuLoadBetweenTicks)
-            .sum();
+      double cpu = Arrays.stream(hardware.getProcessors())
+          .mapToDouble(Processor::getSystemCpuLoadBetweenTicks)
+          .sum();
 
-        double memory = hardware.getMemory().getAvailable() / (double) hardware.getMemory().getTotal();
+      double memory = hardware.getMemory().getAvailable() / (double) hardware.getMemory().getTotal();
 
 
-        StatisticsActor.WorkerStatistics statistics = new StatisticsActor.WorkerStatistics
-            (throughput, cpu, memory, now);
-
-        statisticsSelection.tell(statistics, getSelf());
-      }
-
-      lastRanking = System.currentTimeMillis();
-      receivedImpressions = 0;
     }, getContext().dispatcher());
   }
 
@@ -110,28 +96,42 @@ public class WorkerActor extends UntypedActor {
 
       String notificationType = notification.getType();
 
-//      log.info(String.format("Received notification of type \"%s\"", notificationType));
+      log.info(String.format("Received notification of type \"%s\"", notificationType));
 
       OrpContext context = notification.getContext();
 
-      String publisher = context.getPublisherId();
+      String publisherId = context.getPublisherId();
       String itemId = context.getItemId();
 
       switch (notificationType) {
         case "event_notification":
-//          log.info(String.format("Event Notification: Publisher = %s. Item ID = %s", publisher, itemId));
+          log.info(String.format("Received event notification: publisherId = %s. itemId = %s", publisherId, itemId));
 
-          ++receivedImpressions;
+          statisticsAggregator.tell("request", getSelf());
 
-          if (!publisher.equals("") && !itemId.equals("") && !itemId.equals("0")) {
+          if (!publisherId.equals("") && !itemId.equals("") && !itemId.equals("0")) {
             mostPopularWorker.tell(context, getSelf());
+            filterActor.tell(new RecommendationFilter.Clicked(context.getUserId(), context.getItemId()), getSelf());
           }
 
           break;
 
       }
     } else if (message instanceof OrpRequest) {
-      mergerSelection.tell(message, getSender());
+
+      // requests are handled by the coordinator
+      workerCoordinator.forward(message, getContext());
+
+    } else if (message instanceof OrpItemUpdate) {
+
+      // look for non recommendable items
+      OrpItemUpdate itemUpdate = (OrpItemUpdate) message;
+      if (!itemUpdate.isItemRecommendable()) {
+        filterActor.tell(new RecommendationFilter.Removed(itemUpdate.getItemId()), getSelf());
+      }
+
+    } else {
+      unhandled(message);
     }
   }
 }

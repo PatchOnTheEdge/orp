@@ -96,7 +96,7 @@ public class BenchmarkTool {
 
     List<Request> requests = prepareRequests(jsonNodes);
 
-    for (int i = 0; i < limit / 1000; i++) {
+    for (int i = 0; i < limit / 1000 + limit % 1000; i++) {
       for (Request request : requests) {
         rateLimiter.acquire();
         requestsCounter.incrementAndGet();

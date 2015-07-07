@@ -24,25 +24,50 @@
 
 package de.tuberlin.orp.common;
 
-import java.util.Comparator;
-import java.util.LinkedHashMap;
+import de.tuberlin.orp.common.message.OrpContext;
+
+import java.io.Serializable;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.BiConsumer;
-import java.util.stream.Collectors;
 
-public class Utils {
-  public static <K, V> LinkedHashMap<K, V> sortMapByEntry(Map<K, V> unsortedMap,
-      Comparator<Map.Entry<K, V>> comparator) {
-    return unsortedMap.entrySet().stream()
-        .sorted(comparator)
-        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (o, o2) -> o, LinkedHashMap::new));
+public class RankingFilter implements Serializable {
+  private Set<String> removed;
+  private Map<String, Set<String>> recommended;
+
+  public RankingFilter(Set<String> removed, Map<String, Set<String>> recommended) {
+    this.removed = removed;
+    this.recommended = recommended;
   }
 
-  public static <K, V> LinkedHashMap<K, V> sliceMap(LinkedHashMap<K, V> map, int n) {
-    return map.entrySet().stream()
-        .limit(n)
-        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (o, o2) -> o, LinkedHashMap::new));
+  public RankingFilter() {
+    this(new HashSet<>(), new HashMap<>());
   }
 
+  public void merge(RankingFilter filter) {
+    removed.addAll(filter.getRemoved());
+    filter.getRecommended().forEach((key, value) -> {
+      recommended.putIfAbsent(key, new HashSet<>());
+      Set<String> recs = recommended.get(key);
+      recs.addAll(value);
+    });
+  }
+
+  public Ranking filter(Ranking toFilter, OrpContext context) {
+    Set<String> toRemove = new HashSet<>();
+    toRemove.addAll(recommended.getOrDefault(context.getUserId(), Collections.emptySet()));
+    toRemove.addAll(removed);
+
+    return toFilter.filter(toRemove);
+  }
+
+  public Set<String> getRemoved() {
+    return removed;
+  }
+
+  public Map<String, Set<String>> getRecommended() {
+    return recommended;
+  }
 }

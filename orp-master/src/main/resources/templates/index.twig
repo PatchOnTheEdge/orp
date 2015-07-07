@@ -14,32 +14,11 @@
     <body>
         {#<h4>CPU</h4>#}
         {#<canvas id="cpu" width="600" height="400"></canvas>#}
-        <h4>Response Time</h4>
-        <canvas id="responseTime" width="1024" height="600"></canvas>
         <h4>Throughput (request/s)</h4>
         <canvas id="throughput" width="1024" height="600"></canvas>
         <script>
 //            var cpuChart = new SmoothieChart({millisPerPixel:100,maxValue:1,minValue:0});
 //            cpuChart.streamTo(document.getElementById("cpu"), 1000);
-
-            var responseTimeChart = new SmoothieChart({
-                millisPerPixel: 700,
-                labels:{
-                    fillStyle: '#000000',
-                    precision: 6},
-                grid: {
-                    millisPerLine: 10000,
-                    fillStyle: '#ffffff',
-                    strokeStyle: 'rgba(0,0,0,0.19)',
-                    sharpLines: true,
-                    verticalSections: 200/10,
-                    borderVisible:false
-                },
-                maxValue: 200,
-                minValue: 0,
-                timestampFormatter: SmoothieChart.timeFormatter
-            });
-            responseTimeChart.streamTo(document.getElementById("responseTime"), 1000);
 
             var throughputChart = new SmoothieChart({
                 millisPerPixel: 700,
@@ -51,10 +30,12 @@
                     fillStyle: '#ffffff',
                     strokeStyle: 'rgba(0,0,0,0.19)',
                     sharpLines: true,
-                    verticalSections: 2500/100,
+//                    verticalSections: 2500/100,
+                    verticalSections: 10,
                     borderVisible:false
                 },
-                maxValue: 2500,
+//                maxValue: 2500,
+//                maxValue: 20,
                 minValue: 0,
                 timestampFormatter: SmoothieChart.timeFormatter
             });
@@ -62,17 +43,11 @@
 
 //            var cpuLine = new TimeSeries();
 
-            var responseTimeLine = new TimeSeries();
-
             var throughputLine1 = new TimeSeries();
             var throughputLine2 = new TimeSeries();
 
             setInterval(function() {
-                $.get('/master/statistics', function(data){
-
-                    if (data.master) {
-                        responseTimeLine.append(data.master.timestamp, data.master.responseTime);
-                    }
+                $.get('/statistics', function(data){
 
                     var workers = data.workers;
 
@@ -90,7 +65,6 @@
 
             // Add to SmoothieChart
 //            cpuChart.addTimeSeries(cpuLine);
-            responseTimeChart.addTimeSeries(responseTimeLine, {lineWidth:1.2,strokeStyle:'#ff2600'});
 
             throughputChart.addTimeSeries(throughputLine1, {lineWidth:1.2,strokeStyle:'#ff2600'});
             throughputChart.addTimeSeries(throughputLine2, {lineWidth:1.2,strokeStyle:'#00ff00'});

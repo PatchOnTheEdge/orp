@@ -24,8 +24,9 @@
 
 package de.tuberlin.orp.worker;
 
-import de.tuberlin.orp.common.message.OrpContext;
 import de.tuberlin.orp.common.Ranking;
+import de.tuberlin.orp.common.RankingRepository;
+import de.tuberlin.orp.common.message.OrpContext;
 
 import java.util.ArrayDeque;
 import java.util.HashMap;
@@ -55,9 +56,8 @@ public class OrpContextCounter {
     contextWindow.add(context);
   }
 
-  public Map<String, Ranking> getRankings() {
+  public RankingRepository getRankingRespository() {
     Map<String, Map<String, Long>> countMap = calculateRankings();
-
 
     Map<String, Ranking> rankings = new HashMap<>(countMap.size());
     for (Map.Entry<String, Map<String, Long>> entry : countMap.entrySet()) {
@@ -68,7 +68,7 @@ public class OrpContextCounter {
       rankings.put(key, value);
     }
 
-    return rankings;
+    return new RankingRepository(rankings);
   }
 
   private Map<String, Map<String, Long>> calculateRankings() {

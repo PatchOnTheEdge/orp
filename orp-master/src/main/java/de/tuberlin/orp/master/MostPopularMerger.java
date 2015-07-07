@@ -30,143 +30,107 @@ import akka.actor.UntypedActor;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.japi.Creator;
-import akka.routing.ActorRefRoutee;
-import akka.routing.BroadcastRoutingLogic;
-import akka.routing.Router;
-import de.tuberlin.orp.common.message.OrpContext;
-import de.tuberlin.orp.common.Ranking;
-import de.tuberlin.orp.common.message.OrpRequest;
+import akka.routing.Broadcast;
+import akka.routing.FromConfig;
+import de.tuberlin.orp.common.RankingFilter;
+import de.tuberlin.orp.common.RankingRepository;
 import scala.concurrent.duration.Duration;
 
 import java.io.Serializable;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class MostPopularMerger extends UntypedActor {
   private LoggingAdapter log = Logging.getLogger(getContext().system(), this);
 
-  private Router router;
+  private ActorRef workerRouter;
 
-  private RankingMerger merger;
-  private Map<String, Ranking> mergerCache = new HashMap<>();
+  private RankingFilter filter;
+  private RankingRepository merger;
 
-  private ActorRef filterActor;
-
-  public MostPopularMerger(ActorRef filterActor) {
-    this.filterActor = filterActor;
-  }
-
-  public static Props create(ActorRef filterActor) {
-    return Props.create(MostPopularMerger.class, new MostPopularMergerCreator(filterActor));
+  public static Props create() {
+    return Props.create(MostPopularMerger.class, new MostPopularMergerCreator());
   }
 
   @Override
   public void preStart() throws Exception {
     log.info("Merger started");
-    router = new Router(new BroadcastRoutingLogic());
-    merger = new RankingMerger();
+
+    merger = new RankingRepository();
+    filter = new RankingFilter();
+
+    workerRouter = getContext().actorOf(FromConfig.getInstance().props(Props.empty()), "workerRouter");
 
     // asks every 2 seconds for the intermediate rankings
     getContext().system().scheduler().schedule(Duration.Zero(), Duration.create(2, TimeUnit.SECONDS), () -> {
-      if (!router.routees().isEmpty()) {
-        mergerCache = merger.merge();
-        log.info("Asking for intermediate rankings");
-        router.route("getRankings", getSelf());
-      }
+
+      merger.sortRankings();
+      log.debug(merger.toString());
+      workerRouter.tell(new Broadcast(new MergedRanking(merger, filter)), getSelf());
+      merger = new RankingRepository();
+
     }, getContext().dispatcher());
 
   }
 
-  public static class Register implements Serializable {
-    private ActorRef worker;
-
-    public Register() {
-    }
-
-    public Register(ActorRef worker) {
-      this.worker = worker;
-    }
-
-    public ActorRef getWorker() {
-      return worker;
-    }
-  }
-
-  public static class Merge implements Serializable {
-    private Map<String, Ranking> rankings;
-
-    public Merge() {
-    }
-
-    public Merge(Map<String, Ranking> rankings) {
-      this.rankings = rankings;
-    }
-
-    public Map<String, Ranking> getRankings() {
-      return rankings;
-    }
-  }
-
-  public static class Retrieve implements Serializable {
-    private OrpContext context;
-    private int limit;
-
-    public Retrieve() {
-    }
-
-    public Retrieve(OrpContext context, int limit) {
-      this.context = context;
-      this.limit = limit;
-    }
-
-    public OrpContext getContext() {
-      return context;
-    }
-
-    public int getLimit() {
-      return limit;
-    }
-  }
-
   @Override
   public void onReceive(Object message) throws Exception {
-    if (message instanceof Register) {
+    if (message instanceof WorkerResult) {
 
-      ActorRef worker = ((Register) message).getWorker();
-      log.info("Registration of actor " + worker.toString());
-      router = router.addRoutee(new ActorRefRoutee(worker));
-      log.info("Routees count: " + router.routees().size());
-
-    } else if (message instanceof Merge) {
+      // build cache and send it after timeout
 
       log.info("Received intermediate rankings from " + getSender().toString());
-      merger.merge(((Merge) message).getRankings());
 
-    } else if (message instanceof OrpRequest) {
+      WorkerResult result = (WorkerResult) message;
 
-      OrpRequest request = (OrpRequest) message;
+      filter.merge(result.getFilter());
+      merger.merge(result.getRankingRepository());
 
-      OrpContext context = request.getContext();
-      Ranking ranking = merger.getRanking(mergerCache, context.getPublisherId());
-
-      RecommendationFilter.Filter filter
-          = new RecommendationFilter.Filter(context, ranking, context.getLimit(), getSender());
-      filterActor.tell(filter, getSelf());
+    } else {
+      unhandled(message);
     }
   }
 
 
-  private static class MostPopularMergerCreator implements Creator<MostPopularMerger> {
-    private final ActorRef filterActor;
+  public static class WorkerResult implements Serializable {
+    private final RankingRepository rankings;
+    private final RankingFilter filter;
 
-    public MostPopularMergerCreator(ActorRef filterActor) {
-      this.filterActor = filterActor;
+    public WorkerResult(RankingRepository rankingRepository, RankingFilter filter) {
+      this.rankings = rankingRepository;
+      this.filter = filter;
     }
 
+    public RankingRepository getRankingRepository() {
+      return rankings;
+    }
+
+    public RankingFilter getFilter() {
+      return filter;
+    }
+  }
+
+  private static class MostPopularMergerCreator implements Creator<MostPopularMerger> {
     @Override
     public MostPopularMerger create() throws Exception {
-      return new MostPopularMerger(filterActor);
+      return new MostPopularMerger();
+    }
+  }
+
+  public static class MergedRanking implements Serializable {
+    private RankingRepository rankingRepository;
+    private RankingFilter filter;
+
+    public MergedRanking(RankingRepository rankingRepository, RankingFilter filter) {
+      this.rankingRepository = rankingRepository;
+      this.filter = filter;
+    }
+
+    public RankingRepository getRankingRepository() {
+      return rankingRepository;
+    }
+
+    public RankingFilter getFilter() {
+      return filter;
     }
   }
 }

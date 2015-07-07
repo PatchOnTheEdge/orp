@@ -22,46 +22,8 @@
  * SOFTWARE.
  */
 
-package de.tuberlin.orp.master;
+package de.tuberlin.orp.common;
 
-import de.tuberlin.orp.common.Ranking;
-
-import java.util.ArrayDeque;
-import java.util.HashMap;
-import java.util.Map;
-
-public class RankingMerger {
-  private Map<String, Ranking> mergedRankings = new HashMap<>();
-
-
-  public void merge(Map<String, Ranking> rankings) {
-    merge(mergedRankings, rankings);
-  }
-
-  private void merge(Map<String, Ranking> mergedRankings, Map<String, Ranking> rankings) {
-
-    for (String publisher : rankings.keySet()) {
-      mergedRankings.putIfAbsent(publisher, new Ranking());
-      Ranking ranking = mergedRankings.get(publisher);
-      ranking.merge(rankings.get(publisher));
-    }
-
-  }
-
-  public Map<String, Ranking> merge() {
-    Map<String, Ranking> result = mergedRankings;
-    mergedRankings = new HashMap<>();
-    return result;
-  }
-
-  public Ranking getRanking(Map<String, Ranking> mergedRankings, String key) {
-    Ranking ranking = mergedRankings.get(key);
-
-    if (ranking == null) {
-      return new Ranking(new HashMap<>());
-    }
-
-    ranking.sort();
-    return ranking;
-  }
+public interface Mergeable<T> {
+  void merge(T toMerge);
 }

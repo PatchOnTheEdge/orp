@@ -37,6 +37,10 @@ public class Ranking implements Serializable {
     ranking = new LinkedHashMap<>();
   }
 
+  public Ranking(Ranking ranking) {
+    this.ranking = ranking.getRanking();
+  }
+
   public Ranking(Map<String, Long> ranking) {
     this.ranking = new LinkedHashMap<>(ranking);
   }
@@ -52,10 +56,14 @@ public class Ranking implements Serializable {
     }
   }
 
-  public void filter(Set<String> keys) {
-    for (String key : keys) {
-      ranking.remove(key);
+  public Ranking filter(Set<String> keys) {
+    Ranking copy = new Ranking(this);
+    if (keys != null) {
+      for (String key : keys) {
+        copy.getRanking().remove(key);
+      }
     }
+    return copy;
   }
 
   public void sort() {

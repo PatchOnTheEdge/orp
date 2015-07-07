@@ -29,11 +29,8 @@ import akka.actor.UntypedActor;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.japi.Creator;
+import de.tuberlin.orp.common.RankingRepository;
 import de.tuberlin.orp.common.message.OrpContext;
-import de.tuberlin.orp.common.Ranking;
-import de.tuberlin.orp.master.MostPopularMerger;
-
-import java.util.Map;
 
 /**
  * An actor that can receive items and store them per publisher in a private Hashmap. The top n entries will be send to
@@ -79,6 +76,11 @@ public class MostPopularWorker extends UntypedActor {
     this.contextCounter = new OrpContextCounter(contextWindowSize, topListSize);
   }
 
+  @Override
+  public void preStart() throws Exception {
+    super.preStart();
+    log.info(getSelf().toString());
+  }
 
   @Override
   public void onReceive(Object message) throws Exception {
@@ -90,14 +92,14 @@ public class MostPopularWorker extends UntypedActor {
 
       contextCounter.add(context);
 
-    } else if (message.equals("getRankings")) {
-      log.debug("received Broadcast message");
+    } else if (message.equals("getIntermediateRanking")) {
 
+      log.info("Intermediate rankings requested.");
+      RankingRepository rankingRepository = contextCounter.getRankingRespository();
+      getSender().tell(new WorkerCoordinator.IntermediateRanking(rankingRepository), getSelf());
 
-      Map<String, Ranking> rankings = contextCounter.getRankings();
-//          log.info(rankings.toString());
-
-      getSender().tell(new MostPopularMerger.Merge(rankings), getSelf());
+    } else {
+      unhandled(message);
     }
   }
 }
