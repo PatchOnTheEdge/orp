@@ -51,9 +51,6 @@ public class StatisticsManager extends UntypedActor {
     workerStatistics = new LinkedHashMap<>();
   }
 
-  public static class RetrieveStatisticsReport implements Serializable {
-  }
-
   public static class StatisticsReport implements Serializable {
     private LinkedHashMap<ActorRef, ArrayDeque<WorkerStatistics>> workerStatistics;
     private SortedMap<Short, Long> responseTimes;
@@ -73,7 +70,6 @@ public class StatisticsManager extends UntypedActor {
     }
   }
 
-
   public static class StatisticsMessage implements Serializable {
     private LinkedHashMap<ActorRef, WorkerStatistics> workerStatistics;
 
@@ -85,7 +81,6 @@ public class StatisticsManager extends UntypedActor {
       return workerStatistics;
     }
   }
-
 
   public static class WorkerStatistics implements Serializable {
 

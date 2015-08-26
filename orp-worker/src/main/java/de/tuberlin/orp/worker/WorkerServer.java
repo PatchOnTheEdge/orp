@@ -67,7 +67,6 @@ public class WorkerServer {
 
     // statistics
     ActorSelection statManagerSel = system.actorSelection(master + "/user/statistics");
-    Future<ActorRef> actorRefFuture = statManagerSel.resolveOne((FiniteDuration) Duration.create("100ms"));
     ActorRef statisticsActor = system.actorOf(StatisticsAggregator.create(statManagerSel), "statistics");
 
 
@@ -93,7 +92,6 @@ public class WorkerServer {
               Optional<String> messageType = context.request().formParam("type").asText();
               Optional<JsonNode> jsonBody = context.request().formParam("body").asJson();
 
-              OrpContext orpContext = new OrpContext(jsonBody.get());
               OrpRequest orpRequest = new OrpRequest(jsonBody.get());
 
               long start = System.currentTimeMillis();

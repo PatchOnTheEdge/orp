@@ -116,18 +116,10 @@ public class MasterServer {
                       .map(new Mapper<Object, Result>() {
                         @Override
                         public Result apply(Object parameter) {
-//                      StringBuilder throughputRow = new StringBuilder();
-//                      List<CentralStatisticsActor.WorkerStatistics> statisticsList =
-//                          ((CentralStatisticsActor.StatisticsMessage) parameter).getWorkerStatistics();
                           StatisticsManager.StatisticsMessage stats = (StatisticsManager
                               .StatisticsMessage) parameter;
                           LinkedHashMap<ActorRef, StatisticsManager.WorkerStatistics> workerStats =
                               stats.getWorkerStatistics();
-
-//                      for (CentralStatisticsActor.WorkerStatistics statistics : statisticsList) {
-//                        throughputRow.append(statistics.getThroughput());
-//                        throughputRow.append('\n');
-//                      }
 
                           ObjectNode result = Json.newObject();
                           ArrayNode workers = result.putArray("workers");
@@ -136,7 +128,6 @@ public class MasterServer {
                             workers.add(
                                 Json.newObject()
                                     .put("timestamp", statsEntries.getValue().getTimestamp())
-//                                    .put("cpu", statsEntries.getValue().getCpu())
                                     .put("throughput", statsEntries.getValue().getThroughput())
                             );
                           }
