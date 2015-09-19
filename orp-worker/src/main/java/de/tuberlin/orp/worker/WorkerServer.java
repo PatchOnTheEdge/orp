@@ -38,6 +38,7 @@ import de.tuberlin.orp.common.message.OrpContext;
 import de.tuberlin.orp.common.message.OrpItemUpdate;
 import de.tuberlin.orp.common.message.OrpNotification;
 import de.tuberlin.orp.common.message.OrpRequest;
+import de.tuberlin.orp.master.ItemHandler;
 import io.verbit.ski.akka.Akka;
 import io.verbit.ski.core.Ski;
 import io.verbit.ski.core.http.Result;
@@ -46,6 +47,7 @@ import scala.concurrent.Future;
 import scala.concurrent.duration.Duration;
 import scala.concurrent.duration.FiniteDuration;
 
+import javax.mail.FetchProfile;
 import java.util.Map;
 import java.util.Optional;
 
@@ -69,9 +71,12 @@ public class WorkerServer {
     ActorSelection statManagerSel = system.actorSelection(master + "/user/statistics");
     ActorRef statisticsActor = system.actorOf(StatisticsAggregator.create(statManagerSel), "statistics");
 
-
+    //Create one worker Actor
     ActorRef workerActor = system.actorOf(WorkerActor.create(statisticsActor), "orp");
 
+    //Get Central Item Handler Reference
+    //ActorRef itemHandler = system.actorOf(ItemHandler.create(), "items");
+    ActorSelection itemHandler = system.actorSelection(master + "/user/items");
 
     Ski.builder()
         .setHost(host)
@@ -140,22 +145,28 @@ public class WorkerServer {
               return Akka.wrap(future);
             }),
             post("/item").route(context -> {
-              Optional<String> messageType = context.request().formParam("type").asText();
               Optional<JsonNode> jsonBody = context.request().formParam("body").asJson();
 
               JsonNode json = jsonBody.get();
               String itemId = json.get("id").asText();
+              String title = json.get("title").asText();
+              String text = json.get("text").asText();
+              String articleURL = json.get("url").asText();
+              String imgURL = json.get("img").asText();
               int flag = json.get("flag").asInt();
-
-              OrpItemUpdate itemUpdate = new OrpItemUpdate(itemId, flag);
+              System.out.println("received Item with ID = " +itemId);
+              OrpItemUpdate itemUpdate = new OrpItemUpdate(itemId, title, text, articleURL, imgURL, flag);
 
               workerActor.tell(itemUpdate, ActorRef.noSender());
+
+              //Save Items in central list
+              //System.out.println("item update = " + itemUpdate.getTitle());
+              itemHandler.tell(itemUpdate,ActorRef.noSender());
 
               return noContent();
             })
         )
         .build()
         .start();
-
   }
 }

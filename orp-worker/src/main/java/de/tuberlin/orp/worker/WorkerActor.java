@@ -51,7 +51,6 @@ public class WorkerActor extends UntypedActor {
   private ActorRef mostPopularWorker;
   private ActorRef filterActor;
   private ActorRef statisticsAggregator;
-
   private ActorRef workerCoordinator;
 
   private HardwareAbstractionLayer hardware = new SystemInfo().getHardware();

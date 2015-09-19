@@ -94,8 +94,8 @@ public class MostPopularWorker extends UntypedActor {
 
     } else if (message.equals("getIntermediateRanking")) {
 
-      log.info("Intermediate rankings requested.");
       RankingRepository rankingRepository = contextCounter.getRankingRespository();
+      //log.info("Intermediate rankings requested.");
       getSender().tell(new WorkerCoordinator.IntermediateRanking(rankingRepository), getSelf());
 
     } else {

@@ -84,7 +84,7 @@ public class WorkerCoordinator extends UntypedActor {
       ranking = mergedRankingMessage.getRankingRepository();
       filter = mergedRankingMessage.getFilter();
 
-      log.info("Calculating intermediate rankings.");
+      //log.info("Calculating intermediate rankings.");
 
       // calculate new intermediate results
       Future<Object> intermediateRankingFuture = Patterns.ask(mostPopularWorker, "getIntermediateRanking", 200);

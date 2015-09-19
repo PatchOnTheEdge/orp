@@ -29,7 +29,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+/**
+ * A Ranking Repository represents a mapping from publisher to ranking
+ */
 public class RankingRepository implements Serializable {
+  //Maps a publisher to his item rankings
   private Map<String, Ranking> rankings;
 
   public RankingRepository() {

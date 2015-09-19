@@ -3,7 +3,7 @@ from fabric.api import cd, run, env, sudo, parallel, shell_env, settings, put, e
 from fabric.decorators import task, hosts
 
 env.user = 'root'
-env.hosts = ['irs1.verbit.io', 'irs2.verbit.io', 'irs3.verbit.io']
+env.hosts = ['78.47.195.77']
 
 def generate_config_master(host):
     return StringIO('''[program:orp]
@@ -85,7 +85,7 @@ def deploy():
 
 
 def worker():
-    env.hosts = ['irs2.verbit.io', 'irs3.verbit.io']
+    env.hosts = ['78.47.195.77']
 
 def master():
-    env.hosts = ['irs1.verbit.io']
+    env.hosts = ['78.47.195.77']

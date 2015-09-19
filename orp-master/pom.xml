@@ -28,11 +28,13 @@
             <artifactId>ski-akka</artifactId>
             <version>0.1-SNAPSHOT</version>
         </dependency>
+
         <dependency>
             <groupId>io.verbit</groupId>
             <artifactId>ski-template-jtwig</artifactId>
             <version>0.1-SNAPSHOT</version>
         </dependency>
+
         <dependency>
             <groupId>com.typesafe.akka</groupId>
             <artifactId>akka-remote_2.10</artifactId>
@@ -43,6 +45,7 @@
             <artifactId>akka-cluster_2.10</artifactId>
             <version>2.3.9</version>
         </dependency>
+
     </dependencies>
 
     <build>

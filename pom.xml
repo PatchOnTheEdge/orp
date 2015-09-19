@@ -9,6 +9,7 @@
         <module>orp-common</module>
         <module>orp-worker</module>
         <module>orp-master</module>
+        <module>orp-test</module>
     </modules>
 
     <groupId>de.tuberlin</groupId>
@@ -29,9 +30,6 @@
     </repositories>
 
     <dependencies>
-
-
-
         <dependency>
             <groupId>com.esotericsoftware</groupId>
             <artifactId>kryo</artifactId>
@@ -41,6 +39,11 @@
             <groupId>com.github.dblock</groupId>
             <artifactId>oshi-core</artifactId>
             <version>1.3</version>
+        </dependency>
+        <dependency>
+            <groupId>com.mashape.unirest</groupId>
+            <artifactId>unirest-java</artifactId>
+            <version>1.4.5</version>
         </dependency>
     </dependencies>
 

@@ -25,6 +25,7 @@
 package de.tuberlin.orp.master;
 
 import akka.actor.ActorRef;
+import akka.actor.ActorSelection;
 import akka.actor.Props;
 import akka.actor.UntypedActor;
 import akka.event.Logging;
@@ -47,6 +48,7 @@ public class MostPopularMerger extends UntypedActor {
   private RankingFilter filter;
   private RankingRepository merger;
 
+
   public static Props create() {
     return Props.create(MostPopularMerger.class, new MostPopularMergerCreator());
   }
@@ -59,6 +61,7 @@ public class MostPopularMerger extends UntypedActor {
     filter = new RankingFilter();
 
     workerRouter = getContext().actorOf(FromConfig.getInstance().props(Props.empty()), "workerRouter");
+
 
     // asks every 2 seconds for the intermediate rankings
     getContext().system().scheduler().schedule(Duration.Zero(), Duration.create(2, TimeUnit.SECONDS), () -> {
@@ -78,14 +81,18 @@ public class MostPopularMerger extends UntypedActor {
 
       // build cache and send it after timeout
 
-      log.info("Received intermediate rankings from " + getSender().toString());
 
       WorkerResult result = (WorkerResult) message;
+      //log.info("Received intermediate rankings from " + getSender().toString());
 
       filter.merge(result.getFilter());
       merger.merge(result.getRankingRepository());
 
-    } else {
+    }
+    else if (message.equals("getMergerResult")){
+      getSender().tell(this.merger.getRankings(),getSelf());
+    }
+    else {
       unhandled(message);
     }
   }

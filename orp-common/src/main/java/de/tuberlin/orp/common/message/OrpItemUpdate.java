@@ -24,10 +24,17 @@
 
 package de.tuberlin.orp.common.message;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.verbit.ski.core.json.Json;
+
 import java.io.Serializable;
 
 public class OrpItemUpdate implements Serializable {
   private String itemId;
+  private String title;
+  private String text;
+  private String articleURL;
+  private String imgURL;
   private int flag;
 
   public OrpItemUpdate() {
@@ -38,10 +45,60 @@ public class OrpItemUpdate implements Serializable {
     this.flag = flag;
   }
 
+  public OrpItemUpdate(String itemId, String title, int flag) {
+    this.itemId = itemId;
+    this.title = title;
+    this.flag = flag;
+  }
+
+  /**
+   *
+   * @param itemId
+   * @param title
+   * @param text
+   * @param articleURL
+   * @param imgURL
+   * @param flag
+   */
+  public OrpItemUpdate(String itemId, String title, String text, String articleURL, String imgURL, int flag) {
+    this.itemId = itemId;
+    this.title = title;
+    this.text = text;
+    this.articleURL = articleURL;
+    this.imgURL = imgURL;
+    this.flag = flag;
+  }
+
+  public String getTitle() {
+    return title;
+  }
+
   public String getItemId() {
     return itemId;
   }
 
+  public String getText() {
+    return text;
+  }
+
+  public String getArticleURL() {
+    return articleURL;
+  }
+
+  public String getImgURL() {
+    return imgURL;
+  }
+
+  public ObjectNode getJson(){
+    ObjectNode node = Json.newObject();
+    //node.put("itemId", itemId);
+    node.put("title", title);
+    node.put("text", text);
+    node.put("articleUrl", articleURL);
+    node.put("imgUrl", imgURL);
+    node.put("flag",flag);
+    return node;
+  }
   public boolean isItemRecommendable() {
     return (flag & 1) == 1;
   }
