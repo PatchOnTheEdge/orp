@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit;
  * They are stored for some days before discarded.
  */
 public class ItemHandler extends UntypedActor {
-  private static int itemStorageDays = 2;
+  private static int itemStorageDays = 3;
   private LoggingAdapter log = Logging.getLogger(getContext().system(), this);
 
   //Map from PublisherId -> ItemId -> Item;
