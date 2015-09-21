@@ -22,11 +22,11 @@
  * SOFTWARE.
  */
 
-package de.tuberlin.orp.worker;
+package de.tuberlin.orp.worker.algorithms.popular;
 
-import de.tuberlin.orp.common.Ranking;
-import de.tuberlin.orp.common.RankingRepository;
-import de.tuberlin.orp.common.message.OrpContext;
+import de.tuberlin.orp.common.rankings.MostPopularRanking;
+import de.tuberlin.orp.common.repositories.MostPopularRankingRepository;
+import de.tuberlin.orp.common.messages.OrpContext;
 
 import java.util.ArrayDeque;
 import java.util.HashMap;
@@ -56,19 +56,19 @@ public class OrpContextCounter {
     contextWindow.add(context);
   }
 
-  public RankingRepository getRankingRespository() {
+  public MostPopularRankingRepository getRankingRespository() {
     Map<String, Map<String, Long>> countMap = calculateRankings();
 
-    Map<String, Ranking> rankings = new HashMap<>(countMap.size());
+    Map<String, MostPopularRanking> rankings = new HashMap<>(countMap.size());
     for (Map.Entry<String, Map<String, Long>> entry : countMap.entrySet()) {
       String key = entry.getKey();
-      Ranking value = new Ranking(entry.getValue());
+      MostPopularRanking value = new MostPopularRanking(entry.getValue());
       value.sort();
       value.slice(topListSize);
       rankings.put(key, value);
     }
 
-    return new RankingRepository(rankings);
+    return new MostPopularRankingRepository(rankings);
   }
 
   private Map<String, Map<String, Long>> calculateRankings() {

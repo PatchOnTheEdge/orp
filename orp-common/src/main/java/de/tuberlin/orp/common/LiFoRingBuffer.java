@@ -1,26 +1,21 @@
-package de.tuberlin.orp.worker;
-
-import de.tuberlin.orp.common.message.OrpContext;
-
-import java.lang.reflect.Array;
-import java.util.ArrayList;
+package de.tuberlin.orp.common;
 
 /**
  * Created by Patch on 21.08.2015.
  */
 public class LiFoRingBuffer {
   private int bufferSize;
-  private OrpContext[] buffer;
+  private Object[] buffer;
   private int lastElement;
   private int nrOfElements;
 
   public LiFoRingBuffer(int bufferSize) {
     this.bufferSize = bufferSize;
-    this.buffer = new OrpContext[bufferSize];
+    this.buffer = new Object[bufferSize];
     this.lastElement = -1;
     this.nrOfElements = 0;
   }
-  public void add(OrpContext context){
+  public void add(Object context){
     if (isEmpty()){
       buffer[0] = context;
       lastElement = 0;
@@ -39,7 +34,7 @@ public class LiFoRingBuffer {
       nrOfElements++;
     }
   }
-  public OrpContext pop(){
+  public Object pop(){
     if (isEmpty()){
       throw new RuntimeException("Buffer is Empty!");
     }
@@ -49,7 +44,7 @@ public class LiFoRingBuffer {
       return buffer[lastElement + 1];
     }
   }
-  public OrpContext getLast(){
+  public Object getLast(){
     if (isEmpty()){
       throw new RuntimeException("Buffer is Empty!");
     }
@@ -57,12 +52,12 @@ public class LiFoRingBuffer {
       return buffer[lastElement];
     }
   }
-  public OrpContext[] getLastN(int n){
+  public Object[] getLastN(int n){
     if (nrOfElements < n){
       throw new RuntimeException("To few Elements");
     }
     else {
-      OrpContext[] lastN = new OrpContext[n];
+      Object[] lastN = new Object[n];
       for (int i = 0; i < n; i++) {
         if (lastElement - i >= 0){
           lastN[i] = buffer[lastElement-i];

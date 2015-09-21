@@ -22,8 +22,9 @@
  * SOFTWARE.
  */
 
-package de.tuberlin.orp.common.message;
+package de.tuberlin.orp.common.messages;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.verbit.ski.core.json.Json;
 
@@ -35,38 +36,17 @@ public class OrpItemUpdate implements Serializable {
   private String text;
   private String articleURL;
   private String imgURL;
+  private String publisherId;
   private int flag;
 
-  public OrpItemUpdate() {
-  }
-
-  public OrpItemUpdate(String itemId, int flag) {
-    this.itemId = itemId;
-    this.flag = flag;
-  }
-
-  public OrpItemUpdate(String itemId, String title, int flag) {
-    this.itemId = itemId;
-    this.title = title;
-    this.flag = flag;
-  }
-
-  /**
-   *
-   * @param itemId
-   * @param title
-   * @param text
-   * @param articleURL
-   * @param imgURL
-   * @param flag
-   */
-  public OrpItemUpdate(String itemId, String title, String text, String articleURL, String imgURL, int flag) {
-    this.itemId = itemId;
-    this.title = title;
-    this.text = text;
-    this.articleURL = articleURL;
-    this.imgURL = imgURL;
-    this.flag = flag;
+  public OrpItemUpdate(JsonNode json) {
+    this.itemId = json.get("id").asText();
+    this.title = json.get("title").asText();
+    this.text = json.get("text").asText();
+    this.articleURL = json.get("url").asText();
+    this.imgURL = json.get("img").asText();
+    this.publisherId = json.get("domainid").asText();
+    this.flag = json.get("flag").asInt();
   }
 
   public String getTitle() {
@@ -87,6 +67,10 @@ public class OrpItemUpdate implements Serializable {
 
   public String getImgURL() {
     return imgURL;
+  }
+
+  public String getPublisherId() {
+    return publisherId;
   }
 
   public ObjectNode getJson(){

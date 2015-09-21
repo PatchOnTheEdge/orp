@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package de.tuberlin.orp.common.message;
+package de.tuberlin.orp.common.messages;
 
 import java.io.Serializable;
 

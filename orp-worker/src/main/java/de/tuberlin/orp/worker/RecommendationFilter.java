@@ -29,7 +29,7 @@ import akka.actor.UntypedActor;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.japi.Creator;
-import de.tuberlin.orp.common.RankingFilter;
+import de.tuberlin.orp.common.rankings.RankingFilter;
 import scala.concurrent.duration.Duration;
 
 import java.io.Serializable;
@@ -118,7 +118,7 @@ public class RecommendationFilter extends UntypedActor {
 
     } else if (message.equals("getIntermediateFilter")) {
 
-      getSender().tell(new WorkerCoordinator.IntermediateFilter(new RankingFilter(removed, recommended)), getSelf());
+      getSender().tell(new RequestCoordinator.IntermediateFilter(new RankingFilter(removed, recommended)), getSelf());
 
     } else {
       unhandled(message);

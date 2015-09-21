@@ -32,11 +32,11 @@ import akka.dispatch.Mapper;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.pattern.Patterns;
-import de.tuberlin.orp.common.Ranking;
-import de.tuberlin.orp.common.RankingFilter;
-import de.tuberlin.orp.common.RankingRepository;
-import de.tuberlin.orp.common.message.OrpContext;
-import de.tuberlin.orp.common.message.OrpRequest;
+import de.tuberlin.orp.common.rankings.MostPopularRanking;
+import de.tuberlin.orp.common.repositories.MostPopularRankingRepository;
+import de.tuberlin.orp.common.rankings.RankingFilter;
+import de.tuberlin.orp.common.messages.OrpContext;
+import de.tuberlin.orp.common.messages.OrpRequest;
 import de.tuberlin.orp.master.MostPopularMerger;
 import scala.concurrent.Future;
 
@@ -44,20 +44,27 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Optional;
 
-public class WorkerCoordinator extends UntypedActor {
+/**
+ * This Actor coordinates requests.
+ * All available algorithm-workers are asked for their rankings.
+ * The worker delegates which ranking will be used.
+ */
+public class RequestCoordinator extends UntypedActor {
   private LoggingAdapter log = Logging.getLogger(getContext().system(), this);
 
   private ActorRef mostPopularWorker;
+  private ActorRef mostRecentWorker;
   private ActorRef filterActor;
 
-  private RankingRepository ranking;
+  private MostPopularRankingRepository ranking;
   private RankingFilter filter;
 
-  public WorkerCoordinator(ActorRef mostPopularWorker, ActorRef filterActor) {
+  public RequestCoordinator(ActorRef mostPopularWorker, ActorRef mostRecentWorker, ActorRef filterActor) {
     this.mostPopularWorker = mostPopularWorker;
+    this.mostRecentWorker = mostRecentWorker;
     this.filterActor = filterActor;
 
-    this.ranking = new RankingRepository();
+    this.ranking = new MostPopularRankingRepository();
     this.filter = new RankingFilter();
   }
 
@@ -72,10 +79,10 @@ public class WorkerCoordinator extends UntypedActor {
       log.info(String.format("Received request: publisherId = %s, userId = %s", publisherId, userId));
 
 
-      Optional<Ranking> ranking = this.ranking.getRanking(publisherId);
+      Optional<MostPopularRanking> ranking = this.ranking.getRanking(publisherId);
       ranking.ifPresent(ranking1 -> filter.filter(ranking1, context));
 
-      getSender().tell(ranking.orElse(new Ranking()), getSelf());
+      getSender().tell(ranking.orElse(new MostPopularRanking()), getSelf());
 
     } else if (message instanceof MostPopularMerger.MergedRanking) {
 
@@ -114,20 +121,20 @@ public class WorkerCoordinator extends UntypedActor {
     }
   }
 
-  public static Props create(ActorRef mostPopularWorker, ActorRef filterActor) {
-    return Props.create(WorkerCoordinator.class, () -> {
-      return new WorkerCoordinator(mostPopularWorker, filterActor);
+  public static Props create(ActorRef mostPopularWorker, ActorRef mostRecentWorker, ActorRef filterActor) {
+    return Props.create(RequestCoordinator.class, () -> {
+      return new RequestCoordinator(mostPopularWorker, mostRecentWorker, filterActor);
     });
   }
 
   public static class IntermediateRanking {
-    private RankingRepository rankingRepository;
+    private MostPopularRankingRepository rankingRepository;
 
-    public IntermediateRanking(RankingRepository rankingRepository) {
+    public IntermediateRanking(MostPopularRankingRepository rankingRepository) {
       this.rankingRepository = rankingRepository;
     }
 
-    public RankingRepository getRankingRepository() {
+    public MostPopularRankingRepository getRankingRepository() {
       return rankingRepository;
     }
   }

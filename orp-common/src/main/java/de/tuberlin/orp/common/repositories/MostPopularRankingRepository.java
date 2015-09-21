@@ -22,7 +22,9 @@
  * SOFTWARE.
  */
 
-package de.tuberlin.orp.common;
+package de.tuberlin.orp.common.repositories;
+
+import de.tuberlin.orp.common.rankings.MostPopularRanking;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -30,37 +32,40 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * A Ranking Repository represents a mapping from publisher to ranking
+ * A MostPopularRanking Repository represents a mapping from publisher to ranking
  */
-public class RankingRepository implements Serializable {
+public class MostPopularRankingRepository implements RankingRepository,Serializable {
   //Maps a publisher to his item rankings
-  private Map<String, Ranking> rankings;
+  private Map<String, MostPopularRanking> rankings;
 
-  public RankingRepository() {
+  public MostPopularRankingRepository() {
     this(new HashMap<>());
   }
 
-  public RankingRepository(Map<String, Ranking> rankings) {
+  public MostPopularRankingRepository(Map<String, MostPopularRanking> rankings) {
     this.rankings = rankings;
   }
 
-  public Optional<Ranking> getRanking(String key) {
+  @Override
+  public Optional<MostPopularRanking> getRanking(String key) {
     return Optional.ofNullable(rankings.get(key));
   }
 
-  public Map<String, Ranking> getRankings() {
+  @Override
+  public Map<String, MostPopularRanking> getRankings() {
     return rankings;
   }
 
-  public void merge(RankingRepository repository) {
+  @Override
+  public void merge(MostPopularRankingRepository repository) {
     merge(rankings, repository.getRankings());
   }
 
-  private void merge(Map<String, Ranking> mergedRankings, Map<String, Ranking> rankings) {
+  private void merge(Map<String, MostPopularRanking> mergedRankings, Map<String, MostPopularRanking> rankings) {
     for (String publisher : rankings.keySet()) {
-      mergedRankings.putIfAbsent(publisher, new Ranking());
-      Ranking ranking = mergedRankings.get(publisher);
-      ranking.merge(rankings.get(publisher));
+      mergedRankings.putIfAbsent(publisher, new MostPopularRanking());
+      MostPopularRanking mostPopularRanking = mergedRankings.get(publisher);
+      mostPopularRanking.merge(rankings.get(publisher));
     }
   }
 
@@ -79,6 +84,7 @@ public class RankingRepository implements Serializable {
     return result.toString();
   }
 
+  @Override
   public void sortRankings() {
     rankings.forEach((publisher, ranking) -> ranking.sort());
   }

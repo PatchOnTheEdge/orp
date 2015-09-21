@@ -1,4 +1,4 @@
-/*
+package de.tuberlin.orp.test;/*
  * The MIT License (MIT)
  *
  * Copyright (c) 2015 Ilya Verbitskiy, Patrick Probst
@@ -42,9 +42,10 @@ public class OrpTestOfflineData {
   public static String HOST = "localhost";
       //"37.120.189.25";
   public static void main(String[] args) throws Exception {
+    // C:\Users\Patch\projects\orp\test.data.json C:\Users\Patch\projects\orp\test.item.json 5 5
     // /Users/ilya/Desktop/2014-07-01.data
     // C:\Users\Patch\projects\json\CLEF-2015-Task2-Json07\Json-07\2014-07-01.data\2014-07-01.data C:\Users\Patch\projects\json\CLEF-2015-Task2-Json07\Json-07\2014-07-01.items\2014-07-01.items
-    // C:\Users\Patch\projects\orp\test.data.json C:\Users\Patch\projects\orp\test.item.json
+
     String filePathData = args[0];
     String filePathItem = args[1];
     int limitData = Integer.parseInt(args[2]);
@@ -66,7 +67,7 @@ public class OrpTestOfflineData {
   }
 
   private static void postJsonItem(JsonNode jsonNode) {
-    System.out.println("json Item: " + jsonNode.toString());
+    //System.out.println("json Item: " + jsonNode.toString());
     String id = jsonNode.get("id").asText();
     String title = jsonNode.get("title").asText();
     String flag = jsonNode.get("flag").asText();
@@ -77,7 +78,7 @@ public class OrpTestOfflineData {
   }
 
   private static void postJson(JsonNode json) {
-    System.out.println("json Data: " + json.toString());
+    //System.out.println("json Data: " + json.toString());
     String eventType;
     eventType = json.get("event_type").asText();
     switch (eventType) {

@@ -28,21 +28,17 @@ import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.cluster.Cluster;
 import akka.dispatch.Mapper;
-import akka.event.Logging;
-import akka.event.LoggingAdapter;
 import akka.pattern.Patterns;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import de.tuberlin.orp.common.Ranking;
-import de.tuberlin.orp.common.message.OrpItemUpdate;
+import de.tuberlin.orp.common.rankings.MostPopularRanking;
+import de.tuberlin.orp.common.messages.OrpItemUpdate;
 import io.verbit.ski.akka.Akka;
 import io.verbit.ski.core.Ski;
 import io.verbit.ski.core.http.Result;
 import io.verbit.ski.core.json.Json;
 import scala.concurrent.Future;
 
-import java.io.InputStream;
 import java.util.*;
 
 import static io.verbit.ski.core.http.SimpleResult.ok;
@@ -63,54 +59,22 @@ public class MasterServer {
         .setPort(port)
         .setStaticFolder(MasterServer.class.getClassLoader().getResource("web").getPath())
         .addRoutes(
+
+            get("/").route(context -> render("web/index.html", Json.newObject())),
+
             get("/report").routeAsync(context -> {
               Future<Result> result =
                   Patterns.ask(statisticsManager, "getStatisticsReport", 100)
                       .map(new Mapper<Object, Result>() {
+
                         @Override
                         public Result apply(Object parameter) {
-                          StringBuilder csv = new StringBuilder();
-
-                          StatisticsManager.StatisticsReport report = (StatisticsManager.StatisticsReport) parameter;
-                          LinkedHashMap<ActorRef, ArrayDeque<StatisticsManager.WorkerStatistics>> workerStats =
-                              report.getWorkerStatistics();
-
-                          csv.append("Throughput\n");
-
-                          for (ActorRef actorRef : workerStats.keySet()) {
-
-                            csv.append(actorRef.toString())
-                                .append('\n');
-
-                            ArrayDeque<StatisticsManager.WorkerStatistics> wStats = workerStats.get(actorRef);
-
-                            Iterator<StatisticsManager.WorkerStatistics> it = wStats.descendingIterator();
-                            while (it.hasNext()) {
-                              StatisticsManager.WorkerStatistics stat = it.next();
-                              csv.append(stat.getTimestamp())
-                                  .append(';')
-                                  .append((long) stat.getThroughput())
-                                  .append('\n');
-                            }
-
-                            csv.append("\n\n");
-                          }
-
-
-                          csv.append("Response Time\n");
-                          SortedMap<Short, Long> resStats = report.getResponseTimes();
-                          for (Map.Entry<Short, Long> entry : resStats.entrySet()) {
-                            csv.append(entry.getKey());
-                            csv.append(';');
-                            csv.append(entry.getValue());
-                            csv.append('\n');
-                          }
-
-                          return ok(csv.toString());
+                          return ok(buildReport(parameter));
                         }
                       }, system.dispatcher());
               return Akka.wrap(result);
             }),
+
             get("/statistics").routeAsync(context -> {
               Future<Result> result =
                   Patterns.ask(statisticsManager, "getCurrentStatistics", 100)
@@ -138,8 +102,9 @@ public class MasterServer {
                       }, system.dispatcher());
               return Akka.wrap(result);
             }),
-            get("/").route(context -> render("web/index.html", Json.newObject())),
+
             get("/throughput").route(context -> render("web/templates/index.twig", Json.newObject())),
+
             get("/items").routeAsync(context -> {
               Future<Result> result =
                   Patterns.ask(itemHandler, "getItems", 100)
@@ -148,23 +113,20 @@ public class MasterServer {
                         public Result apply(Object parameter) {
 
                           ObjectNode result = Json.newObject();
-                          ArrayNode data = result.putArray("items");
-                          HashMap<String, OrpItemUpdate> items = (HashMap<String, OrpItemUpdate>) parameter;
+                          ArrayNode items = result.putArray("items");
 
-                          for (String itemId : items.keySet()) {
-                            OrpItemUpdate item = items.get(itemId);
-                            System.out.println("providing item with id = " + itemId);
-                            ObjectNode itemJson = Json.newObject();
-                            ObjectNode node = item.getJson();
-                            itemJson.put("itemId", itemId);
-                            itemJson.put("item", node);
-                            data.add(itemJson);
+                          Map<String, LinkedHashMap<String, OrpItemUpdate>> publisherItems = (Map<String, LinkedHashMap<String, OrpItemUpdate>>) parameter;
+
+                          for (String publisher : publisherItems.keySet()) {
+                            buildItemArray(items, publisherItems.get(publisher));
                           }
+
                           return ok(result);
                         }
                       }, system.dispatcher());
               return Akka.wrap(result);
             }),
+
             get("/ranking-mp").routeAsync(context -> {
               Future<Result> result =
                   Patterns.ask(mergerActor, "getMergerResult", 100)
@@ -173,19 +135,19 @@ public class MasterServer {
                         @Override
                         public Result apply(Object object) {
 
-                          Map<String, Ranking> pubRankMap = (Map<String, Ranking>) object;
+                          Map<String, MostPopularRanking> pubRankMap = (Map<String, MostPopularRanking>) object;
                           Set<String> publishers = pubRankMap.keySet();
 
                           ObjectNode result = Json.newObject();
                           ArrayNode data = result.putArray("rankings");
 
                           for (String publisher : publishers) {
-                            Ranking ranking = pubRankMap.get(publisher);
+                            MostPopularRanking mostPopularRanking = pubRankMap.get(publisher);
 
                             ObjectNode publisherNode = Json.newObject();
                             publisherNode.put("publisherId", publisher);
                             ArrayNode rankingNode = publisherNode.putArray("ranking");
-                            rankingNode.addAll(ranking.toJson());
+                            rankingNode.addAll(mostPopularRanking.toJson());
 
                             data.add(publisherNode);
                           }
@@ -197,6 +159,65 @@ public class MasterServer {
         )
         .build()
         .start();
+  }
 
+  /**
+   * Writes throughput and response time in csv-like style
+   * @param parameter
+   * @return String containing throughput and response time
+   */
+  private static String buildReport(Object parameter) {
+    StringBuilder csv = new StringBuilder();
+
+    StatisticsManager.StatisticsReport report = (StatisticsManager.StatisticsReport) parameter;
+    LinkedHashMap<ActorRef, ArrayDeque<StatisticsManager.WorkerStatistics>> workerStats =
+        report.getWorkerStatistics();
+
+    csv.append("Throughput\n");
+
+    for (ActorRef actorRef : workerStats.keySet()) {
+
+      csv.append(actorRef.toString())
+          .append('\n');
+
+      ArrayDeque<StatisticsManager.WorkerStatistics> wStats = workerStats.get(actorRef);
+
+      Iterator<StatisticsManager.WorkerStatistics> it = wStats.descendingIterator();
+      while (it.hasNext()) {
+        StatisticsManager.WorkerStatistics stat = it.next();
+        csv.append(stat.getTimestamp())
+            .append(';')
+            .append((long) stat.getThroughput())
+            .append('\n');
+      }
+      csv.append("\n\n");
+    }
+
+    csv.append("Response Time\n");
+    SortedMap<Short, Long> resStats = report.getResponseTimes();
+    for (Map.Entry<Short, Long> entry : resStats.entrySet()) {
+      csv.append(entry.getKey());
+      csv.append(';');
+      csv.append(entry.getValue());
+      csv.append('\n');
+    }
+    return csv.toString();
+  }
+
+  /**
+   * Builds a Json Array which contains all items from one publisher
+   * @param data The Array Node which will contain the items
+   * @param items The Hashmap which holds the items
+   */
+  private static void buildItemArray(ArrayNode data, LinkedHashMap<String, OrpItemUpdate> items){
+    for (String itemId : items.keySet()) {
+      OrpItemUpdate item = items.get(itemId);
+      //System.out.println("providing item with id = " + itemId);
+      ObjectNode itemJson = Json.newObject();
+      ObjectNode node = item.getJson();
+      itemJson.put("itemId", itemId);
+      itemJson.put("item", node);
+      data.add(itemJson);
+    }
   }
 }

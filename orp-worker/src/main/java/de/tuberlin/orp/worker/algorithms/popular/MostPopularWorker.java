@@ -22,15 +22,16 @@
  * SOFTWARE.
  */
 
-package de.tuberlin.orp.worker;
+package de.tuberlin.orp.worker.algorithms.popular;
 
 import akka.actor.Props;
 import akka.actor.UntypedActor;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.japi.Creator;
-import de.tuberlin.orp.common.RankingRepository;
-import de.tuberlin.orp.common.message.OrpContext;
+import de.tuberlin.orp.common.repositories.MostPopularRankingRepository;
+import de.tuberlin.orp.common.messages.OrpContext;
+import de.tuberlin.orp.worker.RequestCoordinator;
 
 /**
  * An actor that can receive items and store them per publisher in a private Hashmap. The top n entries will be send to
@@ -94,9 +95,9 @@ public class MostPopularWorker extends UntypedActor {
 
     } else if (message.equals("getIntermediateRanking")) {
 
-      RankingRepository rankingRepository = contextCounter.getRankingRespository();
+      MostPopularRankingRepository rankingRepository = contextCounter.getRankingRespository();
       //log.info("Intermediate rankings requested.");
-      getSender().tell(new WorkerCoordinator.IntermediateRanking(rankingRepository), getSelf());
+      getSender().tell(new RequestCoordinator.IntermediateRanking(rankingRepository), getSelf());
 
     } else {
       unhandled(message);

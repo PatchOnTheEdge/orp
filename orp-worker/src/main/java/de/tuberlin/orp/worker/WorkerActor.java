@@ -29,10 +29,12 @@ import akka.actor.Props;
 import akka.actor.UntypedActor;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
-import de.tuberlin.orp.common.message.OrpContext;
-import de.tuberlin.orp.common.message.OrpItemUpdate;
-import de.tuberlin.orp.common.message.OrpNotification;
-import de.tuberlin.orp.common.message.OrpRequest;
+import de.tuberlin.orp.common.messages.OrpContext;
+import de.tuberlin.orp.common.messages.OrpItemUpdate;
+import de.tuberlin.orp.common.messages.OrpNotification;
+import de.tuberlin.orp.common.messages.OrpRequest;
+import de.tuberlin.orp.worker.algorithms.popular.MostPopularWorker;
+import de.tuberlin.orp.worker.algorithms.recent.MostRecentWorker;
 import oshi.SystemInfo;
 import oshi.hardware.HardwareAbstractionLayer;
 import oshi.hardware.Processor;
@@ -49,9 +51,10 @@ public class WorkerActor extends UntypedActor {
   private LoggingAdapter log = Logging.getLogger(getContext().system(), this);
 
   private ActorRef mostPopularWorker;
+  private ActorRef mostRecentWorker;
   private ActorRef filterActor;
   private ActorRef statisticsAggregator;
-  private ActorRef workerCoordinator;
+  private ActorRef requestCoordinator;
 
   private HardwareAbstractionLayer hardware = new SystemInfo().getHardware();
 
@@ -72,9 +75,11 @@ public class WorkerActor extends UntypedActor {
     super.preStart();
 
     mostPopularWorker = getContext().actorOf(MostPopularWorker.create(500, 50), "mp");
+    mostRecentWorker = getContext().actorOf(MostRecentWorker.create(50), "mr");
+
     filterActor = getContext().actorOf(RecommendationFilter.create(), "filter");
 
-    workerCoordinator = getContext().actorOf(WorkerCoordinator.create(mostPopularWorker, filterActor), "coordinator");
+    requestCoordinator = getContext().actorOf(RequestCoordinator.create(mostPopularWorker, mostRecentWorker,filterActor), "coordinator");
 
     getContext().system().scheduler().schedule(Duration.Zero(), Duration.create(1, TimeUnit.SECONDS), () -> {
 
@@ -83,7 +88,6 @@ public class WorkerActor extends UntypedActor {
           .sum();
 
       double memory = hardware.getMemory().getAvailable() / (double) hardware.getMemory().getTotal();
-
 
     }, getContext().dispatcher());
   }
@@ -110,6 +114,7 @@ public class WorkerActor extends UntypedActor {
 
           if (!publisherId.equals("") && !itemId.equals("") && !itemId.equals("0")) {
             mostPopularWorker.tell(context, getSelf());
+
             filterActor.tell(new RecommendationFilter.Clicked(context.getUserId(), context.getItemId()), getSelf());
           }
 
@@ -119,7 +124,7 @@ public class WorkerActor extends UntypedActor {
     } else if (message instanceof OrpRequest) {
 
       // requests are handled by the coordinator
-      workerCoordinator.forward(message, getContext());
+      requestCoordinator.forward(message, getContext());
 
     } else if (message instanceof OrpItemUpdate) {
 

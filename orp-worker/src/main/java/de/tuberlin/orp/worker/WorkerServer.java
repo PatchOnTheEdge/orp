@@ -33,21 +33,17 @@ import akka.pattern.Patterns;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import de.tuberlin.orp.common.Ranking;
-import de.tuberlin.orp.common.message.OrpContext;
-import de.tuberlin.orp.common.message.OrpItemUpdate;
-import de.tuberlin.orp.common.message.OrpNotification;
-import de.tuberlin.orp.common.message.OrpRequest;
-import de.tuberlin.orp.master.ItemHandler;
+import de.tuberlin.orp.common.rankings.MostPopularRanking;
+import de.tuberlin.orp.common.messages.OrpContext;
+import de.tuberlin.orp.common.messages.OrpItemUpdate;
+import de.tuberlin.orp.common.messages.OrpNotification;
+import de.tuberlin.orp.common.messages.OrpRequest;
 import io.verbit.ski.akka.Akka;
 import io.verbit.ski.core.Ski;
 import io.verbit.ski.core.http.Result;
 import io.verbit.ski.core.json.Json;
 import scala.concurrent.Future;
-import scala.concurrent.duration.Duration;
-import scala.concurrent.duration.FiniteDuration;
 
-import javax.mail.FetchProfile;
 import java.util.Map;
 import java.util.Optional;
 
@@ -109,9 +105,9 @@ public class WorkerServer {
                         return ok(Json.newObject());
                       }
 
-                      Ranking ranking = (Ranking) o;
+                      MostPopularRanking mostPopularRanking = (MostPopularRanking) o;
 
-                      if (ranking.getRanking().isEmpty()) {
+                      if (mostPopularRanking.getRanking().isEmpty()) {
                         return ok(Json.newObject());
                       }
 
@@ -127,9 +123,9 @@ public class WorkerServer {
                           .putArray("2");
 
 
-                      double max = ranking.getRanking().values().stream().mapToLong(l -> l).max().getAsLong();
+                      double max = mostPopularRanking.getRanking().values().stream().mapToLong(l -> l).max().getAsLong();
 
-                      for (Map.Entry<String, Long> entry : ranking.getRanking().entrySet()) {
+                      for (Map.Entry<String, Long> entry : mostPopularRanking.getRanking().entrySet()) {
                         items.add(entry.getKey());
                         scores.add(entry.getValue() / max);
                       }
@@ -147,21 +143,15 @@ public class WorkerServer {
             post("/item").route(context -> {
               Optional<JsonNode> jsonBody = context.request().formParam("body").asJson();
 
-              JsonNode json = jsonBody.get();
-              String itemId = json.get("id").asText();
-              String title = json.get("title").asText();
-              String text = json.get("text").asText();
-              String articleURL = json.get("url").asText();
-              String imgURL = json.get("img").asText();
-              int flag = json.get("flag").asInt();
-              System.out.println("received Item with ID = " +itemId);
-              OrpItemUpdate itemUpdate = new OrpItemUpdate(itemId, title, text, articleURL, imgURL, flag);
+              OrpItemUpdate itemUpdate = new OrpItemUpdate(jsonBody.get());
 
+              //Forward item to Worker Actor who informs Algorithm Workers
               workerActor.tell(itemUpdate, ActorRef.noSender());
 
-              //Save Items in central list
-              //System.out.println("item update = " + itemUpdate.getTitle());
-              itemHandler.tell(itemUpdate,ActorRef.noSender());
+              //Save items in central list
+              if (itemUpdate.isItemRecommendable()){
+                //itemHandler.tell(itemUpdate,ActorRef.noSender());
+              }
 
               return noContent();
             })

@@ -25,7 +25,6 @@
 package de.tuberlin.orp.master;
 
 import akka.actor.ActorRef;
-import akka.actor.ActorSelection;
 import akka.actor.Props;
 import akka.actor.UntypedActor;
 import akka.event.Logging;
@@ -33,8 +32,8 @@ import akka.event.LoggingAdapter;
 import akka.japi.Creator;
 import akka.routing.Broadcast;
 import akka.routing.FromConfig;
-import de.tuberlin.orp.common.RankingFilter;
-import de.tuberlin.orp.common.RankingRepository;
+import de.tuberlin.orp.common.repositories.MostPopularRankingRepository;
+import de.tuberlin.orp.common.rankings.RankingFilter;
 import scala.concurrent.duration.Duration;
 
 import java.io.Serializable;
@@ -46,7 +45,7 @@ public class MostPopularMerger extends UntypedActor {
   private ActorRef workerRouter;
 
   private RankingFilter filter;
-  private RankingRepository merger;
+  private MostPopularRankingRepository merger;
 
 
   public static Props create() {
@@ -57,7 +56,7 @@ public class MostPopularMerger extends UntypedActor {
   public void preStart() throws Exception {
     log.info("Merger started");
 
-    merger = new RankingRepository();
+    merger = new MostPopularRankingRepository();
     filter = new RankingFilter();
 
     workerRouter = getContext().actorOf(FromConfig.getInstance().props(Props.empty()), "workerRouter");
@@ -69,7 +68,7 @@ public class MostPopularMerger extends UntypedActor {
       merger.sortRankings();
       log.debug(merger.toString());
       workerRouter.tell(new Broadcast(new MergedRanking(merger, filter)), getSelf());
-      merger = new RankingRepository();
+      merger = new MostPopularRankingRepository();
 
     }, getContext().dispatcher());
 
@@ -99,15 +98,15 @@ public class MostPopularMerger extends UntypedActor {
 
 
   public static class WorkerResult implements Serializable {
-    private final RankingRepository rankings;
+    private final MostPopularRankingRepository rankings;
     private final RankingFilter filter;
 
-    public WorkerResult(RankingRepository rankingRepository, RankingFilter filter) {
+    public WorkerResult(MostPopularRankingRepository rankingRepository, RankingFilter filter) {
       this.rankings = rankingRepository;
       this.filter = filter;
     }
 
-    public RankingRepository getRankingRepository() {
+    public MostPopularRankingRepository getRankingRepository() {
       return rankings;
     }
 
@@ -124,15 +123,15 @@ public class MostPopularMerger extends UntypedActor {
   }
 
   public static class MergedRanking implements Serializable {
-    private RankingRepository rankingRepository;
+    private MostPopularRankingRepository rankingRepository;
     private RankingFilter filter;
 
-    public MergedRanking(RankingRepository rankingRepository, RankingFilter filter) {
+    public MergedRanking(MostPopularRankingRepository rankingRepository, RankingFilter filter) {
       this.rankingRepository = rankingRepository;
       this.filter = filter;
     }
 
-    public RankingRepository getRankingRepository() {
+    public MostPopularRankingRepository getRankingRepository() {
       return rankingRepository;
     }
 

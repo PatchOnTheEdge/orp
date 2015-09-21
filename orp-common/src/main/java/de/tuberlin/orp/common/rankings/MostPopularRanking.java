@@ -22,11 +22,11 @@
  * SOFTWARE.
  */
 
-package de.tuberlin.orp.common;
+package de.tuberlin.orp.common.rankings;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import de.tuberlin.orp.common.message.OrpItemUpdate;
+import de.tuberlin.orp.common.Utils;
 import io.verbit.ski.core.json.Json;
 
 import java.io.Serializable;
@@ -35,37 +35,39 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * A Ranking represents a Mapping from Item to Number of Clicks
+ * A MostPopularRanking represents a Mapping from Item to Number of Clicks
  */
-public class Ranking implements Serializable {
+public class MostPopularRanking implements Ranking, Serializable {
   private LinkedHashMap<String, Long> ranking;
-  private LinkedHashMap<Long, OrpItemUpdate> items;
 
-  public Ranking() {
+  public MostPopularRanking() {
     ranking = new LinkedHashMap<>();
   }
 
-  public Ranking(Ranking ranking) {
-    this.ranking = ranking.getRanking();
+  public MostPopularRanking(MostPopularRanking mostPopularRanking) {
+    this.ranking = mostPopularRanking.getRanking();
   }
 
-  public Ranking(Map<String, Long> ranking) {
+  public MostPopularRanking(Map<String, Long> ranking) {
     this.ranking = new LinkedHashMap<>(ranking);
   }
 
+  @Override
   public LinkedHashMap<String, Long> getRanking() {
     return ranking;
   }
 
-  public void merge(Ranking ranking) {
-    LinkedHashMap<String, Long> newRanking = ranking.getRanking();
+  @Override
+  public void merge(MostPopularRanking mostPopularRanking) {
+    LinkedHashMap<String, Long> newRanking = mostPopularRanking.getRanking();
     for (String key : newRanking.keySet()) {
       this.ranking.merge(key, newRanking.get(key), Long::sum);
     }
   }
 
-  public Ranking filter(Set<String> keys) {
-    Ranking copy = new Ranking(this);
+  @Override
+  public MostPopularRanking filter(Set<String> keys) {
+    MostPopularRanking copy = new MostPopularRanking(this);
     if (keys != null) {
       for (String key : keys) {
         copy.getRanking().remove(key);
@@ -74,10 +76,12 @@ public class Ranking implements Serializable {
     return copy;
   }
 
+  @Override
   public void sort() {
     ranking = Utils.sortMapByEntry(ranking, (o1, o2) -> (int) (o2.getValue() - o1.getValue()));
   }
 
+  @Override
   public void slice(int limit) {
     ranking = Utils.sliceMap(ranking, limit);
   }
@@ -86,6 +90,8 @@ public class Ranking implements Serializable {
   public String toString() {
     return ranking.toString();
   }
+
+  @Override
   public ArrayNode toJson(){
     ObjectNode jsonNodes = Json.newObject();
     ArrayNode rankings = jsonNodes.putArray("ranking");
