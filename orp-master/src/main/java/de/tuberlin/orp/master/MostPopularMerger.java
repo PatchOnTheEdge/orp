@@ -80,7 +80,6 @@ public class MostPopularMerger extends UntypedActor {
 
       // build cache and send it after timeout
 
-
       WorkerResult result = (WorkerResult) message;
       //log.info("Received intermediate rankings from " + getSender().toString());
 

@@ -35,7 +35,7 @@ public class ItemHandler extends UntypedActor {
   private Map<String, LiFoRingBuffer> recentItemBuffer;
 
   public ItemHandler() {
-    publisherItemIdMap = new LinkedHashMap<>();
+    publisherItemIdMap = new HashMap<>();
     itemPublisherMap = new HashMap<>();
     creationTime = new HashMap<>();
     recentItemBuffer = new HashMap<>();
@@ -47,8 +47,12 @@ public class ItemHandler extends UntypedActor {
   }
   @Override
   public void preStart(){
+    log.info("Item Handler started.");
+
     //Every Hour: clean items older than 2 days;
-    getContext().system().scheduler().schedule(Duration.Zero(), Duration.create(1, TimeUnit.HOURS), () -> {
+    getContext().system().scheduler().schedule(Duration.create(1, TimeUnit.HOURS), Duration.create(1, TimeUnit.HOURS), () -> {
+      log.info("Deleting items old than " + itemStorageDays + " days.");
+
       Calendar currentCalendar = Calendar.getInstance();
       currentCalendar.add(Calendar.DATE, -itemStorageDays);
       Date time = currentCalendar.getTime();
@@ -73,22 +77,23 @@ public class ItemHandler extends UntypedActor {
       String itemId = item.getItemId();
       String publisherId = item.getPublisherId();
 
-      log.info("Received Item with ID = " + itemId);
+      log.info("Received Item (Pb = " + publisherId + ") with ID = " + itemId);
 
-      publisherItemIdMap.getOrDefault(publisherId,new HashMap<>()).put(itemId,item);
+      publisherItemIdMap.putIfAbsent(publisherId, new HashMap<>());
+      publisherItemIdMap.get(publisherId).put(itemId, item);
       itemPublisherMap.put(itemId, publisherId);
       recentItemBuffer.getOrDefault(publisherId,new LiFoRingBuffer(6)).add(item);
       creationTime.put(itemId, new Date());
     }
     else if(message.equals("getItems")){
       getSender().tell(getItems(),getSelf());
-      //log.info("Sending items. Nr.: " + getItems().size());
+      log.info("Sending items." + getItems().keySet().toString());
     }
   }
 
   public static Props create() { return Props.create(ItemHandler.class, new ItemHandlerCreator());}
 
-  public Object getItems() {
+  public Map<String, Map<String, OrpItemUpdate>> getItems() {
     return publisherItemIdMap;
   }
 

@@ -73,6 +73,7 @@ public class WorkerActor extends UntypedActor {
   @Override
   public void preStart() throws Exception {
     super.preStart();
+    log.info("Worker started.");
 
     mostPopularWorker = getContext().actorOf(MostPopularWorker.create(500, 50), "mp");
     mostRecentWorker = getContext().actorOf(MostRecentWorker.create(50), "mr");
@@ -127,7 +128,6 @@ public class WorkerActor extends UntypedActor {
       requestCoordinator.forward(message, getContext());
 
     } else if (message instanceof OrpItemUpdate) {
-
       // look for non recommendable items
       OrpItemUpdate itemUpdate = (OrpItemUpdate) message;
       if (!itemUpdate.isItemRecommendable()) {

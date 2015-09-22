@@ -115,7 +115,7 @@ public class MasterServer {
                           ObjectNode result = Json.newObject();
                           ArrayNode items = result.putArray("items");
 
-                          Map<String, LinkedHashMap<String, OrpItemUpdate>> publisherItems = (Map<String, LinkedHashMap<String, OrpItemUpdate>>) parameter;
+                          Map<String, Map<String, OrpItemUpdate>> publisherItems = (Map<String, Map<String, OrpItemUpdate>>) parameter;
 
                           for (String publisher : publisherItems.keySet()) {
                             buildItemArray(items, publisherItems.get(publisher));
@@ -209,7 +209,7 @@ public class MasterServer {
    * @param data The Array Node which will contain the items
    * @param items The Hashmap which holds the items
    */
-  private static void buildItemArray(ArrayNode data, LinkedHashMap<String, OrpItemUpdate> items){
+  private static void buildItemArray(ArrayNode data, Map<String, OrpItemUpdate> items){
     for (String itemId : items.keySet()) {
       OrpItemUpdate item = items.get(itemId);
       //System.out.println("providing item with id = " + itemId);

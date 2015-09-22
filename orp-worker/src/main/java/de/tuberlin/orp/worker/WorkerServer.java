@@ -150,7 +150,7 @@ public class WorkerServer {
 
               //Save items in central list
               if (itemUpdate.isItemRecommendable()){
-                //itemHandler.tell(itemUpdate,ActorRef.noSender());
+                itemHandler.tell(itemUpdate,ActorRef.noSender());
               }
 
               return noContent();

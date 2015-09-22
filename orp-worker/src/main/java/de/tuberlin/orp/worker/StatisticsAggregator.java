@@ -71,6 +71,7 @@ public class StatisticsAggregator extends UntypedActor {
 
   @Override
   public void preStart() throws Exception {
+    log.info("Statistics Aggregator started.");
     FiniteDuration aggregationInterval = Duration.create(1, TimeUnit.SECONDS);
     getContext().system().scheduler().schedule(Duration.Zero(), aggregationInterval, () -> {
 

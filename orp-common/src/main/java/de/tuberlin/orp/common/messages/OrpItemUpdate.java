@@ -75,15 +75,17 @@ public class OrpItemUpdate implements Serializable {
 
   public ObjectNode getJson(){
     ObjectNode node = Json.newObject();
-    //node.put("itemId", itemId);
+    node.put("itemId", itemId);
     node.put("title", title);
     node.put("text", text);
     node.put("articleUrl", articleURL);
     node.put("imgUrl", imgURL);
+    node.put("publisherId", publisherId);
     node.put("flag",flag);
     return node;
   }
   public boolean isItemRecommendable() {
-    return (flag & 1) == 1;
+    //return (flag & 1) == 1;
+    return flag == 0;
   }
 }
