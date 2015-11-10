@@ -29,10 +29,10 @@ import akka.actor.Props;
 import akka.actor.UntypedActor;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
-import de.tuberlin.orp.common.messages.OrpContext;
-import de.tuberlin.orp.common.messages.OrpItemUpdate;
-import de.tuberlin.orp.common.messages.OrpNotification;
-import de.tuberlin.orp.common.messages.OrpRequest;
+import de.tuberlin.orp.common.message.OrpContext;
+import de.tuberlin.orp.common.message.OrpItemUpdate;
+import de.tuberlin.orp.common.message.OrpNotification;
+import de.tuberlin.orp.common.message.OrpRequest;
 import de.tuberlin.orp.worker.algorithms.popular.MostPopularWorker;
 import de.tuberlin.orp.worker.algorithms.recent.MostRecentWorker;
 import oshi.SystemInfo;
@@ -45,7 +45,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * This actor is the entry point for the Akka application. All Requests received over HTTP are transformed to Akka
- * messages and sent to this actor.
+ * message and sent to this actor.
  */
 public class WorkerActor extends UntypedActor {
   private LoggingAdapter log = Logging.getLogger(getContext().system(), this);
@@ -55,6 +55,7 @@ public class WorkerActor extends UntypedActor {
   private ActorRef filterActor;
   private ActorRef statisticsAggregator;
   private ActorRef requestCoordinator;
+  private ActorRef itemHandler;
 
   private HardwareAbstractionLayer hardware = new SystemInfo().getHardware();
 
@@ -62,13 +63,11 @@ public class WorkerActor extends UntypedActor {
     this.statisticsAggregator = statisticsAggregator;
   }
 
-
   public static Props create(ActorRef statisticsAggregator) {
     return Props.create(WorkerActor.class, () -> {
       return new WorkerActor(statisticsAggregator);
     });
   }
-
 
   @Override
   public void preStart() throws Exception {
@@ -100,23 +99,25 @@ public class WorkerActor extends UntypedActor {
 
       String notificationType = notification.getType();
 
-      log.info(String.format("Received notification of type \"%s\"", notificationType));
+//      log.info(String.format("Received notification of type \"%s\"", notificationType));
 
       OrpContext context = notification.getContext();
 
       String publisherId = context.getPublisherId();
       String itemId = context.getItemId();
+      String userId = context.getUserId();
+
+      statisticsAggregator.tell("notification", getSelf());
 
       switch (notificationType) {
         case "event_notification":
-          log.info(String.format("Received event notification: publisherId = %s. itemId = %s", publisherId, itemId));
 
-          statisticsAggregator.tell("request", getSelf());
+//          statisticsAggregator.tell("request", getSelf()); ???Wrong position? moved to OrpRequest
 
           if (!publisherId.equals("") && !itemId.equals("") && !itemId.equals("0")) {
             mostPopularWorker.tell(context, getSelf());
 
-            filterActor.tell(new RecommendationFilter.Clicked(context.getUserId(), context.getItemId()), getSelf());
+            filterActor.tell(new RecommendationFilter.Clicked(userId, itemId), getSelf());
           }
 
           break;
@@ -124,10 +125,14 @@ public class WorkerActor extends UntypedActor {
       }
     } else if (message instanceof OrpRequest) {
 
+      statisticsAggregator.tell("request", getSelf());
+
       // requests are handled by the coordinator
       requestCoordinator.forward(message, getContext());
 
     } else if (message instanceof OrpItemUpdate) {
+//      log.info(String.format("Received Item (%s)", itemCounter));
+
       // look for non recommendable items
       OrpItemUpdate itemUpdate = (OrpItemUpdate) message;
       if (!itemUpdate.isItemRecommendable()) {

@@ -6,7 +6,10 @@ import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.japi.Creator;
 import de.tuberlin.orp.common.LiFoRingBuffer;
-import de.tuberlin.orp.common.messages.OrpContext;
+import de.tuberlin.orp.common.message.OrpContext;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by Patch on 21.08.2015.
@@ -14,7 +17,9 @@ import de.tuberlin.orp.common.messages.OrpContext;
 public class MostRecentWorker extends UntypedActor {
   private LoggingAdapter log = Logging.getLogger(getContext().system(), this);
 
-  private LiFoRingBuffer buffer;
+  //Maps a Publisher to his recent Item Buffer
+  private Map<String, LiFoRingBuffer> bufferMap;
+  private int bufferSize;
 
   static class MostRecentlyWorkerCreator implements Creator<MostRecentWorker>{
     private int bufferSize;
@@ -30,25 +35,30 @@ public class MostRecentWorker extends UntypedActor {
     return Props.create(MostRecentWorker.class, new MostRecentlyWorkerCreator(bufferSize));
   }
   public MostRecentWorker(int bufferSize) {
-    this.buffer = new LiFoRingBuffer(bufferSize);
+    this.bufferMap = new HashMap<String, LiFoRingBuffer>();
+    this.bufferSize = bufferSize;
   }
+
   @Override
   public void preStart() throws Exception {
     super.preStart();
+    log.info("Most Recent Worker started!");
     log.info(getSelf().toString());
   }
+
   @Override
   public void onReceive(Object message) throws Exception {
     if (message instanceof OrpContext) {
       OrpContext context = (OrpContext) message;
 
+      LiFoRingBuffer buffer = bufferMap.getOrDefault(context.getPublisherId(), new LiFoRingBuffer(this.bufferSize));
+
       buffer.add(context);
 
     } else if (message.equals("getIntermediateRanking")) {
 
-      log.info("Intermediate rankings requested.");
-      //MostPopularRankingRepository rankingRepository = contextCounter.getRankingRespository();
-      //getSender().tell(new RequestCoordinator.IntermediateRanking(rankingRepository), getSelf());
+      log.info("Intermediate ranking requested.");
+      getSender().tell(bufferMap, getSelf());
 
     } else {
       unhandled(message);

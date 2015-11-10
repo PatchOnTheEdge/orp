@@ -22,17 +22,24 @@
  * SOFTWARE.
  */
 
-package de.tuberlin.orp.common.messages;
-
-import com.fasterxml.jackson.databind.JsonNode;
+package de.tuberlin.orp.common.message;
 
 import java.io.Serializable;
 
-public class OrpRequest implements Serializable {
+public class OrpNotification implements Serializable {
+  private String type;
   private OrpContext context;
 
-  public OrpRequest(JsonNode jsonNode) {
-    context = new OrpContext(jsonNode);
+  public OrpNotification() {
+  }
+
+  public OrpNotification(String type, OrpContext context) {
+    this.type = type;
+    this.context = context;
+  }
+
+  public String getType() {
+    return type;
   }
 
   public OrpContext getContext() {

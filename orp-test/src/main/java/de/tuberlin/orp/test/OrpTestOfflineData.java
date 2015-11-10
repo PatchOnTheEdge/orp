@@ -39,7 +39,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 public class OrpTestOfflineData {
 
-  public static String HOST = "localhost";
+  public static String HOST = "37.120.189.25";
       //"37.120.189.25";
   public static void main(String[] args) throws Exception {
     // C:\Users\Patch\projects\orp\test.data.json C:\Users\Patch\projects\orp\test.item.json 5 5
@@ -54,20 +54,24 @@ public class OrpTestOfflineData {
     File fileData = new File(filePathData);
     File fileItem = new File(filePathItem);
 
-    Stream<String> stringStreamData = Files.lines(fileData.toPath(), Charset.defaultCharset());
-    Stream<String> stringStreamItem = Files.lines(fileItem.toPath(), Charset.defaultCharset());
-    List<JsonNode> jsonNodes = stringStreamData.limit(limitData).map(Json::parse).collect(Collectors.toList());
-    List<JsonNode> jsonNodes2 = stringStreamItem.limit(limitItem).map(Json::parse).collect(Collectors.toList());
+    //Stream<String> stringStreamData = Files.lines(fileData.toPath(), Charset.defaultCharset());
+    //Stream<String> stringStreamItem = Files.lines(fileItem.toPath(), Charset.defaultCharset());
 
-    jsonNodes.forEach(OrpTestOfflineData::postJson);
+
+    Files.lines(fileData.toPath(), Charset.defaultCharset())
+        .limit(limitData).map(Json::parse)
+        .forEach(OrpTestOfflineData::postJson);
     System.out.println("Done sending Data.");
-    jsonNodes2.forEach(OrpTestOfflineData::postJsonItem);
-    System.out.println("Done sending Items.");
+
+//    Files.lines(fileItem.toPath(), Charset.defaultCharset())
+//        .limit(limitItem).map(Json::parse)
+//        .forEach(OrpTestOfflineData::postJsonItem);
+//    System.out.println("Done sending Items.");
 
   }
 
   private static void postJsonItem(JsonNode jsonNode) {
-    //System.out.println("json Item: " + jsonNode.toString());
+//    System.out.println("json Item: " + jsonNode.toString());
     String id = jsonNode.get("id").asText();
     String title = jsonNode.get("title").asText();
     String flag = jsonNode.get("flag").asText();
@@ -78,15 +82,26 @@ public class OrpTestOfflineData {
   }
 
   private static void postJson(JsonNode json) {
-    //System.out.println("json Data: " + json.toString());
+//    System.out.println("json Data: " + json.toString());
+    String urlQuery = "";
     String eventType;
     eventType = json.get("event_type").asText();
+
     switch (eventType) {
+      case "recommendation_request":
+        urlQuery = "recommendation"; break;
+      case "event_notification":
+        urlQuery = "event"; break;
       case "impression":
-        eventType = "event_notification";
+        urlQuery = "event";
+        eventType = "event_notification"; //TODO: is this right?
+        break;
+      default:
+        System.out.println("Attention! Unhandled event type: " + eventType);
     }
-    //System.out.println("sending " + eventType);
-    Future<HttpResponse<String>> httpResponseFuture = Unirest.post("http://"+HOST+":9000/event")
+
+//    System.out.println("sending " + eventType);
+    Future<HttpResponse<String>> httpResponseFuture = Unirest.post("http://"+HOST+":9000/" + urlQuery)
         .field("type", eventType)
         .field("body", json.toString())
         .asStringAsync();
@@ -107,8 +122,8 @@ public class OrpTestOfflineData {
 
   private synchronized static void printResponse(HttpResponse<?> response) {
     System.out.printf("%d - %s%n", response.getStatus(), response.getStatusText());
-    //System.out.println(response.getBody());
-    //System.out.println(response.getHeaders().toString());
-    //System.out.println();
+    System.out.println(response.getBody());
+    System.out.println(response.getHeaders().toString());
+    System.out.println();
   }
 }

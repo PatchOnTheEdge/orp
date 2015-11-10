@@ -31,8 +31,8 @@ import akka.dispatch.Mapper;
 import akka.pattern.Patterns;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import de.tuberlin.orp.common.rankings.MostPopularRanking;
-import de.tuberlin.orp.common.messages.OrpItemUpdate;
+import de.tuberlin.orp.common.ranking.MostPopularRanking;
+import de.tuberlin.orp.common.message.OrpItemUpdate;
 import io.verbit.ski.akka.Akka;
 import io.verbit.ski.core.Ski;
 import io.verbit.ski.core.http.Result;
@@ -41,26 +41,31 @@ import scala.concurrent.Future;
 
 import java.util.*;
 
+import static de.tuberlin.orp.common.Utils.itemMapAsJson;
 import static io.verbit.ski.core.http.SimpleResult.ok;
 import static io.verbit.ski.core.route.RouteBuilder.get;
-import static io.verbit.ski.template.jtwig.JtwigTemplateResult.render;
+//import static io.verbit.ski.template.jtwig.JtwigTemplateResult.render;
 public class MasterServer {
 
   public static void main(String[] args) throws Exception {
+
     String host = "0.0.0.0";
     int port = 9001;
+
     ActorSystem system = ActorSystem.create("ClusterSystem");
     Cluster cluster = Cluster.get(system);
     ActorRef mergerActor = system.actorOf(MostPopularMerger.create(), "merger");
     ActorRef statisticsManager = system.actorOf(StatisticsManager.create(), "statistics");
     ActorRef itemHandler = system.actorOf(ItemHandler.create(),"items");
+    ActorRef searchHandler = system.actorOf(SearchHandler.create(itemHandler), "search");
+
     Ski.builder()
         .setHost(host)
         .setPort(port)
         .setStaticFolder(MasterServer.class.getClassLoader().getResource("web").getPath())
         .addRoutes(
 
-            get("/").route(context -> render("web/index.html", Json.newObject())),
+//            get("/").route(context -> render("web/index.html", Json.newObject())),
 
             get("/report").routeAsync(context -> {
               Future<Result> result =
@@ -103,7 +108,7 @@ public class MasterServer {
               return Akka.wrap(result);
             }),
 
-            get("/throughput").route(context -> render("web/templates/index.twig", Json.newObject())),
+//            get("/throughput").route(context -> render("web/templates/index.twig", Json.newObject())),
 
             get("/items").routeAsync(context -> {
               Future<Result> result =
@@ -112,15 +117,30 @@ public class MasterServer {
                         @Override
                         public Result apply(Object parameter) {
 
-                          ObjectNode result = Json.newObject();
-                          ArrayNode items = result.putArray("items");
-
                           Map<String, Map<String, OrpItemUpdate>> publisherItems = (Map<String, Map<String, OrpItemUpdate>>) parameter;
 
-                          for (String publisher : publisherItems.keySet()) {
-                            buildItemArray(items, publisherItems.get(publisher));
-                          }
+                          return ok(itemMapAsJson(publisherItems));
+                        }
+                      }, system.dispatcher());
+              return Akka.wrap(result);
+            }),
 
+            get("/ranking-mr").routeAsync(context -> {
+              Future<Result> result =
+                  Patterns.ask(itemHandler, "getRecentItems", 100)
+                      .map(new Mapper<Object, Result>() {
+                        @Override
+                        public Result apply(Object parameter) {
+                          ObjectNode result = Json.newObject();
+                          ItemHandler.RecentItems items = (ItemHandler.RecentItems) parameter;
+                          HashMap<String, ArrayDeque> publisherItems = items.getPublisherItems();
+                          for (String publisherId : publisherItems.keySet()) {
+                            ArrayNode arrayNode = result.putArray(publisherId);
+                            publisherItems.get(publisherId).descendingIterator().forEachRemaining(o -> {
+                              OrpItemUpdate item = (OrpItemUpdate) o;
+                              arrayNode.add(item.getJson());
+                            });
+                          }
                           return ok(result);
                         }
                       }, system.dispatcher());

@@ -33,19 +33,24 @@ import akka.pattern.Patterns;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import de.tuberlin.orp.common.rankings.MostPopularRanking;
-import de.tuberlin.orp.common.messages.OrpContext;
-import de.tuberlin.orp.common.messages.OrpItemUpdate;
-import de.tuberlin.orp.common.messages.OrpNotification;
-import de.tuberlin.orp.common.messages.OrpRequest;
+import de.tuberlin.orp.common.ranking.MostPopularRanking;
+import de.tuberlin.orp.common.message.OrpContext;
+import de.tuberlin.orp.common.message.OrpItemUpdate;
+import de.tuberlin.orp.common.message.OrpNotification;
+import de.tuberlin.orp.common.message.OrpRequest;
 import io.verbit.ski.akka.Akka;
+import io.verbit.ski.core.DefaultSkiListener;
 import io.verbit.ski.core.Ski;
+import io.verbit.ski.core.http.AsyncResult;
+import io.verbit.ski.core.http.Context;
 import io.verbit.ski.core.http.Result;
 import io.verbit.ski.core.json.Json;
 import scala.concurrent.Future;
 
-import java.util.Map;
-import java.util.Optional;
+import java.io.File;
+import java.io.PrintWriter;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static io.verbit.ski.core.http.SimpleResult.noContent;
 import static io.verbit.ski.core.http.SimpleResult.ok;
@@ -54,6 +59,7 @@ import static io.verbit.ski.core.route.RouteBuilder.post;
 public class WorkerServer {
 
   public static void main(String[] args) throws Exception {
+
     String host = "0.0.0.0";
     int port = 9000;
 
@@ -67,96 +73,144 @@ public class WorkerServer {
     ActorSelection statManagerSel = system.actorSelection(master + "/user/statistics");
     ActorRef statisticsActor = system.actorOf(StatisticsAggregator.create(statManagerSel), "statistics");
 
+    //All Items
+    ActorSelection itemHandler = system.actorSelection(master + "/user/items");
+    //TODO get ActorRef and tell it WorkerActor
+
     //Create one worker Actor
     ActorRef workerActor = system.actorOf(WorkerActor.create(statisticsActor), "orp");
 
-    //Get Central Item Handler Reference
-    //ActorRef itemHandler = system.actorOf(ItemHandler.create(), "items");
-    ActorSelection itemHandler = system.actorSelection(master + "/user/items");
+
+    File itemLogFile = new File(args[0]);
+    PrintWriter printWriter = new PrintWriter(itemLogFile);
 
     Ski.builder()
         .setHost(host)
         .setPort(port)
+        .setListener(saveRequest(printWriter))
         .addRoutes(
             post("/event").route(context -> {
-              Optional<String> messageType = context.request().formParam("type").asText();
-              Optional<JsonNode> jsonBody = context.request().formParam("body").asJson();
-
-              OrpContext orpContext = new OrpContext(jsonBody.get());
-              OrpNotification notification = new OrpNotification(messageType.get(), orpContext);
-
-              workerActor.tell(notification, ActorRef.noSender());
-
-              return noContent();
+              return forwardEvent(workerActor, context);
             }),
             post("/recommendation").routeAsync(context -> {
-              Optional<String> messageType = context.request().formParam("type").asText();
-              Optional<JsonNode> jsonBody = context.request().formParam("body").asJson();
-
-              OrpRequest orpRequest = new OrpRequest(jsonBody.get());
-
-              long start = System.currentTimeMillis();
-
-              Future<Result> future = Patterns.ask(workerActor, orpRequest, 1000)
-                  .map(new Mapper<Object, Result>() {
-                    @Override
-                    public Result apply(Object o) {
-                      if (o == null) {
-                        return ok(Json.newObject());
-                      }
-
-                      MostPopularRanking mostPopularRanking = (MostPopularRanking) o;
-
-                      if (mostPopularRanking.getRanking().isEmpty()) {
-                        return ok(Json.newObject());
-                      }
-
-                      ObjectNode result = Json.newObject();
-                      ObjectNode recs = result.putObject("recs");
-
-                      ArrayNode items = recs
-                          .putObject("ints")
-                          .putArray("3");
-
-                      ArrayNode scores = recs
-                          .putObject("floats")
-                          .putArray("2");
-
-
-                      double max = mostPopularRanking.getRanking().values().stream().mapToLong(l -> l).max().getAsLong();
-
-                      for (Map.Entry<String, Long> entry : mostPopularRanking.getRanking().entrySet()) {
-                        items.add(entry.getKey());
-                        scores.add(entry.getValue() / max);
-                      }
-
-                      long responseTime = System.currentTimeMillis() - start;
-                      statisticsActor.tell(new StatisticsAggregator.ResponseTime(responseTime), ActorRef.noSender());
-
-                      return ok(result);
-                    }
-                  }, system.dispatcher());
-
-
-              return Akka.wrap(future);
+              return forwardRecommendationRequest(system, statisticsActor, workerActor, context);
             }),
             post("/item").route(context -> {
-              Optional<JsonNode> jsonBody = context.request().formParam("body").asJson();
-
-              OrpItemUpdate itemUpdate = new OrpItemUpdate(jsonBody.get());
-
-              //Forward item to Worker Actor who informs Algorithm Workers
-              workerActor.tell(itemUpdate, ActorRef.noSender());
-
-              //Save items in central list
-              if (itemUpdate.isItemRecommendable()){
-                itemHandler.tell(itemUpdate,ActorRef.noSender());
-              }
-
-              return noContent();
+              return forwardItem(workerActor, itemHandler, context);
             })
         )
         .build()
         .start();
+  }
+
+  private static Result forwardItem(ActorRef workerActor, ActorSelection itemHandler, Context context) {
+    Optional<JsonNode> jsonBody = context.request().formParam("body").asJson();
+
+    OrpItemUpdate itemUpdate = new OrpItemUpdate(jsonBody.get());
+
+    //Forward item to Worker Actor who informs Algorithm Workers
+    //TODO move to workerActor!
+    workerActor.tell(itemUpdate, ActorRef.noSender());
+
+    //Save items in central list
+    if (itemUpdate.isItemRecommendable()) {
+      itemHandler.tell(itemUpdate, ActorRef.noSender());
+    }
+
+    return noContent();
+  }
+
+  private static AsyncResult forwardRecommendationRequest(ActorSystem system, final ActorRef statisticsActor, ActorRef workerActor, Context context) {
+    Optional<String> messageType = context.request().formParam("type").asText();
+    Optional<JsonNode> jsonBody = context.request().formParam("body").asJson();
+
+    OrpRequest orpRequest = new OrpRequest(jsonBody.get());
+
+    long start = System.currentTimeMillis();
+
+    Future<Result> future = Patterns.ask(workerActor, orpRequest, 1000)
+        .map(new Mapper<Object, Result>() {
+          @Override
+          public Result apply(Object o) {
+            if (o == null) {
+              return ok(Json.newObject());
+            }
+
+            MostPopularRanking mostPopularRanking = (MostPopularRanking) o;
+
+            if (mostPopularRanking.getRanking().isEmpty()) {
+              return ok(Json.newObject());
+            }
+
+            ObjectNode result = Json.newObject();
+            ObjectNode recs = result.putObject("recs");
+
+            ArrayNode items = recs
+                .putObject("ints")
+                .putArray("3");
+
+            ArrayNode scores = recs
+                .putObject("floats")
+                .putArray("2");
+
+
+            double max = mostPopularRanking.getRanking().values().stream().mapToLong(l -> l).max().getAsLong();
+
+            for (Map.Entry<String, Long> entry : mostPopularRanking.getRanking().entrySet()) {
+              items.add(entry.getKey());
+              scores.add(entry.getValue() / max);
+            }
+
+            long responseTime = System.currentTimeMillis() - start;
+            statisticsActor.tell(new StatisticsAggregator.ResponseTime(responseTime), ActorRef.noSender());
+
+            return ok(result);
+          }
+        }, system.dispatcher());
+
+
+    return Akka.wrap(future);
+  }
+
+  private static Result forwardEvent(ActorRef workerActor, Context context) {
+    Optional<String> messageType = context.request().formParam("type").asText();
+    Optional<JsonNode> jsonBody = context.request().formParam("body").asJson();
+
+    OrpContext orpContext = new OrpContext(jsonBody.get());
+    OrpNotification notification = new OrpNotification(messageType.get(), orpContext);
+
+    workerActor.tell(notification, ActorRef.noSender());
+
+    return noContent();
+  }
+
+  private static DefaultSkiListener saveRequest(final PrintWriter printWriter) {
+    return new DefaultSkiListener() {
+      @Override
+      public void onRequest(Context context) {
+        super.onRequest(context);
+        Map<String, List<String>> bodyForm = context.request().body().asForm();
+        JsonNode json = Json.newObject();
+        String bodyString = "";
+        if (!bodyForm.isEmpty()) {
+          bodyString = queryParamsToString(bodyForm);
+          json = Json.parse(bodyString);
+        }
+        String path = context.request().path();
+        String queryString = queryParamsToString(context.request().queryParams());
+        Date date = new Date();
+        ObjectNode result = Json.newObject().put("path", path)
+            .put("queryString", queryString).put("timestamp", date.toString());
+        result.set("body", json);
+
+        printWriter.write(result.toString() + "\n");
+      }
+    };
+  }
+
+  private static String queryParamsToString(Map<String, List<String>> map){
+    return map.entrySet().stream()
+        .flatMap(stringListEntry -> stringListEntry.getValue().stream())
+        .collect(Collectors.joining(","));
   }
 }

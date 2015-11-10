@@ -3,7 +3,7 @@ from fabric.api import cd, run, env, sudo, parallel, shell_env, settings, put, e
 from fabric.decorators import task, hosts
 
 env.user = 'root'
-env.hosts = ['78.47.195.77']
+env.hosts = ['37.120.189.25']
 
 def generate_config_master(host):
     return StringIO('''[program:orp]
@@ -85,7 +85,7 @@ def deploy():
 
 
 def worker():
-    env.hosts = ['78.47.195.77']
+    env.hosts = ['37.120.189.25']
 
 def master():
-    env.hosts = ['78.47.195.77']
+    env.hosts = ['37.120.189.25']

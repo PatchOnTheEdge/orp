@@ -32,11 +32,13 @@ import akka.dispatch.Mapper;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.pattern.Patterns;
-import de.tuberlin.orp.common.rankings.MostPopularRanking;
-import de.tuberlin.orp.common.repositories.MostPopularRankingRepository;
-import de.tuberlin.orp.common.rankings.RankingFilter;
-import de.tuberlin.orp.common.messages.OrpContext;
-import de.tuberlin.orp.common.messages.OrpRequest;
+import de.tuberlin.orp.common.ranking.MostPopularRanking;
+import de.tuberlin.orp.common.ranking.Ranking;
+import de.tuberlin.orp.common.repository.MostPopularRankingRepository;
+import de.tuberlin.orp.common.repository.RankingRepository;
+import de.tuberlin.orp.common.ranking.RankingFilter;
+import de.tuberlin.orp.common.message.OrpContext;
+import de.tuberlin.orp.common.message.OrpRequest;
 import de.tuberlin.orp.master.MostPopularMerger;
 import scala.concurrent.Future;
 
@@ -46,7 +48,7 @@ import java.util.Optional;
 
 /**
  * This Actor coordinates requests.
- * All available algorithm-workers are asked for their rankings.
+ * All available algorithm-workers are asked for their ranking.
  * The worker delegates which ranking will be used.
  */
 public class RequestCoordinator extends UntypedActor {
@@ -56,7 +58,7 @@ public class RequestCoordinator extends UntypedActor {
   private ActorRef mostRecentWorker;
   private ActorRef filterActor;
 
-  private MostPopularRankingRepository ranking;
+  private RankingRepository ranking;
   private RankingFilter filter;
 
   public RequestCoordinator(ActorRef mostPopularWorker, ActorRef mostRecentWorker, ActorRef filterActor) {
@@ -79,7 +81,7 @@ public class RequestCoordinator extends UntypedActor {
       log.info(String.format("Received request: publisherId = %s, userId = %s", publisherId, userId));
 
 
-      Optional<MostPopularRanking> ranking = this.ranking.getRanking(publisherId);
+      Optional<Ranking<MostPopularRanking>> ranking = this.ranking.getRanking(publisherId);
       ranking.ifPresent(ranking1 -> filter.filter(ranking1, context));
 
       getSender().tell(ranking.orElse(new MostPopularRanking()), getSelf());
@@ -91,12 +93,13 @@ public class RequestCoordinator extends UntypedActor {
       ranking = mergedRankingMessage.getRankingRepository();
       filter = mergedRankingMessage.getFilter();
 
-      //log.info("Calculating intermediate rankings.");
+      //log.info("Calculating intermediate ranking.");
 
       // calculate new intermediate results
       Future<Object> intermediateRankingFuture = Patterns.ask(mostPopularWorker, "getIntermediateRanking", 200);
       Future<Object> intermediateFilterFuture = Patterns.ask(filterActor, "getIntermediateFilter", 200);
 
+      //TODO merger result to big...
       Future<MostPopularMerger.WorkerResult> workerResultFuture = Futures
           .sequence(Arrays.asList(intermediateRankingFuture, intermediateFilterFuture), getContext().dispatcher())
           .map(new Mapper<Iterable<Object>, MostPopularMerger.WorkerResult>() {
@@ -128,13 +131,13 @@ public class RequestCoordinator extends UntypedActor {
   }
 
   public static class IntermediateRanking {
-    private MostPopularRankingRepository rankingRepository;
+    private RankingRepository rankingRepository;
 
-    public IntermediateRanking(MostPopularRankingRepository rankingRepository) {
+    public IntermediateRanking(RankingRepository rankingRepository) {
       this.rankingRepository = rankingRepository;
     }
 
-    public MostPopularRankingRepository getRankingRepository() {
+    public RankingRepository getRankingRepository() {
       return rankingRepository;
     }
   }

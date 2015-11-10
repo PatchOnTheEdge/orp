@@ -22,22 +22,21 @@
  * SOFTWARE.
  */
 
-package de.tuberlin.orp.common.rankings;
+package de.tuberlin.orp.common.ranking;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import de.tuberlin.orp.common.Utils;
 import io.verbit.ski.core.json.Json;
 
-import java.io.Serializable;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
 /**
- * A MostPopularRanking represents a Mapping from Item to Number of Clicks
+ * MostPopularRanking represents a Mapping from Item to Number of Clicks
  */
-public class MostPopularRanking implements Ranking, Serializable {
+public class MostPopularRanking implements Ranking<MostPopularRanking> {
   private LinkedHashMap<String, Long> ranking;
 
   public MostPopularRanking() {
@@ -58,7 +57,7 @@ public class MostPopularRanking implements Ranking, Serializable {
   }
 
   @Override
-  public void merge(MostPopularRanking mostPopularRanking) {
+  public void merge(Ranking<MostPopularRanking> mostPopularRanking) {
     LinkedHashMap<String, Long> newRanking = mostPopularRanking.getRanking();
     for (String key : newRanking.keySet()) {
       this.ranking.merge(key, newRanking.get(key), Long::sum);
@@ -103,16 +102,16 @@ public class MostPopularRanking implements Ranking, Serializable {
     }
     return rankings;
   }
-  public String getPublisherName(String id){
-    String publisherName = "";
-    switch (id){
-      case "596": return "Sport1";
-      case "694": return "Gulli";
-      case "1": return publisherName;
-      case "2": return publisherName;
-      case "3": return publisherName;
-      case "1677": return "Tagesspiegel";
-      default: return id + " better change that..";
-    }
-  }
+//  public String getPublisherName(String id){
+//    String publisherName = "";
+//    switch (id){
+//      case "596": return "Sport1";
+//      case "694": return "Gulli";
+//      case "1": return publisherName;
+//      case "2": return publisherName;
+//      case "3": return publisherName;
+//      case "1677": return "Tagesspiegel";
+//      default: return id + " better change that..";
+//    }
+//  }
 }

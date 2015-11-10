@@ -29,7 +29,7 @@ import akka.actor.UntypedActor;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.japi.Creator;
-import de.tuberlin.orp.common.rankings.RankingFilter;
+import de.tuberlin.orp.common.ranking.RankingFilter;
 import scala.concurrent.duration.Duration;
 
 import java.io.Serializable;
@@ -42,6 +42,7 @@ import java.util.concurrent.TimeUnit;
 public class RecommendationFilter extends UntypedActor {
   private LoggingAdapter log = Logging.getLogger(getContext().system(), this);
 
+  //todo is removed exploding?
   private Set<String> removed;
   private Map<String, Long> lastUpdated;
   private Map<String, Set<String>> recommended;
@@ -141,6 +142,7 @@ public class RecommendationFilter extends UntypedActor {
     for (String key : toRemove) {
       lastUpdated.remove(key);
       recommended.remove(key);
+      removed.remove(key); //todo sensefull
     }
   }
 

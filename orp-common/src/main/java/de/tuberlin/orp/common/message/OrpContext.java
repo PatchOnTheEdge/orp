@@ -22,27 +22,41 @@
  * SOFTWARE.
  */
 
-package de.tuberlin.orp.common.messages;
+package de.tuberlin.orp.common.message;
+
+import com.fasterxml.jackson.databind.JsonNode;
 
 import java.io.Serializable;
 
-public class OrpNotification implements Serializable {
-  private String type;
-  private OrpContext context;
+public class OrpContext implements Serializable {
+  private String publisherId;
+  private String itemId;
+  private String userId;
+  private int limit;
 
-  public OrpNotification() {
+  public OrpContext() {
   }
 
-  public OrpNotification(String type, OrpContext context) {
-    this.type = type;
-    this.context = context;
+  public OrpContext(JsonNode jsonNode) {
+    this.publisherId = jsonNode.at("/context/simple/27").asText();
+    this.itemId = jsonNode.at("/context/simple/25").asText();
+    this.userId = jsonNode.at("/context/simple/57").asText();
+    this.limit = jsonNode.path("limit").asInt(20);
   }
 
-  public String getType() {
-    return type;
+  public String getPublisherId() {
+    return publisherId;
   }
 
-  public OrpContext getContext() {
-    return context;
+  public String getItemId() {
+    return itemId;
+  }
+
+  public String getUserId() {
+    return userId;
+  }
+
+  public int getLimit() {
+    return limit;
   }
 }

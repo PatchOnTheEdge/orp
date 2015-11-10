@@ -22,9 +22,9 @@
  * SOFTWARE.
  */
 
-package de.tuberlin.orp.common.rankings;
+package de.tuberlin.orp.common.ranking;
 
-import de.tuberlin.orp.common.messages.OrpContext;
+import de.tuberlin.orp.common.message.OrpContext;
 
 import java.io.Serializable;
 import java.util.Collections;

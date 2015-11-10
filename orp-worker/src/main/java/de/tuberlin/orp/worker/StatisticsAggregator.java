@@ -42,8 +42,9 @@ public class StatisticsAggregator extends UntypedActor {
   private LoggingAdapter log = Logging.getLogger(getContext().system(), this);
 
   private long requestCounter;
-  private Map<Short, Long> responseTimes;
+  private long notificationCounter;
 
+  private Map<Short, Long> responseTimes;
   private ActorSelection statisticsManager;
 
   public static class ResponseTime implements Serializable {
@@ -79,6 +80,7 @@ public class StatisticsAggregator extends UntypedActor {
       statisticsManager.tell(new StatisticsManager.WorkerStatistics(System.currentTimeMillis(),
           throughput, responseTimes), getSelf());
       requestCounter = 0;
+      notificationCounter = 0;
       responseTimes = new HashMap<>();
 
     }, getContext().dispatcher());
@@ -94,7 +96,11 @@ public class StatisticsAggregator extends UntypedActor {
     } else if (message.equals("request")) {
 
       ++requestCounter;
-      log.info("Request Counter: " + requestCounter);
+      log.info("Interval Request Counter: " + requestCounter);
+
+    } else if (message.equals("notification")){
+
+      ++notificationCounter;
 
     } else {
       unhandled(message);

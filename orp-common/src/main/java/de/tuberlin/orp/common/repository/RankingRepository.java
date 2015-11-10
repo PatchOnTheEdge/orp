@@ -22,41 +22,25 @@
  * SOFTWARE.
  */
 
-package de.tuberlin.orp.common.messages;
+package de.tuberlin.orp.common.repository;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import de.tuberlin.orp.common.ranking.MostPopularRanking;
+import de.tuberlin.orp.common.ranking.Ranking;
 
-import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 
-public class OrpContext implements Serializable {
-  private String publisherId;
-  private String itemId;
-  private String userId;
-  private int limit;
+/**
+ * A Ranking Repository represents a mapping from publisher to ranking
+ */
+public abstract class RankingRepository<T>  {
 
-  public OrpContext() {
-  }
+  public abstract Optional<Ranking> getRanking(String key);
 
-  public OrpContext(JsonNode jsonNode) {
-    this.publisherId = jsonNode.at("/context/simple/27").asText();
-    this.itemId = jsonNode.at("/context/simple/25").asText();
-    this.userId = jsonNode.at("/context/simple/57").asText();
-    this.limit = jsonNode.path("limit").asInt(20);
-  }
+  public abstract Map<String, Ranking<MostPopularRanking>> getRankings();
 
-  public String getPublisherId() {
-    return publisherId;
-  }
+  public abstract void merge(RankingRepository repository);
 
-  public String getItemId() {
-    return itemId;
-  }
-
-  public String getUserId() {
-    return userId;
-  }
-
-  public int getLimit() {
-    return limit;
-  }
+  public abstract void sortRankings();
 }

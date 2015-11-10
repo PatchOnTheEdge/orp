@@ -29,8 +29,8 @@ import akka.actor.UntypedActor;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.japi.Creator;
-import de.tuberlin.orp.common.repositories.MostPopularRankingRepository;
-import de.tuberlin.orp.common.messages.OrpContext;
+import de.tuberlin.orp.common.repository.RankingRepository;
+import de.tuberlin.orp.common.message.OrpContext;
 import de.tuberlin.orp.worker.RequestCoordinator;
 
 /**
@@ -71,7 +71,7 @@ public class MostPopularWorker extends UntypedActor {
    * @param contextWindowSize
    *     The window size which defines of how many contexts a window should consist.
    * @param topListSize
-   *     The maximum size of the rankings for the publishers.
+   *     The maximum size of the ranking for the publishers.
    */
   public MostPopularWorker(int contextWindowSize, int topListSize) {
     this.contextCounter = new OrpContextCounter(contextWindowSize, topListSize);
@@ -79,7 +79,7 @@ public class MostPopularWorker extends UntypedActor {
 
   @Override
   public void preStart() throws Exception {
-    log.info("MostPopular Worker started.");
+    log.info("MostPopularRanking Worker started.");
     super.preStart();
     log.info(getSelf().toString());
   }
@@ -96,8 +96,8 @@ public class MostPopularWorker extends UntypedActor {
 
     } else if (message.equals("getIntermediateRanking")) {
 
-      MostPopularRankingRepository rankingRepository = contextCounter.getRankingRespository();
-      //log.info("Intermediate rankings requested.");
+      RankingRepository rankingRepository = contextCounter.getRankingRespository();
+      //log.info("Intermediate ranking requested.");
       getSender().tell(new RequestCoordinator.IntermediateRanking(rankingRepository), getSelf());
 
     } else {

@@ -10,78 +10,96 @@
 
 </head>
 <body>
-  <div class="container">
-    <div class="jumbotron jumbotron-material-blue-grey-200">
-      <h1>The News</h1>
-      <p>Adaptive News Recommendation for Germany</p> 
-      <a href="index.html"><button type="button" class="btn btn-default">Home</button></a>
-      <button type="button" class="btn btn-success" data-toggle="collapse" href="#about">About</button>
+<nav class="navbar navbar-inverse navbar-fixed-top">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="#">The News</a>
     </div>
-    <div class = "collapse" id="about">
-      <div class="well">
-        <button class="btn-danger pull-right" data-toggle="collapse" href="#about"><b>X</b></button>
-        This Service was developed as part of a project at the <a href="http://www.tu-berlin.de">Technical University Berlin</a>. The project was offered by the Distributed Artificial Intelligence Laboratory (<a href="http://www.dai-labor.de/">DAI Labor</a>). The software was developed in order to participate at the <a href="http://www.clef-newsreel.org/">CLEEF Newsreel challenge</a>. Source code can be derived from <a href="http://github.com/verbit/orp">github.com/verbit/orp</a>.
-        <br>
-        If you have any Questions feel free to contact <a href="mailto:patrick.c.probst@gmail.com">me</a>.
-        <br><br>
-        <u>Legal Information: </u>
-        <br>
-        Patrick Probst
-        <br>
-        Turmstraße 61,
-        <br>
-        10551 Berlin
-      </div>
-    </div>
-    
-    <div class="row">
-      <div class="col-sm-8">
-        <h3><a href="http://www.tagesspiegel.de/">Der Tagesspiegel</a></h3>
-        <h4><b><p id="1677-title" class="bg-success"></p></b></h4>
-        <blockquote><p id="1677-text"></p></blockquote>
-        <footer>Read the full Article at <a id="1677-link">Tagesspiegel.de</a></footer>
-      </div>
-      <div class="col-sm-4">
-        <img id="1677-img" class="img-thumbnail">
-      </div>
-    </div>
-
-    <div class="row">
-      <div class="col-sm-8">
-        <h3><a href="http://www.ksta.de/">Kölner Stadt-Anzeiger</a></h3>
-        <h4><b><p id="1677-title" class="bg-success"></p></b></h4>
-        <blockquote><p id="1677-text"></p></blockquote>
-        <footer>Read the full Article at <a id="1677-link">ksta.de</a></footer>
-      </div>
-      <div class="col-sm-4">
-        <img id="1677-img" class="img-thumbnail">
-      </div>
-    </div>
-    
-    <div class="row">
-      <div class="col-sm-8">
-        <h3><a href="http://www.sport1.de/">Sport1.de</a></h3>
-        <h4><b><p id="596-title" class="bg-success"></p></b></h4>
-        <blockquote><p id="596-text"></p></blockquote>
-        <footer>Read the full Article at <a id="596-link">Sport1.de</a></footer>
-      </div>
-      <div class="col-sm-4">
-        <img id="596-img" class="img-thumbnail">
-      </div>
-    </div>
-    
-        <div class="row">
-      <div class="col-sm-8">
-        <h3><a href="http://www.gulli.com/">gulli</a></h3>
-        <h4><b><p id="694-title" class="bg-success"></p></b></h4>
-        <blockquote><p id="694-text"></p></blockquote>
-        <footer>Read the full Article at <a id="694-link">gulli.com</a></footer>
-      </div>
-      <div class="col-sm-4">
-        <img id="694-img" class="img-thumbnail">
-      </div>
+    <div>
+      <ul class="nav navbar-nav">
+        <li class="active"><a href="#">Most Popular Articles</a></li>
+        <li><a href="#">Recent Articles</a></li>
+        <li><a href="#">Google Search Trends</a></li>
+        <li><a href="#">Statistics</a></li>
+      </ul>
     </div>
   </div>
-<!--<script src="static/js/frontend.js">pageScroll();</script>!-->
+</nav>
+<div class="container">
+  <div class="jumbotron jumbotron-material-blue-grey-200">
+    <h1>The News</h1>
+    <p>Adaptive News Recommendation for Germany
+      <button type="button" class="btn btn-success pull-right" data-toggle="collapse" href="#about">
+          <span class="glyphicon glyphicon-info-sign">
+      </button>
+    </p>
+    <!-- <a href="index.html"><button type="button" class="btn btn-default">Home</button></a> -->
+  </div>
+  <div class = "collapse" id="about">
+    <div class="well">
+      <button class="btn-danger pull-right" data-toggle="collapse" href="#about"><b>X</b></button>
+      This Service was developed as part of a project at the <a href="http://www.tu-berlin.de">Technical University Berlin</a>. The project was offered by the Distributed Artificial Intelligence Laboratory (<a href="http://www.dai-labor.de/">DAI Labor</a>). The software was developed in order to participate at the <a href="http://www.clef-newsreel.org/">CLEEF Newsreel challenge</a>. Source code can be derived from <a href="http://github.com/verbit/orp">github.com/verbit/orp</a>.
+      <br>
+      If you have any Questions feel free to contact me <a href="mailto:patrick.c.probst@gmail.com"><span class="glyphicon glyphicon-envelope"></a>.
+      <br><br>
+      <u>Legal Information: </u>
+      <br>
+      Patrick Probst
+      <br>
+      Turmstraße 61,
+      <br>
+      10551 Berlin
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-sm-8">
+      <h3>Der Tagesspiegel <a href="http://www.tagesspiegel.de/"><span class="glyphicon glyphicon-link"></a></h3>
+      <h4><b><p id="1677-title" class="bg-success"></p></b></h4>
+      <blockquote><p id="1677-text"></p></blockquote>
+      <footer>Read the whole article <a id="1677-link"><span class="glyphicon glyphicon-chevron-right"></a></footer>
+    </div>
+    <div class="col-sm-4">
+      <img id="1677-img" class="img-thumbnail">
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-sm-8">
+      <h3>Kölner Stadt-Anzeiger <a href="http://www.ksta.de/"><span class="glyphicon glyphicon-link"></a></h3>
+      <h4><b><p id="123-title" class="bg-success"></p></b></h4>
+      <blockquote><p id="123-text"></p></blockquote>
+      <footer>Read the whole article <a id="123-link"><span class="glyphicon glyphicon-chevron-right"></a></footer>
+    </div>
+    <div class="col-sm-4">
+      <img id="123-img" class="img-thumbnail">
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-sm-8">
+      <h3>Sport1.de <a href="http://www.sport1.de/"><span class="glyphicon glyphicon-link"></a></h3>
+      <h4><b><p id="596-title" class="bg-success"></p></b></h4>
+      <blockquote><p id="596-text"></p></blockquote>
+      <footer>Read the whole article <a id="596-link"><span class="glyphicon glyphicon-chevron-right"></a></footer>
+    </div>
+    <div class="col-sm-4">
+      <img id="596-img" class="img-thumbnail">
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-sm-8">
+      <h3>gulli <a href="http://www.gulli.com/"><span class="glyphicon glyphicon-link"></a></h3>
+      <h4><b><p id="694-title" class="bg-success"></p></b></h4>
+      <blockquote><p id="694-text"></p></blockquote>
+      <footer>Read the whole article <a id="694-link"><span class="glyphicon glyphicon-chevron-right"></a></footer>
+    </div>
+    <div class="col-sm-4">
+      <img id="694-img" class="img-thumbnail">
+    </div>
+  </div>
+</div>
+<script src="static/js/frontend.js"></script>
 </body>
 </html>
