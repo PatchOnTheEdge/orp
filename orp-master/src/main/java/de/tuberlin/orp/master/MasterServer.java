@@ -32,7 +32,7 @@ import akka.pattern.Patterns;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import de.tuberlin.orp.common.ranking.MostPopularRanking;
-import de.tuberlin.orp.common.message.OrpItemUpdate;
+import de.tuberlin.orp.common.message.OrpArticleRemove;
 import io.verbit.ski.akka.Akka;
 import io.verbit.ski.core.Ski;
 import io.verbit.ski.core.http.Result;
@@ -56,8 +56,8 @@ public class MasterServer {
     Cluster cluster = Cluster.get(system);
     ActorRef mergerActor = system.actorOf(MostPopularMerger.create(), "merger");
     ActorRef statisticsManager = system.actorOf(StatisticsManager.create(), "statistics");
-    ActorRef itemHandler = system.actorOf(ItemHandler.create(),"items");
-    ActorRef searchHandler = system.actorOf(SearchHandler.create(itemHandler), "search");
+    ActorRef articleMerger = system.actorOf(ArticleMerger.create(),"articles");
+    ActorRef searchHandler = system.actorOf(SearchHandler.create(articleMerger), "search");
 
     Ski.builder()
         .setHost(host)
@@ -76,6 +76,7 @@ public class MasterServer {
                         public Result apply(Object parameter) {
                           return ok(buildReport(parameter));
                         }
+
                       }, system.dispatcher());
               return Akka.wrap(result);
             }),
@@ -86,21 +87,8 @@ public class MasterServer {
                       .map(new Mapper<Object, Result>() {
                         @Override
                         public Result apply(Object parameter) {
-                          StatisticsManager.StatisticsMessage stats = (StatisticsManager
-                              .StatisticsMessage) parameter;
-                          LinkedHashMap<ActorRef, StatisticsManager.WorkerStatistics> workerStats =
-                              stats.getWorkerStatistics();
 
-                          ObjectNode result = Json.newObject();
-                          ArrayNode workers = result.putArray("workers");
-                          for (Map.Entry<ActorRef, StatisticsManager.WorkerStatistics> statsEntries :
-                              workerStats.entrySet()) {
-                            workers.add(
-                                Json.newObject()
-                                    .put("timestamp", statsEntries.getValue().getTimestamp())
-                                    .put("throughput", statsEntries.getValue().getThroughput())
-                            );
-                          }
+                          ObjectNode result = getStatisticsAsJson((StatisticsManager.StatisticsMessage) parameter);
 
                           return ok(result);
                         }
@@ -112,12 +100,12 @@ public class MasterServer {
 
             get("/items").routeAsync(context -> {
               Future<Result> result =
-                  Patterns.ask(itemHandler, "getItems", 100)
+                  Patterns.ask(articleMerger, "getItems", 100)
                       .map(new Mapper<Object, Result>() {
                         @Override
                         public Result apply(Object parameter) {
 
-                          Map<String, Map<String, OrpItemUpdate>> publisherItems = (Map<String, Map<String, OrpItemUpdate>>) parameter;
+                          Map<String, Map<String, OrpArticleRemove>> publisherItems = (Map<String, Map<String, OrpArticleRemove>>) parameter;
 
                           return ok(itemMapAsJson(publisherItems));
                         }
@@ -127,17 +115,17 @@ public class MasterServer {
 
             get("/ranking-mr").routeAsync(context -> {
               Future<Result> result =
-                  Patterns.ask(itemHandler, "getRecentItems", 100)
+                  Patterns.ask(articleMerger, "getRecentItems", 100)
                       .map(new Mapper<Object, Result>() {
                         @Override
                         public Result apply(Object parameter) {
                           ObjectNode result = Json.newObject();
-                          ItemHandler.RecentItems items = (ItemHandler.RecentItems) parameter;
+                          ArticleMerger.RecentItems items = (ArticleMerger.RecentItems) parameter;
                           HashMap<String, ArrayDeque> publisherItems = items.getPublisherItems();
                           for (String publisherId : publisherItems.keySet()) {
                             ArrayNode arrayNode = result.putArray(publisherId);
                             publisherItems.get(publisherId).descendingIterator().forEachRemaining(o -> {
-                              OrpItemUpdate item = (OrpItemUpdate) o;
+                              OrpArticleRemove item = (OrpArticleRemove) o;
                               arrayNode.add(item.getJson());
                             });
                           }
@@ -179,6 +167,24 @@ public class MasterServer {
         )
         .build()
         .start();
+  }
+
+  private static ObjectNode getStatisticsAsJson(StatisticsManager.StatisticsMessage parameter) {
+    StatisticsManager.StatisticsMessage stats = parameter;
+    LinkedHashMap<ActorRef, StatisticsManager.WorkerStatistics> workerStats =
+        stats.getWorkerStatistics();
+
+    ObjectNode result = Json.newObject();
+    ArrayNode workers = result.putArray("workers");
+    for (Map.Entry<ActorRef, StatisticsManager.WorkerStatistics> statsEntries :
+        workerStats.entrySet()) {
+      workers.add(
+          Json.newObject()
+              .put("timestamp", statsEntries.getValue().getTimestamp())
+              .put("throughput", statsEntries.getValue().getThroughput())
+      );
+    }
+    return result;
   }
 
   /**
@@ -229,9 +235,9 @@ public class MasterServer {
    * @param data The Array Node which will contain the items
    * @param items The Hashmap which holds the items
    */
-  private static void buildItemArray(ArrayNode data, Map<String, OrpItemUpdate> items){
+  private static void buildItemArray(ArrayNode data, Map<String, OrpArticleRemove> items){
     for (String itemId : items.keySet()) {
-      OrpItemUpdate item = items.get(itemId);
+      OrpArticleRemove item = items.get(itemId);
       //System.out.println("providing item with id = " + itemId);
       ObjectNode itemJson = Json.newObject();
       ObjectNode node = item.getJson();

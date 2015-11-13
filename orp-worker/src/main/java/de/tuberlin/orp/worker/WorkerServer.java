@@ -29,13 +29,16 @@ import akka.actor.ActorSelection;
 import akka.actor.ActorSystem;
 import akka.cluster.Cluster;
 import akka.dispatch.Mapper;
+import akka.event.Logging;
+import akka.event.LoggingAdapter;
 import akka.pattern.Patterns;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import de.tuberlin.orp.common.message.OrpArticle;
 import de.tuberlin.orp.common.ranking.MostPopularRanking;
 import de.tuberlin.orp.common.message.OrpContext;
-import de.tuberlin.orp.common.message.OrpItemUpdate;
+import de.tuberlin.orp.common.message.OrpArticleRemove;
 import de.tuberlin.orp.common.message.OrpNotification;
 import de.tuberlin.orp.common.message.OrpRequest;
 import io.verbit.ski.akka.Akka;
@@ -74,11 +77,11 @@ public class WorkerServer {
     ActorRef statisticsActor = system.actorOf(StatisticsAggregator.create(statManagerSel), "statistics");
 
     //All Items
-    ActorSelection itemHandler = system.actorSelection(master + "/user/items");
-    //TODO get ActorRef and tell it WorkerActor
+    ActorSelection articleMerger = system.actorSelection(master + "/user/articles");
+    ActorRef articleAggregator = system.actorOf(ArticleAggregator.create(articleMerger), "articles");
 
     //Create one worker Actor
-    ActorRef workerActor = system.actorOf(WorkerActor.create(statisticsActor), "orp");
+    ActorRef workerActor = system.actorOf(WorkerActor.create(statisticsActor, articleAggregator), "orp");
 
 
     File itemLogFile = new File(args[0]);
@@ -89,32 +92,47 @@ public class WorkerServer {
         .setPort(port)
         .setListener(saveRequest(printWriter))
         .addRoutes(
+            post("/error").route(context -> {
+              return forwardError(workerActor, context);
+            }),
             post("/event").route(context -> {
               return forwardEvent(workerActor, context);
             }),
+            post("/item").route(context -> {
+              return forwardItem(workerActor, context);
+            }),
             post("/recommendation").routeAsync(context -> {
               return forwardRecommendationRequest(system, statisticsActor, workerActor, context);
-            }),
-            post("/item").route(context -> {
-              return forwardItem(workerActor, itemHandler, context);
             })
         )
         .build()
         .start();
   }
 
-  private static Result forwardItem(ActorRef workerActor, ActorSelection itemHandler, Context context) {
+  private static Result forwardError(ActorRef workerActor, Context context) {
+    Optional<JsonNode> jsonBody = context.request().formParam("body").asJson();
+    JsonNode json = jsonBody.get();
+
+    System.err.println(json);
+
+    return noContent();
+  }
+
+  private static Result forwardItem(ActorRef workerActor, Context context) {
     Optional<JsonNode> jsonBody = context.request().formParam("body").asJson();
 
-    OrpItemUpdate itemUpdate = new OrpItemUpdate(jsonBody.get());
+    JsonNode json = jsonBody.get();
+    int flag = json.get("flag").asInt();
 
-    //Forward item to Worker Actor who informs Algorithm Workers
-    //TODO move to workerActor!
-    workerActor.tell(itemUpdate, ActorRef.noSender());
-
-    //Save items in central list
-    if (itemUpdate.isItemRecommendable()) {
-      itemHandler.tell(itemUpdate, ActorRef.noSender());
+    if (flag == 0){
+      //Article is recommendable
+      OrpArticle article = new OrpArticle(json);
+      workerActor.tell(article, ActorRef.noSender());
+    }
+    else {
+      //Article shall be removed
+      OrpArticleRemove toRemove = new OrpArticleRemove(json.get("id").asText(), json.get("domainid").asText());
+      workerActor.tell(toRemove, ActorRef.noSender());
     }
 
     return noContent();

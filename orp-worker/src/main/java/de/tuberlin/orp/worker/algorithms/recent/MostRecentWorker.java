@@ -17,7 +17,7 @@ import java.util.Map;
 public class MostRecentWorker extends UntypedActor {
   private LoggingAdapter log = Logging.getLogger(getContext().system(), this);
 
-  //Maps a Publisher to his recent Item Buffer
+  //Maps a Publisher to his recent OrpArticle Buffer
   private Map<String, LiFoRingBuffer> bufferMap;
   private int bufferSize;
 

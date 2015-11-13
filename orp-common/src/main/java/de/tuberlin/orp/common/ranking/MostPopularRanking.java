@@ -34,7 +34,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * MostPopularRanking represents a Mapping from Item to Number of Clicks
+ * MostPopularRanking represents a Mapping from OrpArticle to Number of Clicks
  */
 public class MostPopularRanking implements Ranking<MostPopularRanking> {
   private LinkedHashMap<String, Long> ranking;

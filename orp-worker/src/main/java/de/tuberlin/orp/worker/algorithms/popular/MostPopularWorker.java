@@ -89,7 +89,7 @@ public class MostPopularWorker extends UntypedActor {
     if (message instanceof OrpContext) {
       OrpContext context = (OrpContext) message;
 
-//      log.info(String.format("Received Item from Publisher: %s with ID: %s",
+//      log.info(String.format("Received OrpArticle from Publisher: %s with ID: %s",
 //          context.getContext(), context.getItemId()));
 
       contextCounter.add(context);

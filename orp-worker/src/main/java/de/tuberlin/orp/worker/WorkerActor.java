@@ -29,10 +29,7 @@ import akka.actor.Props;
 import akka.actor.UntypedActor;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
-import de.tuberlin.orp.common.message.OrpContext;
-import de.tuberlin.orp.common.message.OrpItemUpdate;
-import de.tuberlin.orp.common.message.OrpNotification;
-import de.tuberlin.orp.common.message.OrpRequest;
+import de.tuberlin.orp.common.message.*;
 import de.tuberlin.orp.worker.algorithms.popular.MostPopularWorker;
 import de.tuberlin.orp.worker.algorithms.recent.MostRecentWorker;
 import oshi.SystemInfo;
@@ -55,17 +52,18 @@ public class WorkerActor extends UntypedActor {
   private ActorRef filterActor;
   private ActorRef statisticsAggregator;
   private ActorRef requestCoordinator;
-  private ActorRef itemHandler;
+  private ActorRef articleAggregator;
 
   private HardwareAbstractionLayer hardware = new SystemInfo().getHardware();
 
-  public WorkerActor(ActorRef statisticsAggregator) {
+  public WorkerActor(ActorRef statisticsAggregator, ActorRef articleAggregator) {
     this.statisticsAggregator = statisticsAggregator;
+    this.articleAggregator = articleAggregator;
   }
 
-  public static Props create(ActorRef statisticsAggregator) {
+  public static Props create(ActorRef statisticsAggregator, ActorRef articleAggregator) {
     return Props.create(WorkerActor.class, () -> {
-      return new WorkerActor(statisticsAggregator);
+      return new WorkerActor(statisticsAggregator, articleAggregator);
     });
   }
 
@@ -130,14 +128,12 @@ public class WorkerActor extends UntypedActor {
       // requests are handled by the coordinator
       requestCoordinator.forward(message, getContext());
 
-    } else if (message instanceof OrpItemUpdate) {
-//      log.info(String.format("Received Item (%s)", itemCounter));
+    } else if (message instanceof OrpArticleRemove) {
 
-      // look for non recommendable items
-      OrpItemUpdate itemUpdate = (OrpItemUpdate) message;
-      if (!itemUpdate.isItemRecommendable()) {
-        filterActor.tell(new RecommendationFilter.Removed(itemUpdate.getItemId()), getSelf());
-      }
+      OrpArticleRemove removedArticle = (OrpArticleRemove) message;
+      filterActor.tell(new RecommendationFilter.Removed(removedArticle.getItemId()), getSelf());
+
+    } else if (message instanceof OrpArticle){
 
     } else {
       unhandled(message);
