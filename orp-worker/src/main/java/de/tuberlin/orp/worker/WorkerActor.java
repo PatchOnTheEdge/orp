@@ -114,6 +114,7 @@ public class WorkerActor extends UntypedActor {
 
           if (!publisherId.equals("") && !itemId.equals("") && !itemId.equals("0")) {
             mostPopularWorker.tell(context, getSelf());
+            mostRecentWorker.tell(context, getSelf());
 
             filterActor.tell(new RecommendationFilter.Clicked(userId, itemId), getSelf());
           }

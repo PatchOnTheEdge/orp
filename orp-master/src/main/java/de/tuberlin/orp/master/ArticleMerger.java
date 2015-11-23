@@ -30,7 +30,6 @@ public class ArticleMerger extends UntypedActor {
   private LoggingAdapter log = Logging.getLogger(getContext().system(), this);
   private ActorRef workerRouter;
 
-  //Map from PublisherId -> ItemId -> OrpArticle;
   private ArticleRepository articles;
 
   public ArticleMerger(int storageDays) {
@@ -47,21 +46,22 @@ public class ArticleMerger extends UntypedActor {
   public void preStart() throws Exception {
     log.info("OrpArticle Handler started.");
 
-    workerRouter = getContext().actorOf(FromConfig.getInstance().props(Props.empty()), "workerRouter");
+//    workerRouter = getContext().actorOf(FromConfig.getInstance().props(Props.empty()), "workerRouter");
 
     // asks every 2 seconds for the intermediate ranking
     getContext().system().scheduler().schedule(Duration.Zero(), Duration.create(2, TimeUnit.SECONDS), () -> {
 
-      workerRouter.tell(new Broadcast(new MergedArticles(articles)), getSelf());
+//      workerRouter.tell(new Broadcast(new MergedArticles(articles)), getSelf());
       articles = new ArticleRepository();
 
     }, getContext().dispatcher());
 
 
-    //Every Hour: clean items older than itemStorageDays;
     int itemStorageDays = 2;
 
+    //Every Hour: clean items older than itemStorageDays;
     getContext().system().scheduler().schedule(Duration.create(1, TimeUnit.HOURS), Duration.create(1, TimeUnit.HOURS), () -> {
+
       log.info("Deleting items older than " + itemStorageDays + " days.");
       articles.clean(itemStorageDays);
 
@@ -86,6 +86,11 @@ public class ArticleMerger extends UntypedActor {
 
       this.articles.merge(newArticles);
       this.articles.remove(removedArticles);
+
+    } else if (message.equals("getArticles")) {
+
+      MergedArticles articles = new MergedArticles(this.articles);
+      getSender().tell(articles, getSelf());
 
     } else {
       unhandled(message);

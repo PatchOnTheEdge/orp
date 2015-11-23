@@ -26,6 +26,7 @@ package de.tuberlin.orp.common;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import de.tuberlin.orp.common.message.OrpArticle;
 import de.tuberlin.orp.common.message.OrpArticleRemove;
 import io.verbit.ski.core.json.Json;
 
@@ -48,14 +49,15 @@ public class Utils {
         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (o, o2) -> o, LinkedHashMap::new));
   }
   //TODO beautify and change deprecated methods
-  public static ObjectNode itemMapAsJson(Map<String, Map<String, OrpArticleRemove>> map){
+
+  public static ObjectNode itemMapAsJson(Map<String, Map<String, OrpArticle>> map){
     ObjectNode result = Json.newObject();
     ArrayNode resultArray = result.putArray("items");
 
     for (String publisher : map.keySet()) {
-      Map<String, OrpArticleRemove> items = map.get(publisher);
+      Map<String, OrpArticle> items = map.get(publisher);
       for (String itemId : items.keySet()) {
-        OrpArticleRemove item = items.get(itemId);
+        OrpArticle item = items.get(itemId);
         ObjectNode itemJson = Json.newObject();
         ObjectNode node = item.getJson();
         itemJson.put("itemId", itemId);

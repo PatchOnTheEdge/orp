@@ -49,11 +49,13 @@ public class MostRecentWorker extends UntypedActor {
   @Override
   public void onReceive(Object message) throws Exception {
     if (message instanceof OrpContext) {
-      OrpContext context = (OrpContext) message;
 
-      LiFoRingBuffer buffer = bufferMap.getOrDefault(context.getPublisherId(), new LiFoRingBuffer(this.bufferSize));
+      OrpContext context = (OrpContext) message;
+      String publisherId = context.getPublisherId();
+      LiFoRingBuffer buffer = bufferMap.getOrDefault(publisherId, new LiFoRingBuffer(this.bufferSize));
 
       buffer.add(context);
+      bufferMap.put(publisherId, buffer);
 
     } else if (message.equals("getIntermediateRanking")) {
 

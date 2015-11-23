@@ -31,6 +31,7 @@ import akka.dispatch.Mapper;
 import akka.pattern.Patterns;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import de.tuberlin.orp.common.message.OrpArticle;
 import de.tuberlin.orp.common.ranking.MostPopularRanking;
 import de.tuberlin.orp.common.message.OrpArticleRemove;
 import io.verbit.ski.akka.Akka;
@@ -98,16 +99,16 @@ public class MasterServer {
 
 //            get("/throughput").route(context -> render("web/templates/index.twig", Json.newObject())),
 
-            get("/items").routeAsync(context -> {
+            get("/articles").routeAsync(context -> {
               Future<Result> result =
-                  Patterns.ask(articleMerger, "getItems", 100)
+                  Patterns.ask(articleMerger, "getArticles", 100)
                       .map(new Mapper<Object, Result>() {
                         @Override
                         public Result apply(Object parameter) {
 
-                          Map<String, Map<String, OrpArticleRemove>> publisherItems = (Map<String, Map<String, OrpArticleRemove>>) parameter;
+                          ArticleMerger.MergedArticles articles = (ArticleMerger.MergedArticles) parameter;
 
-                          return ok(itemMapAsJson(publisherItems));
+                          return ok(itemMapAsJson(articles.getArticles().getArticles()));
                         }
                       }, system.dispatcher());
               return Akka.wrap(result);
@@ -120,15 +121,15 @@ public class MasterServer {
                         @Override
                         public Result apply(Object parameter) {
                           ObjectNode result = Json.newObject();
-                          ArticleMerger.RecentItems items = (ArticleMerger.RecentItems) parameter;
-                          HashMap<String, ArrayDeque> publisherItems = items.getPublisherItems();
-                          for (String publisherId : publisherItems.keySet()) {
-                            ArrayNode arrayNode = result.putArray(publisherId);
-                            publisherItems.get(publisherId).descendingIterator().forEachRemaining(o -> {
-                              OrpArticleRemove item = (OrpArticleRemove) o;
-                              arrayNode.add(item.getJson());
-                            });
-                          }
+//                          ArticleMerger.RecentItems items = (ArticleMerger.RecentItems) parameter;
+//                          HashMap<String, ArrayDeque> publisherItems = items.getPublisherItems();
+//                          for (String publisherId : publisherItems.keySet()) {
+//                            ArrayNode arrayNode = result.putArray(publisherId);
+//                            publisherItems.get(publisherId).descendingIterator().forEachRemaining(o -> {
+//                              OrpArticleRemove item = (OrpArticleRemove) o;
+//                              arrayNode.add(item.getJson());
+//                            });
+//                          }
                           return ok(result);
                         }
                       }, system.dispatcher());
@@ -235,9 +236,9 @@ public class MasterServer {
    * @param data The Array Node which will contain the items
    * @param items The Hashmap which holds the items
    */
-  private static void buildItemArray(ArrayNode data, Map<String, OrpArticleRemove> items){
+  private static void buildItemArray(ArrayNode data, Map<String, OrpArticle> items){
     for (String itemId : items.keySet()) {
-      OrpArticleRemove item = items.get(itemId);
+      OrpArticle item = items.get(itemId);
       //System.out.println("providing item with id = " + itemId);
       ObjectNode itemJson = Json.newObject();
       ObjectNode node = item.getJson();
