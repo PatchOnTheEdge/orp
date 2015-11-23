@@ -35,8 +35,14 @@ public class ArticleAggregator extends UntypedActor {
   }
 
   @Override
-  public void onReceive(Object message) throws Exception {
+  public void preStart() throws Exception {
     log.info("Article Aggregator started");
+
+    super.preStart();
+  }
+
+  @Override
+  public void onReceive(Object message) throws Exception {
 
     if (message instanceof OrpArticleRemove){
 
@@ -51,19 +57,14 @@ public class ArticleAggregator extends UntypedActor {
       getSender().tell(articles.getArticles(), getSelf());
       log.info("Sending items.");
 
-    } else if(message.equals("getRecentItems")){
-
-      getSender().tell(articles.getRecentArticles(), getSelf());
-      log.info("Sending recent items");
-
-    } else if (message.equals("getIntermediateResult")){
+    } else if (message instanceof ArticleMerger.MergedArticles){
 
       ArticleMerger.ArticleAggregatorResult articleAggregatorResult = new ArticleMerger.ArticleAggregatorResult(this.newArticles, this.removedArticles);
       getSender().tell(articleAggregatorResult, getSelf());
 
-    } else if (message instanceof ArticleMerger.MergedArticles){
-
       this.articles = ((ArticleMerger.MergedArticles) message).getArticles();
+      this.newArticles = new ArrayDeque<>();
+      this.removedArticles = new HashSet<>();
 
     } else {
       unhandled(message);

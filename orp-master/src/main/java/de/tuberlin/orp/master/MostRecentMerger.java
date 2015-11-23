@@ -9,7 +9,6 @@ import akka.japi.Creator;
 import akka.routing.Broadcast;
 import akka.routing.FromConfig;
 import de.tuberlin.orp.common.ranking.RankingFilter;
-import de.tuberlin.orp.common.repository.MostRecentRankingRepository;
 import de.tuberlin.orp.common.repository.RankingRepository;
 import scala.concurrent.duration.Duration;
 
@@ -36,7 +35,7 @@ public class MostRecentMerger extends UntypedActor{
   public void preStart() throws Exception {
     log.info("Most Recent Merger started");
 
-    merger = new MostRecentRankingRepository();
+    merger = new RankingRepository();
     filter = new RankingFilter();
 
     workerRouter = getContext().actorOf(FromConfig.getInstance().props(Props.empty()), "workerRouter");
@@ -48,7 +47,7 @@ public class MostRecentMerger extends UntypedActor{
       merger.sortRankings();
       log.debug(merger.toString());
       workerRouter.tell(new Broadcast(new MergedRanking(merger, filter)), getSelf());
-      merger = new MostRecentRankingRepository();
+      merger = new RankingRepository();
 
     }, getContext().dispatcher());
 

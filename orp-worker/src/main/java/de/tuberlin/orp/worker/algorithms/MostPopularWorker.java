@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package de.tuberlin.orp.worker.algorithms.popular;
+package de.tuberlin.orp.worker.algorithms;
 
 import akka.actor.Props;
 import akka.actor.UntypedActor;

@@ -51,14 +51,13 @@ public class MostPopularRanking implements Ranking<MostPopularRanking> {
     this.ranking = new LinkedHashMap<>(ranking);
   }
 
-  @Override
   public LinkedHashMap<String, Long> getRanking() {
     return ranking;
   }
 
   @Override
-  public void merge(Ranking<MostPopularRanking> mostPopularRanking) {
-    LinkedHashMap<String, Long> newRanking = mostPopularRanking.getRanking();
+  public void merge(Ranking<MostPopularRanking> ranking) {
+    LinkedHashMap<String, Long> newRanking = ranking.getRanking();
     for (String key : newRanking.keySet()) {
       this.ranking.merge(key, newRanking.get(key), Long::sum);
     }

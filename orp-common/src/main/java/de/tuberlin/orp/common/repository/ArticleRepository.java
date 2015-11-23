@@ -14,12 +14,9 @@ public class ArticleRepository implements Serializable{
   //Map from PublisherId -> ItemId -> OrpArticle;
   private Map<String, Map<String, OrpArticle>> publisherItemIdMap;
 
-  //Buffer holding recently added Elements for each publisher
-  private Map<String, LiFoRingBuffer> recentItemBuffer;
 
   public ArticleRepository() {
     this.publisherItemIdMap = new HashMap<>();
-    this.recentItemBuffer = new HashMap<>();
   }
 
   public void clean(int itemStorageDays){
@@ -49,20 +46,8 @@ public class ArticleRepository implements Serializable{
 
     publisherItemIdMap.putIfAbsent(publisherId, new HashMap<>());
     publisherItemIdMap.get(publisherId).put(itemId, article);
-
-    recentItemBuffer.putIfAbsent(publisherId, new LiFoRingBuffer(5));
-    recentItemBuffer.get(publisherId).add(article);
   }
 
-  public RecentArticles getRecentArticles(){
-    RecentArticles result = new RecentArticles();
-
-    for (String publisherId : publisherItemIdMap.keySet()) {
-      ArrayDeque<Object> buffer = recentItemBuffer.get(publisherId).getBuffer();
-      result.getPublisherItems().put(publisherId, buffer);
-    }
-    return result;
-  }
 
   public Map<String, Map<String, OrpArticle>> getArticles() {
     return publisherItemIdMap;
@@ -76,20 +61,5 @@ public class ArticleRepository implements Serializable{
     String itemId = toRemove.getItemId();
     String publisherId = toRemove.getPublisherId();
     publisherItemIdMap.get(publisherId).remove(itemId);
-    recentItemBuffer.get(publisherId).getBuffer().remove(itemId);
-  }
-
-
-
-  public static class RecentArticles implements Serializable{
-    private HashMap<String, ArrayDeque> publisherItems;
-
-    public RecentArticles() {
-      this.publisherItems = new HashMap<String, ArrayDeque>();
-    }
-
-    public HashMap<String, ArrayDeque> getPublisherItems() {
-      return publisherItems;
-    }
   }
 }

@@ -34,22 +34,23 @@ import akka.event.LoggingAdapter;
 import akka.pattern.Patterns;
 import de.tuberlin.orp.common.ranking.MostPopularRanking;
 import de.tuberlin.orp.common.ranking.Ranking;
-import de.tuberlin.orp.common.repository.MostPopularRankingRepository;
-import de.tuberlin.orp.common.repository.RankingRepository;
 import de.tuberlin.orp.common.ranking.RankingFilter;
 import de.tuberlin.orp.common.message.OrpContext;
 import de.tuberlin.orp.common.message.OrpRequest;
+import de.tuberlin.orp.common.repository.RankingRepository;
 import de.tuberlin.orp.master.MostPopularMerger;
+import de.tuberlin.orp.master.MostRecentMerger;
 import scala.concurrent.Future;
 
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
  * This Actor coordinates requests.
- * All available algorithm-workers are asked for their ranking.
- * The worker delegates which ranking will be used.
+ * All available algorithm-workers are asked for their mostPopularRanking.
+ * The worker delegates which mostPopularRanking will be used.
  */
 public class RequestCoordinator extends UntypedActor {
   private LoggingAdapter log = Logging.getLogger(getContext().system(), this);
@@ -58,7 +59,9 @@ public class RequestCoordinator extends UntypedActor {
   private ActorRef mostRecentWorker;
   private ActorRef filterActor;
 
-  private RankingRepository ranking;
+  private RankingRepository mostPopularRanking;
+  private RankingRepository mostRecentRanking;
+
   private RankingFilter filter;
 
   public RequestCoordinator(ActorRef mostPopularWorker, ActorRef mostRecentWorker, ActorRef filterActor) {
@@ -66,7 +69,8 @@ public class RequestCoordinator extends UntypedActor {
     this.mostRecentWorker = mostRecentWorker;
     this.filterActor = filterActor;
 
-    this.ranking = new MostPopularRankingRepository();
+    this.mostPopularRanking = new RankingRepository();
+    this.mostRecentRanking = new RankingRepository();
     this.filter = new RankingFilter();
   }
 
@@ -80,8 +84,7 @@ public class RequestCoordinator extends UntypedActor {
 
       log.info(String.format("Received request: publisherId = %s, userId = %s", publisherId, userId));
 
-
-      Optional<Ranking<MostPopularRanking>> ranking = this.ranking.getRanking(publisherId);
+      Optional<Ranking> ranking = this.mostPopularRanking.getRanking(publisherId);
       ranking.ifPresent(ranking1 -> filter.filter(ranking1, context));
 
       getSender().tell(ranking.orElse(new MostPopularRanking()), getSelf());
@@ -90,7 +93,7 @@ public class RequestCoordinator extends UntypedActor {
 
       // cache merged results
       MostPopularMerger.MergedRanking mergedRankingMessage = (MostPopularMerger.MergedRanking) message;
-      ranking = mergedRankingMessage.getRankingRepository();
+      mostPopularRanking = mergedRankingMessage.getRankingRepository();
       filter = mergedRankingMessage.getFilter();
 
       //log.info("Calculating intermediate ranking.");
@@ -100,28 +103,58 @@ public class RequestCoordinator extends UntypedActor {
       Future<Object> intermediateFilterFuture = Patterns.ask(filterActor, "getIntermediateFilter", 200);
 
       //TODO merger result to big...
-      Future<MostPopularMerger.WorkerResult> workerResultFuture = Futures
-          .sequence(Arrays.asList(intermediateRankingFuture, intermediateFilterFuture), getContext().dispatcher())
-          .map(new Mapper<Iterable<Object>, MostPopularMerger.WorkerResult>() {
-            @Override
-            public MostPopularMerger.WorkerResult apply(Iterable<Object> parameter) {
-              Iterator<Object> it = parameter.iterator();
-              IntermediateRanking ranking = (IntermediateRanking) it.next();
-              IntermediateFilter filter = (IntermediateFilter) it.next();
-              log.debug(ranking.toString());
-              return new MostPopularMerger.WorkerResult(
-                  ranking.getRankingRepository(),
-                  filter.getFilter());
-            }
-          }, getContext().dispatcher());
-
+      //Get Ranking from MostPopular Worker
+      Future<MostPopularMerger.WorkerResult> workerResultFuture = getMostPopularWorkerResultFuture(intermediateRankingFuture, intermediateFilterFuture);
       Patterns.pipe(workerResultFuture, getContext().dispatcher()).to(getSender());
 
+    } else if (message instanceof MostRecentMerger.MergedRanking) {
+
+      MostRecentMerger.MergedRanking mergedRankingMessage = (MostRecentMerger.MergedRanking) message;
+      mostRecentRanking = mergedRankingMessage.getRankingRepository();
+      filter = mergedRankingMessage.getFilter();
+
+      Future<Object> intermediateRankingFuture = Patterns.ask(mostRecentWorker, "getIntermediateRanking", 200);
+      Future<Object> intermediateFilterFuture = Patterns.ask(filterActor, "getIntermediateFilter", 200);
+
+      Future<MostRecentMerger.WorkerResult> workerResultFuture = getMostRecentWorkerResultFuture(intermediateRankingFuture, intermediateFilterFuture);
+      Patterns.pipe(workerResultFuture, getContext().dispatcher()).to(getSender());
     } else {
 
       unhandled(message);
 
     }
+  }
+  private Future<MostPopularMerger.WorkerResult> getMostPopularWorkerResultFuture(Future<Object> intermediateRankingFuture, Future<Object> intermediateFilterFuture) {
+    return Futures
+        .sequence(Arrays.asList(intermediateRankingFuture, intermediateFilterFuture), getContext().dispatcher())
+        .map(new Mapper<Iterable<Object>, MostPopularMerger.WorkerResult>() {
+          @Override
+          public MostPopularMerger.WorkerResult apply(Iterable<Object> parameter) {
+            Iterator<Object> it = parameter.iterator();
+            IntermediateRanking ranking = (IntermediateRanking) it.next();
+            IntermediateFilter filter = (IntermediateFilter) it.next();
+            log.debug(ranking.toString());
+            return new MostPopularMerger.WorkerResult(
+                ranking.getRankingRepository(),
+                filter.getFilter());
+          }
+        }, getContext().dispatcher());
+  }
+  private Future<MostRecentMerger.WorkerResult> getMostRecentWorkerResultFuture(Future<Object> intermediateRankingFuture, Future<Object> intermediateFilterFuture) {
+    return Futures
+            .sequence(Arrays.asList(intermediateRankingFuture, intermediateFilterFuture), getContext().dispatcher())
+            .map(new Mapper<Iterable<Object>, MostRecentMerger.WorkerResult>() {
+              @Override
+              public MostRecentMerger.WorkerResult apply(Iterable<Object> parameter) {
+                Iterator<Object> it = parameter.iterator();
+                IntermediateRanking ranking = (IntermediateRanking) it.next();
+                IntermediateFilter filter = (IntermediateFilter) it.next();
+                log.debug(ranking.toString());
+                return new MostRecentMerger.WorkerResult(
+                    ranking.getRankingRepository(),
+                    filter.getFilter());
+              }
+            }, getContext().dispatcher());
   }
 
   public static Props create(ActorRef mostPopularWorker, ActorRef mostRecentWorker, ActorRef filterActor) {

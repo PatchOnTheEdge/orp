@@ -27,6 +27,7 @@ package de.tuberlin.orp.common.repository;
 import de.tuberlin.orp.common.ranking.MostPopularRanking;
 import de.tuberlin.orp.common.ranking.Ranking;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -34,13 +35,53 @@ import java.util.Optional;
 /**
  * A Ranking Repository represents a mapping from publisher to ranking
  */
-public abstract class RankingRepository<T>  {
+public class RankingRepository  implements Serializable{
+  //Maps a publisher to his item ranking
+  private Map<String, Ranking> rankings;
 
-  public abstract Optional<Ranking> getRanking(String key);
+  public RankingRepository() {
+    this(new HashMap<>());
+  }
 
-  public abstract Map<String, Ranking<MostPopularRanking>> getRankings();
+  public RankingRepository(Map<String, Ranking> rankings) {
+    this.rankings = rankings;
+  }
 
-  public abstract void merge(RankingRepository repository);
+  public Optional<Ranking> getRanking(String key) {
+    return Optional.ofNullable(rankings.get(key));
+  }
 
-  public abstract void sortRankings();
+  public Map<String, Ranking> getRankings() {
+    return rankings;
+  }
+
+  public void merge(RankingRepository repository) {
+    merge(rankings, repository.getRankings());
+  }
+
+  private void merge(Map<String, Ranking> mergedRankings, Map<String, Ranking> rankings) {
+    for (String publisher : rankings.keySet()) {
+      mergedRankings.putIfAbsent(publisher, new MostPopularRanking());
+      Ranking ranking = mergedRankings.get(publisher);
+      ranking.merge(rankings.get(publisher));
+    }
+  }
+  @Override
+  public String toString() {
+    StringBuilder result = new StringBuilder();
+    rankings.forEach((publisher, ranking) -> {
+      result
+          .append("\nPublisher: ")
+          .append(publisher)
+          .append('\n');
+      ranking.getRanking().forEach((item, count) -> result
+          .append(item)
+          .append(" (").append(count).append(")\n"));
+    });
+    return result.toString();
+  }
+  public void sortRankings() {
+    rankings.forEach((publisher, ranking) -> ranking.sort());
+  }
+
 }

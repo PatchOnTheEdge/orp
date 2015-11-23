@@ -32,9 +32,8 @@ import akka.event.LoggingAdapter;
 import akka.japi.Creator;
 import akka.routing.Broadcast;
 import akka.routing.FromConfig;
-import de.tuberlin.orp.common.repository.MostPopularRankingRepository;
-import de.tuberlin.orp.common.repository.RankingRepository;
 import de.tuberlin.orp.common.ranking.RankingFilter;
+import de.tuberlin.orp.common.repository.RankingRepository;
 import scala.concurrent.duration.Duration;
 
 import java.io.Serializable;
@@ -57,7 +56,7 @@ public class MostPopularMerger extends UntypedActor {
   public void preStart() throws Exception {
     log.info("Merger started");
 
-    merger = new MostPopularRankingRepository();
+    merger = new RankingRepository();
     filter = new RankingFilter();
 
     workerRouter = getContext().actorOf(FromConfig.getInstance().props(Props.empty()), "workerRouter");
@@ -69,7 +68,7 @@ public class MostPopularMerger extends UntypedActor {
       merger.sortRankings();
       log.debug(merger.toString());
       workerRouter.tell(new Broadcast(new MergedRanking(merger, filter)), getSelf());
-      merger = new MostPopularRankingRepository();
+      merger = new RankingRepository();
 
     }, getContext().dispatcher());
 

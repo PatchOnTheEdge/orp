@@ -13,6 +13,7 @@ import de.tuberlin.orp.common.repository.ArticleRepository;
 import de.tuberlin.orp.common.message.OrpArticleRemove;
 import scala.concurrent.duration.Duration;
 
+import java.io.Serializable;
 import java.util.ArrayDeque;
 import java.util.HashSet;
 import java.util.Map;
@@ -46,13 +47,13 @@ public class ArticleMerger extends UntypedActor {
   public void preStart() throws Exception {
     log.info("OrpArticle Handler started.");
 
-//    workerRouter = getContext().actorOf(FromConfig.getInstance().props(Props.empty()), "workerRouter");
+    workerRouter = getContext().actorOf(FromConfig.getInstance().props(Props.empty()), "workerRouter");
 
     // asks every 2 seconds for the intermediate ranking
     getContext().system().scheduler().schedule(Duration.Zero(), Duration.create(2, TimeUnit.SECONDS), () -> {
 
-//      workerRouter.tell(new Broadcast(new MergedArticles(articles)), getSelf());
-      articles = new ArticleRepository();
+      workerRouter.tell(new Broadcast(new MergedArticles(articles)), getSelf());
+//      articles = new ArticleRepository();
 
     }, getContext().dispatcher());
 
@@ -84,6 +85,8 @@ public class ArticleMerger extends UntypedActor {
       ArrayDeque<OrpArticle> newArticles = aggregatorResult.getNewArticles();
       Set<OrpArticleRemove> removedArticles = aggregatorResult.getRemovedArticles();
 
+//      log.info("Received Aggregator Result. Nr of Articles = " + newArticles.size());
+
       this.articles.merge(newArticles);
       this.articles.remove(removedArticles);
 
@@ -107,7 +110,7 @@ public class ArticleMerger extends UntypedActor {
     }
   }
 
-  public static class MergedArticles{
+  public static class MergedArticles implements Serializable{
     private ArticleRepository articles;
 
     public MergedArticles(ArticleRepository articles) {
@@ -119,7 +122,7 @@ public class ArticleMerger extends UntypedActor {
     }
   }
 
-  public static class ArticleAggregatorResult {
+  public static class ArticleAggregatorResult implements Serializable{
     private ArrayDeque<OrpArticle> newArticles;
     private HashSet<OrpArticleRemove> removedArticles;
 

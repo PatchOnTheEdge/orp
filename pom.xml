@@ -9,7 +9,7 @@
         <module>orp-common</module>
         <module>orp-worker</module>
         <module>orp-master</module>
-        <module>orp-test</module>
+        <module>orp-evaluate</module>
     </modules>
 
     <groupId>de.tuberlin</groupId>

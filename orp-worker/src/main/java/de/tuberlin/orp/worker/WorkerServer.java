@@ -44,9 +44,9 @@ import de.tuberlin.orp.common.message.OrpRequest;
 import io.verbit.ski.akka.Akka;
 import io.verbit.ski.core.DefaultSkiListener;
 import io.verbit.ski.core.Ski;
-import io.verbit.ski.core.http.AsyncResult;
-import io.verbit.ski.core.http.Context;
-import io.verbit.ski.core.http.Result;
+import io.verbit.ski.core.http.result.AsyncResult;
+import io.verbit.ski.core.http.context.RequestContext;
+import io.verbit.ski.core.http.result.Result;
 import io.verbit.ski.core.json.Json;
 import scala.concurrent.Future;
 
@@ -55,8 +55,8 @@ import java.io.PrintWriter;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static io.verbit.ski.core.http.SimpleResult.noContent;
-import static io.verbit.ski.core.http.SimpleResult.ok;
+import static io.verbit.ski.core.http.result.SimpleResult.noContent;
+import static io.verbit.ski.core.http.result.SimpleResult.ok;
 import static io.verbit.ski.core.route.RouteBuilder.post;
 
 public class WorkerServer {
@@ -84,13 +84,13 @@ public class WorkerServer {
     ActorRef workerActor = system.actorOf(WorkerActor.create(statisticsActor, articleAggregator), "orp");
 
 
-    File itemLogFile = new File(args[0]);
-    PrintWriter printWriter = new PrintWriter(itemLogFile);
+//    File itemLogFile = new File(args[0]);
+//    PrintWriter printWriter = new PrintWriter(itemLogFile);
 
     Ski.builder()
         .setHost(host)
         .setPort(port)
-        .setListener(saveRequest(printWriter))
+//        .setListener(saveRequest(printWriter))
         .addRoutes(
             post("/error").route(context -> {
               return forwardError(workerActor, context);
@@ -109,7 +109,7 @@ public class WorkerServer {
         .start();
   }
 
-  private static Result forwardError(ActorRef workerActor, Context context) {
+  private static Result forwardError(ActorRef workerActor, RequestContext context) {
     Optional<JsonNode> jsonBody = context.request().formParam("body").asJson();
     JsonNode json = jsonBody.get();
 
@@ -118,7 +118,7 @@ public class WorkerServer {
     return noContent();
   }
 
-  private static Result forwardItem(ActorRef workerActor, Context context) {
+  private static Result forwardItem(ActorRef workerActor, RequestContext context) {
     Optional<JsonNode> jsonBody = context.request().formParam("body").asJson();
 
     JsonNode json = jsonBody.get();
@@ -138,7 +138,7 @@ public class WorkerServer {
     return noContent();
   }
 
-  private static AsyncResult forwardRecommendationRequest(ActorSystem system, final ActorRef statisticsActor, ActorRef workerActor, Context context) {
+  private static AsyncResult forwardRecommendationRequest(ActorSystem system, final ActorRef statisticsActor, ActorRef workerActor, RequestContext context) {
     Optional<String> messageType = context.request().formParam("type").asText();
     Optional<JsonNode> jsonBody = context.request().formParam("body").asJson();
 
@@ -187,10 +187,10 @@ public class WorkerServer {
         }, system.dispatcher());
 
 
-    return Akka.wrap(future);
+    return Akka.wrap(future, system.dispatcher());
   }
 
-  private static Result forwardEvent(ActorRef workerActor, Context context) {
+  private static Result forwardEvent(ActorRef workerActor, RequestContext context) {
     Optional<String> messageType = context.request().formParam("type").asText();
     Optional<JsonNode> jsonBody = context.request().formParam("body").asJson();
 
@@ -205,7 +205,7 @@ public class WorkerServer {
   private static DefaultSkiListener saveRequest(final PrintWriter printWriter) {
     return new DefaultSkiListener() {
       @Override
-      public void onRequest(Context context) {
+      public void onRequest(RequestContext context) {
         super.onRequest(context);
         Map<String, List<String>> bodyForm = context.request().body().asForm();
         JsonNode json = Json.newObject();

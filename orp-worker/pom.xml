@@ -26,12 +26,12 @@
         <dependency>
             <groupId>io.verbit</groupId>
             <artifactId>ski-core</artifactId>
-            <version>0.1-SNAPSHOT</version>
+            <version>0.2-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>io.verbit</groupId>
             <artifactId>ski-akka</artifactId>
-            <version>0.1-SNAPSHOT</version>
+            <version>0.2-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.typesafe.akka</groupId>

@@ -30,8 +30,8 @@ import akka.actor.UntypedActor;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import de.tuberlin.orp.common.message.*;
-import de.tuberlin.orp.worker.algorithms.popular.MostPopularWorker;
-import de.tuberlin.orp.worker.algorithms.recent.MostRecentWorker;
+import de.tuberlin.orp.worker.algorithms.MostPopularWorker;
+import de.tuberlin.orp.worker.algorithms.MostRecentWorker;
 import oshi.SystemInfo;
 import oshi.hardware.HardwareAbstractionLayer;
 import oshi.hardware.Processor;
@@ -132,9 +132,13 @@ public class WorkerActor extends UntypedActor {
     } else if (message instanceof OrpArticleRemove) {
 
       OrpArticleRemove removedArticle = (OrpArticleRemove) message;
+
       filterActor.tell(new RecommendationFilter.Removed(removedArticle.getItemId()), getSelf());
+      articleAggregator.tell(((OrpArticleRemove) message), getSelf());
 
     } else if (message instanceof OrpArticle){
+
+      articleAggregator.tell(((OrpArticle) message), getSelf());
 
     } else {
       unhandled(message);

@@ -1,4 +1,5 @@
-package de.tuberlin.orp.test;/*
+package de.tuberlin.orp.evaluate;
+/*
  * The MIT License (MIT)
  *
  * Copyright (c) 2015 Ilya Verbitskiy, Patrick Probst
@@ -22,9 +23,7 @@ package de.tuberlin.orp.test;/*
  * SOFTWARE.
  */
 
-
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.core.TreeNode;
 import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.Unirest;
 import io.verbit.ski.core.json.Json;
@@ -32,20 +31,18 @@ import io.verbit.ski.core.json.Json;
 import java.io.File;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-public class OrpTestOfflineData {
 
-  public static String HOST = "37.120.189.25";
-      //"37.120.189.25";
+public class PostRequest {
+
+  public static String HOST = "localhost";
+  //"37.120.189.25";
+
   public static void main(String[] args) throws Exception {
     // C:\Users\Patch\projects\orp\test.data.json C:\Users\Patch\projects\orp\test.item.json 5 5
-    // /Users/ilya/Desktop/2014-07-01.data
     // C:\Users\Patch\projects\json\CLEF-2015-Task2-Json07\Json-07\2014-07-01.data\2014-07-01.data C:\Users\Patch\projects\json\CLEF-2015-Task2-Json07\Json-07\2014-07-01.items\2014-07-01.items
-
+//    G:\json\CLEF-2015-Task2-Json07\Json-07\2014-07-01.data\2014-07-01.data G:\json\CLEF-2015-Task2-Json07\Json-07\2014-07-01.items\2014-07-01.items 1000 1000
     String filePathData = args[0];
     String filePathItem = args[1];
     int limitData = Integer.parseInt(args[2]);
@@ -60,13 +57,13 @@ public class OrpTestOfflineData {
 
     Files.lines(fileData.toPath(), Charset.defaultCharset())
         .limit(limitData).map(Json::parse)
-        .forEach(OrpTestOfflineData::postJson);
+        .forEach(PostRequest::postJsonData);
     System.out.println("Done sending Data.");
 
-//    Files.lines(fileItem.toPath(), Charset.defaultCharset())
-//        .limit(limitItem).map(Json::parse)
-//        .forEach(OrpTestOfflineData::postJsonItem);
-//    System.out.println("Done sending Items.");
+    Files.lines(fileItem.toPath(), Charset.defaultCharset())
+        .limit(limitItem).map(Json::parse)
+        .forEach(PostRequest::postJsonItem);
+    System.out.println("Done sending Items.");
 
   }
 
@@ -76,12 +73,12 @@ public class OrpTestOfflineData {
     String title = jsonNode.get("title").asText();
     String flag = jsonNode.get("flag").asText();
 
-    Future<HttpResponse<String>> httpResponseFuture = Unirest.post("http://"+HOST+":9000/item")
+    Future<HttpResponse<String>> httpResponseFuture = Unirest.post("http://" + HOST + ":9000/item")
         .field("body", jsonNode.toString())
         .asStringAsync();
   }
 
-  private static void postJson(JsonNode json) {
+  private static void postJsonData(JsonNode json) {
 //    System.out.println("json Data: " + json.toString());
     String urlQuery = "";
     String eventType;
@@ -101,7 +98,7 @@ public class OrpTestOfflineData {
     }
 
 //    System.out.println("sending " + eventType);
-    Future<HttpResponse<String>> httpResponseFuture = Unirest.post("http://"+HOST+":9000/" + urlQuery)
+    Future<HttpResponse<String>> httpResponseFuture = Unirest.post("http://" + HOST + ":9000/" + urlQuery)
         .field("type", eventType)
         .field("body", json.toString())
         .asStringAsync();
@@ -122,8 +119,9 @@ public class OrpTestOfflineData {
 
   private synchronized static void printResponse(HttpResponse<?> response) {
     System.out.printf("%d - %s%n", response.getStatus(), response.getStatusText());
+    Object body = response.getBody();
     System.out.println(response.getBody());
-    System.out.println(response.getHeaders().toString());
+//    System.out.println(response.getHeaders().toString());
     System.out.println();
   }
 }

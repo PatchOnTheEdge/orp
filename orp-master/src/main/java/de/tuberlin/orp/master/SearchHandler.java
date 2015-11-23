@@ -25,7 +25,6 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static de.tuberlin.orp.common.JsonReader.readJsonFromUrl;
-import static io.verbit.ski.core.http.SimpleResult.ok;
 
 /**
  * Created by Patch on 22.09.2015.
@@ -70,7 +69,7 @@ public class SearchHandler extends UntypedActor {
 
       try {
         //TODO change to message
-        json = readJsonFromUrl("http://localhost:9001/items");
+        json = readJsonFromUrl("http://localhost:9001/articles");
         items = (ArrayNode) json.get("items");
       } catch (IOException e) {
         e.printStackTrace();

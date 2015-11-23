@@ -1,4 +1,4 @@
-package de.tuberlin.orp.worker.algorithms.recent;
+package de.tuberlin.orp.worker.algorithms;
 
 import akka.actor.Props;
 import akka.actor.UntypedActor;

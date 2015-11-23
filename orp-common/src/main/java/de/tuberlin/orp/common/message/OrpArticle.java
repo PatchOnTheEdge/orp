@@ -4,12 +4,13 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.verbit.ski.core.json.Json;
 
+import java.io.Serializable;
 import java.util.Date;
 
 /**
  * Created by patch on 10.11.2015.
  */
-public class OrpArticle {
+public class OrpArticle implements Serializable{
   private String itemId;
   private String title;
   private String text;
