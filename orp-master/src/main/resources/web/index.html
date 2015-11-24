@@ -1,105 +1,129 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <title>Adaptive News Recommendation - What's new in Germany?</title>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="static/css/bootstrap.min.css">
-  <script src="static/js/jquery.min.js"></script>
-  <script src="static/js/bootstrap.min.js"></script>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
+    <meta name="description" content="Adaptive News Recommendation">
+    <meta name="author" content="Patrick Probst">
+    <link rel="icon" href="../../favicon.ico">
+
+    <title>Adaptive News Recommendation - What's new in Germany?</title>
+
+
+    <link href="static/css/bootstrap.min.css" rel="stylesheet">
+    <link href="static/css/offcanvas.css" rel="stylesheet">
 </head>
+
 <body>
-<nav class="navbar navbar-inverse navbar-fixed-top">
-  <div class="container-fluid">
-    <div class="navbar-header">
-      <a class="navbar-brand" href="#">The News</a>
-    </div>
-    <div>
-      <ul class="nav navbar-nav">
-        <li class="active"><a href="#">Most Popular Articles</a></li>
-        <li><a href="#">Recent Articles</a></li>
-        <li><a href="#">Google Search Trends</a></li>
-        <li><a href="#">Statistics</a></li>
-      </ul>
-    </div>
-  </div>
-</nav>
+<nav class="navbar navbar-fixed-top navbar-inverse">
+    <div class="container">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="#">News</a>
+        </div>
+        <div id="navbar" class="collapse navbar-collapse">
+            <ul class="nav navbar-nav">
+                <li class="active"><a href="#">Popular</a></li>
+                <li><a href="#about">Recent</a></li>
+                <li><a href="#contact">Terms</a></li>
+                <li><a href="#about" data-toggle="collapse">About</a> </li>
+            </ul>
+        </div><!-- /.nav-collapse -->
+    </div><!-- /.container -->
+</nav><!-- /.navbar -->
+
 <div class="container">
-  <div class="jumbotron jumbotron-material-blue-grey-200">
-    <h1>The News</h1>
-    <p>Adaptive News Recommendation for Germany
-      <button type="button" class="btn btn-success pull-right" data-toggle="collapse" href="#about">
-          <span class="glyphicon glyphicon-info-sign">
-      </button>
-    </p>
-    <!-- <a href="index.html"><button type="button" class="btn btn-default">Home</button></a> -->
-  </div>
-  <div class = "collapse" id="about">
-    <div class="well">
-      <button class="btn-danger pull-right" data-toggle="collapse" href="#about"><b>X</b></button>
-      This Service was developed as part of a project at the <a href="http://www.tu-berlin.de">Technical University Berlin</a>. The project was offered by the Distributed Artificial Intelligence Laboratory (<a href="http://www.dai-labor.de/">DAI Labor</a>). The software was developed in order to participate at the <a href="http://www.clef-newsreel.org/">CLEEF Newsreel challenge</a>. Source code can be derived from <a href="http://github.com/verbit/orp">github.com/verbit/orp</a>.
-      <br>
-      If you have any Questions feel free to contact me <a href="mailto:patrick.c.probst@gmail.com"><span class="glyphicon glyphicon-envelope"></a>.
-      <br><br>
-      <u>Legal Information: </u>
-      <br>
-      Patrick Probst
-      <br>
-      Turmstraße 61,
-      <br>
-      10551 Berlin
+    <div class = "collapse" id="about">
+        <div class="well">
+            <button class="btn-danger pull-right" data-toggle="collapse" href="#about"><b>X</b></button>
+            This Service was developed as part of a project at the <a href="http://www.tu-berlin.de">Technical University Berlin</a>. The project was offered by the Distributed Artificial Intelligence Laboratory (<a href="http://www.dai-labor.de/">DAI Labor</a>). The software was developed in order to participate at the <a href="http://www.clef-newsreel.org/">CLEEF Newsreel challenge</a>. Source code can be derived from <a href="http://github.com/verbit/orp">github.com/verbit/orp</a>.
+            <br>
+            If you have any Questions feel free to contact me <a href="mailto:patrick.c.probst@gmail.com"><span class="glyphicon glyphicon-envelope"></a>.
+            <br><br>
+            <u>Legal Information: </u>
+            <br>
+            Patrick Probst
+            <br>
+            Turmstraße 61,
+            <br>
+            10551 Berlin
+        </div>
     </div>
-  </div>
+    <div class="row row-offcanvas row-offcanvas-right">
 
-  <div class="row">
-    <div class="col-sm-8">
-      <h3>Der Tagesspiegel <a href="http://www.tagesspiegel.de/"><span class="glyphicon glyphicon-link"></a></h3>
-      <h4><b><p id="1677-title" class="bg-success"></p></b></h4>
-      <blockquote><p id="1677-text"></p></blockquote>
-      <footer>Read the whole article <a id="1677-link"><span class="glyphicon glyphicon-chevron-right"></a></footer>
-    </div>
-    <div class="col-sm-4">
-      <img id="1677-img" class="img-thumbnail">
-    </div>
-  </div>
+        <div class="col-xs-12 col-sm-9">
+            <p class="pull-right visible-xs">
+                <button type="button" class="btn btn-primary btn-xs" data-toggle="offcanvas">Toggle nav</button>
+            </p>
+            <div class="row">
+                <div class="col-xs-6 col-lg-4">
+                    <h2>Heading</h2>
+                    <p>Donec id elit non mi porta gravida at eget metus. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus. Etiam porta sem malesuada magna mollis euismod. Donec sed odio dui. </p>
+                    <p><a class="btn btn-default" href="#" role="button">View details &raquo;</a></p>
+                </div><!--/.col-xs-6.col-lg-4-->
+                <div class="col-xs-6 col-lg-4">
+                    <h2>Heading</h2>
+                    <p>Donec id elit non mi porta gravida at eget metus. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus. Etiam porta sem malesuada magna mollis euismod. Donec sed odio dui. </p>
+                    <p><a class="btn btn-default" href="#" role="button">View details &raquo;</a></p>
+                </div><!--/.col-xs-6.col-lg-4-->
+                <div class="col-xs-6 col-lg-4">
+                    <h2>Heading</h2>
+                    <p>Donec id elit non mi porta gravida at eget metus. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus. Etiam porta sem malesuada magna mollis euismod. Donec sed odio dui. </p>
+                    <p><a class="btn btn-default" href="#" role="button">View details &raquo;</a></p>
+                </div><!--/.col-xs-6.col-lg-4-->
+                <div class="col-xs-6 col-lg-4">
+                    <h2>Heading</h2>
+                    <p>Donec id elit non mi porta gravida at eget metus. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus. Etiam porta sem malesuada magna mollis euismod. Donec sed odio dui. </p>
+                    <p><a class="btn btn-default" href="#" role="button">View details &raquo;</a></p>
+                </div><!--/.col-xs-6.col-lg-4-->
+                <div class="col-xs-6 col-lg-4">
+                    <h2>Heading</h2>
+                    <p>Donec id elit non mi porta gravida at eget metus. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus. Etiam porta sem malesuada magna mollis euismod. Donec sed odio dui. </p>
+                    <p><a class="btn btn-default" href="#" role="button">View details &raquo;</a></p>
+                </div><!--/.col-xs-6.col-lg-4-->
+                <div class="col-xs-6 col-lg-4">
+                    <h2>Heading</h2>
+                    <p>Donec id elit non mi porta gravida at eget metus. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus. Etiam porta sem malesuada magna mollis euismod. Donec sed odio dui. </p>
+                    <p><a class="btn btn-default" href="#" role="button">View details &raquo;</a></p>
+                </div><!--/.col-xs-6.col-lg-4-->
+            </div><!--/row-->
+        </div><!--/.col-xs-12.col-sm-9-->
 
-  <div class="row">
-    <div class="col-sm-8">
-      <h3>Kölner Stadt-Anzeiger <a href="http://www.ksta.de/"><span class="glyphicon glyphicon-link"></a></h3>
-      <h4><b><p id="123-title" class="bg-success"></p></b></h4>
-      <blockquote><p id="123-text"></p></blockquote>
-      <footer>Read the whole article <a id="123-link"><span class="glyphicon glyphicon-chevron-right"></a></footer>
-    </div>
-    <div class="col-sm-4">
-      <img id="123-img" class="img-thumbnail">
-    </div>
-  </div>
+        <div class="col-xs-6 col-sm-3 sidebar-offcanvas" id="sidebar">
+            <div class="list-group">
+                <a href="#" class="list-group-item active">Link</a>
+                <a href="#" class="list-group-item">Link</a>
+                <a href="#" class="list-group-item">Link</a>
+                <a href="#" class="list-group-item">Link</a>
+                <a href="#" class="list-group-item">Link</a>
+                <a href="#" class="list-group-item">Link</a>
+                <a href="#" class="list-group-item">Link</a>
+                <a href="#" class="list-group-item">Link</a>
+                <a href="#" class="list-group-item">Link</a>
+                <a href="#" class="list-group-item">Link</a>
+            </div>
+        </div><!--/.sidebar-offcanvas-->
+    </div><!--/row-->
 
-  <div class="row">
-    <div class="col-sm-8">
-      <h3>Sport1.de <a href="http://www.sport1.de/"><span class="glyphicon glyphicon-link"></a></h3>
-      <h4><b><p id="596-title" class="bg-success"></p></b></h4>
-      <blockquote><p id="596-text"></p></blockquote>
-      <footer>Read the whole article <a id="596-link"><span class="glyphicon glyphicon-chevron-right"></a></footer>
-    </div>
-    <div class="col-sm-4">
-      <img id="596-img" class="img-thumbnail">
-    </div>
-  </div>
+    <hr>
 
-  <div class="row">
-    <div class="col-sm-8">
-      <h3>gulli <a href="http://www.gulli.com/"><span class="glyphicon glyphicon-link"></a></h3>
-      <h4><b><p id="694-title" class="bg-success"></p></b></h4>
-      <blockquote><p id="694-text"></p></blockquote>
-      <footer>Read the whole article <a id="694-link"><span class="glyphicon glyphicon-chevron-right"></a></footer>
-    </div>
-    <div class="col-sm-4">
-      <img id="694-img" class="img-thumbnail">
-    </div>
-  </div>
-</div>
-<script src="static/js/frontend.js"></script>
+    <footer>
+        <p>&copy; Company 2014</p>
+    </footer>
+
+</div><!--/.container-->
+
+
+<script src="static/js/jquery.min.js"></script>
+<script src="static/js/bootstrap.min.js"></script>
+
+<script src="static/js/offcanvas.js"></script>
 </body>
 </html>

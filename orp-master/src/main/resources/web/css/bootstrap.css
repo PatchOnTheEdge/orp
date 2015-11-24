@@ -5008,7 +5008,7 @@ a.badge:focus {
   padding-bottom: 30px;
   margin-bottom: 30px;
   color: inherit;
-  background-color: #c1e2b3;
+  background-color: #eee;
 }
 .jumbotron h1,
 .jumbotron .h1 {
@@ -6798,4 +6798,3 @@ button.close {
   }
 }
 /*# sourceMappingURL=bootstrap.css.map */
-

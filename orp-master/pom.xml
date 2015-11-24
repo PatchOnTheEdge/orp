@@ -28,11 +28,11 @@
             <artifactId>ski-akka</artifactId>
             <version>0.2-SNAPSHOT</version>
         </dependency>
-        <!--<dependency>-->
-            <!--<groupId>io.verbit</groupId>-->
-            <!--<artifactId>ski-template-jtwig</artifactId>-->
-            <!--<version>0.1-SNAPSHOT</version>-->
-        <!--</dependency>-->
+        <dependency>
+            <groupId>io.verbit</groupId>
+            <artifactId>ski-template-mustache</artifactId>
+            <version>0.2-SNAPSHOT</version>
+        </dependency>
         <dependency>
             <groupId>com.typesafe.akka</groupId>
             <artifactId>akka-remote_2.10</artifactId>

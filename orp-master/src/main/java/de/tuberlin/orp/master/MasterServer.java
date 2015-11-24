@@ -47,7 +47,8 @@ import java.util.*;
 import static de.tuberlin.orp.common.Utils.itemMapAsJson;
 import static io.verbit.ski.core.http.result.SimpleResult.ok;
 import static io.verbit.ski.core.route.RouteBuilder.get;
-//import static io.verbit.ski.template.jtwig.JtwigTemplateResult.render;
+import static io.verbit.ski.template.mustache.MustacheTemplateResult.render;
+
 public class MasterServer {
 
   public static void main(String[] args) throws Exception {
@@ -66,10 +67,10 @@ public class MasterServer {
     Ski.builder()
         .setHost(host)
         .setPort(port)
-        .setStaticFolder(MasterServer.class.getClassLoader().getResource("web").getPath(), "static")
+        .setStaticFolder(MasterServer.class.getClassLoader().getResource("web").getPath(), "/static")
         .addRoutes(
 
-//            get("/").route(context -> render("web/index.html", Json.newObject())),
+            get("/").route(context -> render("web/index.html", Json.newObject())),
 
             get("/report").routeAsync(context -> {
               Future<Result> result =
