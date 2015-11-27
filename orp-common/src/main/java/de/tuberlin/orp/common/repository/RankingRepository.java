@@ -25,9 +25,12 @@
 package de.tuberlin.orp.common.repository;
 
 import de.tuberlin.orp.common.ranking.MostPopularRanking;
+import de.tuberlin.orp.common.ranking.MostRecentRanking;
 import de.tuberlin.orp.common.ranking.Ranking;
 
 import java.io.Serializable;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -38,13 +41,16 @@ import java.util.Optional;
 public class RankingRepository  implements Serializable{
   //Maps a publisher to his item ranking
   private Map<String, Ranking> rankings;
+  private Ranking type;
 
-  public RankingRepository() {
-    this(new HashMap<>());
+  public RankingRepository(Ranking type) {
+    this.rankings = new HashMap<>();
+    this.type = type;
   }
 
-  public RankingRepository(Map<String, Ranking> rankings) {
+  public RankingRepository(Map<String, Ranking> rankings, Ranking type) {
     this.rankings = rankings;
+    this.type = type;
   }
 
   public Optional<Ranking> getRanking(String key) {
@@ -60,11 +66,20 @@ public class RankingRepository  implements Serializable{
   }
 
   private void merge(Map<String, Ranking> mergedRankings, Map<String, Ranking> rankings) {
-    for (String publisher : rankings.keySet()) {
-      mergedRankings.putIfAbsent(publisher, new MostPopularRanking());
-      Ranking ranking = mergedRankings.get(publisher);
-      ranking.merge(rankings.get(publisher));
+    if (this.type instanceof MostPopularRanking){
+      for (String publisher : rankings.keySet()) {
+        mergedRankings.putIfAbsent(publisher, new MostPopularRanking());
+        Ranking ranking = mergedRankings.get(publisher);
+        ranking.merge(rankings.get(publisher));
+      }
+    } else if (this.type instanceof MostRecentRanking){
+      for (String publisher : rankings.keySet()) {
+        mergedRankings.putIfAbsent(publisher, new MostRecentRanking());
+        Ranking ranking = mergedRankings.get(publisher);
+        ranking.merge(rankings.get(publisher));
+      }
     }
+
   }
   @Override
   public String toString() {

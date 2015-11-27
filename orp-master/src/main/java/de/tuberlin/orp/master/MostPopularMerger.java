@@ -32,6 +32,7 @@ import akka.event.LoggingAdapter;
 import akka.japi.Creator;
 import akka.routing.Broadcast;
 import akka.routing.FromConfig;
+import de.tuberlin.orp.common.ranking.MostPopularRanking;
 import de.tuberlin.orp.common.ranking.RankingFilter;
 import de.tuberlin.orp.common.repository.RankingRepository;
 import scala.concurrent.duration.Duration;
@@ -56,7 +57,7 @@ public class MostPopularMerger extends UntypedActor {
   public void preStart() throws Exception {
     log.info("Merger started");
 
-    merger = new RankingRepository();
+    merger = new RankingRepository(new MostPopularRanking());
     filter = new RankingFilter();
 
     workerRouter = getContext().actorOf(FromConfig.getInstance().props(Props.empty()), "workerRouter");
@@ -68,7 +69,7 @@ public class MostPopularMerger extends UntypedActor {
       merger.sortRankings();
       log.debug(merger.toString());
       workerRouter.tell(new Broadcast(new MergedRanking(merger, filter)), getSelf());
-      merger = new RankingRepository();
+      merger = new RankingRepository(new MostPopularRanking());
 
     }, getContext().dispatcher());
 
@@ -76,12 +77,12 @@ public class MostPopularMerger extends UntypedActor {
 
   @Override
   public void onReceive(Object message) throws Exception {
-    if (message instanceof WorkerResult) {
+    if (message instanceof MostPopularMerger.WorkerResult) {
 
       // build cache and send it after timeout
 
       WorkerResult result = (WorkerResult) message;
-//      log.info("Received intermediate ranking from " + getSender().toString());
+      log.debug("Received intermediate ranking from " + getSender().toString());
 
       filter.merge(result.getFilter());
       merger.merge(result.getRankingRepository());

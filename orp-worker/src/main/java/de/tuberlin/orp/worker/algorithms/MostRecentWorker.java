@@ -7,8 +7,15 @@ import akka.event.LoggingAdapter;
 import akka.japi.Creator;
 import de.tuberlin.orp.common.LiFoRingBuffer;
 import de.tuberlin.orp.common.message.OrpContext;
+import de.tuberlin.orp.common.ranking.MostRecentRanking;
+import de.tuberlin.orp.common.ranking.Ranking;
+import de.tuberlin.orp.common.repository.RankingRepository;
+import de.tuberlin.orp.master.MostRecentMerger;
+import de.tuberlin.orp.worker.RequestCoordinator;
 
+import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -18,7 +25,7 @@ public class MostRecentWorker extends UntypedActor {
   private LoggingAdapter log = Logging.getLogger(getContext().system(), this);
 
   //Maps a Publisher to his recent OrpArticle Buffer
-  private Map<String, LiFoRingBuffer> bufferMap;
+  private RankingRepository rankingRepository;
   private int bufferSize;
 
   static class MostRecentlyWorkerCreator implements Creator<MostRecentWorker>{
@@ -35,7 +42,7 @@ public class MostRecentWorker extends UntypedActor {
     return Props.create(MostRecentWorker.class, new MostRecentlyWorkerCreator(bufferSize));
   }
   public MostRecentWorker(int bufferSize) {
-    this.bufferMap = new HashMap<String, LiFoRingBuffer>();
+    this.rankingRepository = new RankingRepository(new MostRecentRanking());
     this.bufferSize = bufferSize;
   }
 
@@ -52,15 +59,31 @@ public class MostRecentWorker extends UntypedActor {
 
       OrpContext context = (OrpContext) message;
       String publisherId = context.getPublisherId();
-      LiFoRingBuffer buffer = bufferMap.getOrDefault(publisherId, new LiFoRingBuffer(this.bufferSize));
+      String itemId = context.getItemId();
 
-      buffer.add(context);
-      bufferMap.put(publisherId, buffer);
+      log.info(String.format("Received OrpArticle from Publisher: %s with ID: %s", publisherId, itemId));
+      Map<String, Ranking> rankings = rankingRepository.getRankings();
+      MostRecentRanking ranking = (MostRecentRanking) rankings.getOrDefault(publisherId, new MostRecentRanking());
+
+      LinkedHashMap<String, Date> map = new LinkedHashMap<String, Date>();
+      map.put(itemId, new Date());
+      MostRecentRanking newRanking = new MostRecentRanking(map);
+      ranking.merge(newRanking);
+
+      rankings.put(publisherId, ranking);
+      RankingRepository newRepo = new RankingRepository(rankings, new MostRecentRanking());
+
+      this.rankingRepository.merge(newRepo);
 
     } else if (message.equals("getIntermediateRanking")) {
 
-      log.info("Intermediate ranking requested.");
-      getSender().tell(bufferMap, getSelf());
+//      log.info("Intermediate ranking requested." + rankingRepository.toString());
+      getSender().tell(new RequestCoordinator.IntermediateRanking(rankingRepository), getSelf());
+
+    } else if (message instanceof MostRecentMerger.MergedRanking) {
+
+      MostRecentMerger.MergedRanking mergedRanking = (MostRecentMerger.MergedRanking) message;
+      this.rankingRepository = mergedRanking.getRankingRepository();
 
     } else {
       unhandled(message);

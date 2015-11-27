@@ -77,7 +77,7 @@ public class WorkerActor extends UntypedActor {
 
     filterActor = getContext().actorOf(RecommendationFilter.create(), "filter");
 
-    requestCoordinator = getContext().actorOf(RequestCoordinator.create(mostPopularWorker, mostRecentWorker,filterActor), "coordinator");
+    requestCoordinator = getContext().actorOf(RequestCoordinator.create(mostPopularWorker, mostRecentWorker, filterActor), "coordinator");
 
     getContext().system().scheduler().schedule(Duration.Zero(), Duration.create(1, TimeUnit.SECONDS), () -> {
 

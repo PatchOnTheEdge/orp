@@ -96,7 +96,7 @@ public class StatisticsAggregator extends UntypedActor {
     } else if (message.equals("request")) {
 
       ++requestCounter;
-      log.info("Interval Request Counter: " + requestCounter);
+//      log.info("Interval Request Counter: " + requestCounter);
 
     } else if (message.equals("notification")){
 

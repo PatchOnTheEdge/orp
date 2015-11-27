@@ -34,6 +34,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import de.tuberlin.orp.common.message.OrpArticle;
 import de.tuberlin.orp.common.ranking.MostPopularRanking;
 import de.tuberlin.orp.common.message.OrpArticleRemove;
+import de.tuberlin.orp.common.ranking.MostRecentRanking;
+import de.tuberlin.orp.common.ranking.Ranking;
 import io.verbit.ski.akka.Akka;
 import io.verbit.ski.core.Ski;
 import io.verbit.ski.core.http.result.Result;
@@ -59,7 +61,7 @@ public class MasterServer {
     ActorSystem system = ActorSystem.create("ClusterSystem");
     Cluster cluster = Cluster.get(system);
     ActorRef popularMergerActor = system.actorOf(MostPopularMerger.create(), "popularMerger");
-    ActorRef recentMergerActor = system.actorOf(MostPopularMerger.create(), "recentMerger");
+    ActorRef recentMergerActor = system.actorOf(MostRecentMerger.create(), "recentMerger");
     ActorRef statisticsManager = system.actorOf(StatisticsManager.create(), "statistics");
     ActorRef articleMerger = system.actorOf(ArticleMerger.create(),"articles");
     ActorRef searchHandler = system.actorOf(SearchHandler.create(articleMerger), "search");
@@ -120,20 +122,25 @@ public class MasterServer {
 
             get("/ranking-mr").routeAsync(context -> {
               Future<Result> result =
-                  Patterns.ask(articleMerger, "getRecentItems", 100)
+                  Patterns.ask(recentMergerActor, "getMergerResult", 100)
                       .map(new Mapper<Object, Result>() {
                         @Override
-                        public Result apply(Object parameter) {
+                        public Result apply(Object object) {
                           ObjectNode result = Json.newObject();
-//                          ArticleMerger.RecentItems items = (ArticleMerger.RecentItems) parameter;
-//                          HashMap<String, ArrayDeque> publisherItems = items.getPublisherItems();
-//                          for (String publisherId : publisherItems.keySet()) {
-//                            ArrayNode arrayNode = result.putArray(publisherId);
-//                            publisherItems.get(publisherId).descendingIterator().forEachRemaining(o -> {
-//                              OrpArticleRemove item = (OrpArticleRemove) o;
-//                              arrayNode.add(item.getJson());
-//                            });
-//                          }
+
+                          Map<String, MostRecentRanking> rankings = (Map<String, MostRecentRanking>) object;
+                          Set<String> publishers = rankings.keySet();
+                          ArrayNode data = result.putArray("rankings");
+
+                          for (String publisher : publishers) {
+                            MostRecentRanking mostRecentRanking = rankings.get(publisher);
+                            ObjectNode publisherNode = Json.newObject();
+                            publisherNode.put("publisherId", publisher);
+                            ArrayNode rankingNode = publisherNode.putArray("ranking");
+                            rankingNode.addAll(mostRecentRanking.toJson());
+                            data.add(publisherNode);
+                          }
+
                           return ok(result);
                         }
                       }, system.dispatcher());

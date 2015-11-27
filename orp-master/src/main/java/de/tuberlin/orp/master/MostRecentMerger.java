@@ -8,6 +8,7 @@ import akka.event.LoggingAdapter;
 import akka.japi.Creator;
 import akka.routing.Broadcast;
 import akka.routing.FromConfig;
+import de.tuberlin.orp.common.ranking.MostRecentRanking;
 import de.tuberlin.orp.common.ranking.RankingFilter;
 import de.tuberlin.orp.common.repository.RankingRepository;
 import scala.concurrent.duration.Duration;
@@ -23,7 +24,6 @@ public class MostRecentMerger extends UntypedActor{
 
   private ActorRef workerRouter;
 
-  private RankingFilter filter;
   private RankingRepository merger;
 
 
@@ -35,8 +35,7 @@ public class MostRecentMerger extends UntypedActor{
   public void preStart() throws Exception {
     log.info("Most Recent Merger started");
 
-    merger = new RankingRepository();
-    filter = new RankingFilter();
+    merger = new RankingRepository(new MostRecentRanking());
 
     workerRouter = getContext().actorOf(FromConfig.getInstance().props(Props.empty()), "workerRouter");
 
@@ -46,8 +45,8 @@ public class MostRecentMerger extends UntypedActor{
 
       merger.sortRankings();
       log.debug(merger.toString());
-      workerRouter.tell(new Broadcast(new MergedRanking(merger, filter)), getSelf());
-      merger = new RankingRepository();
+      workerRouter.tell(new Broadcast(new MergedRanking(merger)), getSelf());
+      merger = new RankingRepository(new MostRecentRanking());
 
     }, getContext().dispatcher());
 
@@ -55,14 +54,13 @@ public class MostRecentMerger extends UntypedActor{
 
   @Override
   public void onReceive(Object message) throws Exception {
-    if (message instanceof WorkerResult) {
+    if (message instanceof MostRecentMerger.WorkerResult) {
 
       // build cache and send it after timeout
 
       WorkerResult result = (WorkerResult) message;
-      //log.info("Received intermediate ranking from " + getSender().toString());
+      log.debug("Received intermediate ranking from " + getSender().toString());
 
-      filter.merge(result.getFilter());
       merger.merge(result.getRankingRepository());
 
     }
@@ -77,20 +75,15 @@ public class MostRecentMerger extends UntypedActor{
 
   public static class WorkerResult implements Serializable {
     private final RankingRepository rankings;
-    private final RankingFilter filter;
 
-    public WorkerResult(RankingRepository rankingRepository, RankingFilter filter) {
+    public WorkerResult(RankingRepository rankingRepository) {
       this.rankings = rankingRepository;
-      this.filter = filter;
     }
 
     public RankingRepository getRankingRepository() {
       return rankings;
     }
 
-    public RankingFilter getFilter() {
-      return filter;
-    }
   }
 
   private static class MostRecentMergerCreator implements Creator<MostRecentMerger> {
@@ -102,19 +95,14 @@ public class MostRecentMerger extends UntypedActor{
 
   public static class MergedRanking implements Serializable {
     private RankingRepository rankingRepository;
-    private RankingFilter filter;
 
-    public MergedRanking(RankingRepository rankingRepository, RankingFilter filter) {
+    public MergedRanking(RankingRepository rankingRepository) {
       this.rankingRepository = rankingRepository;
-      this.filter = filter;
     }
 
     public RankingRepository getRankingRepository() {
       return rankingRepository;
     }
 
-    public RankingFilter getFilter() {
-      return filter;
-    }
   }
 }

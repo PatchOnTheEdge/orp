@@ -3,7 +3,7 @@
  */
 
 var itemRepo = {};
-var rankingRepo = {};
+var rankingRepo = [];
 
 function httpGetAsync(theUrl, callback) {
     var xmlHttp = new XMLHttpRequest();
@@ -27,11 +27,10 @@ function parseJsonItem(responseText){
     for(i in items){
         var itemId = items[i].itemId;
         var item = items[i].item;
-        console.log(itemId);
         itemRepo[itemId] = item;
     }
 }
-function parseJsonRanking(responseText){
+function parseMPRanking(responseText){
     //console.log(responseText);
     var rankings = JSON.parse(responseText).rankings;
 
@@ -39,15 +38,38 @@ function parseJsonRanking(responseText){
         var publisher = rankings[p].publisherId;
         var ranking = rankings[p].ranking;
 
+        var i = 1;
         for(r in ranking){
+            if(i == 3){break;}
             var key = ranking[r].key;
             var rank = ranking[r].rank;
-            console.log("Item Rank = " + publisher, key, rank);
+            //console.log("Item Rank = " + publisher, key, rank);
+            setContent(i, publisher, itemRepo[key], rank);
+            i++;
 
         }
     }
 }
-httpGetAsync("/items", parseJsonItem);
-httpGetAsync("/ranking-mp", parseJsonRanking);
+function setContent(i, publisher, item, rank){
+    setTitle(i, publisher, item.title);
+    setText(i, publisher, item.text);
+    setArticleUrl(i, publisher, item.articleUrl);
+    setImgUrl(i, publisher, item.imgUrl);
+    console.log(item.title);
+}
+function setTitle(i, publisher, titel){
+    document.getElementById("h" + "-" + publisher + "-" + i ).innerHTML = titel;
+}
+function setText(i, publisher, text){
+    document.getElementById("t" + "-"  + publisher + "-" + i ).innerHTML = text;
+}
+function setArticleUrl(i, publisher, url){
+    document.getElementById("l" + "-"  + publisher + "-" + i ).href = url;
+}
+function setImgUrl(i, publisher, url){
+    document.getElementById("i" + "-"  + publisher + "-" + i).src = url;
+}
+httpGetAsync("/articles", parseJsonItem);
+httpGetAsync("/ranking-mp", parseMPRanking);
 
 

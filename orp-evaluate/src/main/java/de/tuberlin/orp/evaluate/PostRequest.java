@@ -40,6 +40,7 @@ public class PostRequest {
   //"37.120.189.25";
 
   public static void main(String[] args) throws Exception {
+//    G:\Projects\orp\test.data G:\Projects\orp\test.item 5 5
     // C:\Users\Patch\projects\orp\test.data.json C:\Users\Patch\projects\orp\test.item.json 5 5
     // C:\Users\Patch\projects\json\CLEF-2015-Task2-Json07\Json-07\2014-07-01.data\2014-07-01.data C:\Users\Patch\projects\json\CLEF-2015-Task2-Json07\Json-07\2014-07-01.items\2014-07-01.items
 //    G:\json\CLEF-2015-Task2-Json07\Json-07\2014-07-01.data\2014-07-01.data G:\json\CLEF-2015-Task2-Json07\Json-07\2014-07-01.items\2014-07-01.items 1000 1000

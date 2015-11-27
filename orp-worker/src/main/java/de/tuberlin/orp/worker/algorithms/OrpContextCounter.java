@@ -69,7 +69,7 @@ public class OrpContextCounter {
       rankings.put(key, value);
     }
 
-    return new RankingRepository(rankings);
+    return new RankingRepository(rankings, new MostPopularRanking());
   }
 
   private Map<String, Map<String, Long>> calculateRankings() {

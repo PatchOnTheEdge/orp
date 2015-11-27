@@ -76,7 +76,7 @@ public class MostPopularRanking implements Ranking<MostPopularRanking> {
 
   @Override
   public void sort() {
-    ranking = Utils.sortMapByEntry(ranking, (o1, o2) -> (int) (o2.getValue() - o1.getValue()));
+    this.ranking = Utils.sortMapByEntry(this.ranking, (o1, o2) -> (int) (o2.getValue() - o1.getValue()));
   }
 
   @Override
