@@ -26,24 +26,30 @@ public class MostRecentWorker extends UntypedActor {
 
   //Maps a Publisher to his recent OrpArticle Buffer
   private RankingRepository rankingRepository;
-  private int bufferSize;
+
+  private RecentArticlesQueue recentArticles;
 
   static class MostRecentlyWorkerCreator implements Creator<MostRecentWorker>{
-    private int bufferSize;
-    public MostRecentlyWorkerCreator(int bufferSize){
-      this.bufferSize=bufferSize;
+
+    private int contextWindowSize;
+    private int topListSize;
+
+    public MostRecentlyWorkerCreator(int contextWindowSize, int topListSize){
+      this.contextWindowSize = contextWindowSize;
+      this.topListSize = topListSize;
     }
+
     @Override
     public MostRecentWorker create() throws Exception {
-      return new MostRecentWorker(bufferSize);
+      return new MostRecentWorker(contextWindowSize, topListSize);
     }
   }
-  public static Props create(int bufferSize) {
-    return Props.create(MostRecentWorker.class, new MostRecentlyWorkerCreator(bufferSize));
+  public static Props create(int contextWindowSize, int topListSize) {
+    return Props.create(MostRecentWorker.class, new MostRecentlyWorkerCreator(contextWindowSize, topListSize));
   }
-  public MostRecentWorker(int bufferSize) {
+  public MostRecentWorker(int contextWindowSize, int topListSize) {
     this.rankingRepository = new RankingRepository(new MostRecentRanking());
-    this.bufferSize = bufferSize;
+    this.recentArticles = new RecentArticlesQueue(contextWindowSize, topListSize);
   }
 
   @Override
@@ -61,7 +67,8 @@ public class MostRecentWorker extends UntypedActor {
       String publisherId = context.getPublisherId();
       String itemId = context.getItemId();
 
-      log.info(String.format("Received OrpArticle from Publisher: %s with ID: %s", publisherId, itemId));
+      log.debug(String.format("Received OrpArticle from Publisher: %s with ID: %s", publisherId, itemId));
+
       Map<String, Ranking> rankings = rankingRepository.getRankings();
       MostRecentRanking ranking = (MostRecentRanking) rankings.getOrDefault(publisherId, new MostRecentRanking());
 
@@ -71,6 +78,7 @@ public class MostRecentWorker extends UntypedActor {
       ranking.merge(newRanking);
 
       rankings.put(publisherId, ranking);
+
       RankingRepository newRepo = new RankingRepository(rankings, new MostRecentRanking());
 
       this.rankingRepository.merge(newRepo);

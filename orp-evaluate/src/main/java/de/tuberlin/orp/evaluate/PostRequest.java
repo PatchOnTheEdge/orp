@@ -77,6 +77,7 @@ public class PostRequest {
     Future<HttpResponse<String>> httpResponseFuture = Unirest.post("http://" + HOST + ":9000/item")
         .field("body", jsonNode.toString())
         .asStringAsync();
+
   }
 
   private static void postJsonData(JsonNode json) {

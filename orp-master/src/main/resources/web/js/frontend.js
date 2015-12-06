@@ -3,7 +3,7 @@
  */
 
 var itemRepo = {};
-var rankingRepo = [];
+var publisherRepo = {};
 
 function httpGetAsync(theUrl, callback) {
     var xmlHttp = new XMLHttpRequest();
@@ -16,12 +16,9 @@ function httpGetAsync(theUrl, callback) {
     xmlHttp.send(null);
 }
 
-function setDiv(){
-
-}
 
 function parseJsonItem(responseText){
-    //console.log(responseText);
+    itemRepo = {};
     var items = JSON.parse(responseText).items;
 
     for(i in items){
@@ -31,7 +28,7 @@ function parseJsonItem(responseText){
     }
 }
 function parseMPRanking(responseText){
-    //console.log(responseText);
+    publisherRepo = {};
     var rankings = JSON.parse(responseText).rankings;
 
     for(p in rankings){
@@ -40,36 +37,68 @@ function parseMPRanking(responseText){
 
         var i = 1;
         for(r in ranking){
-            if(i == 3){break;}
+            //if(i == 3){break;}
             var key = ranking[r].key;
             var rank = ranking[r].rank;
-            //console.log("Item Rank = " + publisher, key, rank);
-            setContent(i, publisher, itemRepo[key], rank);
-            i++;
 
+            var articles = {};
+            var article = {};
+            if(!itemRepo[key].is(undefined)){
+                article.rank = rank;
+                article.title = itemRepo[key].title;
+                article.text = itemRepo[key].text;
+                article.url = itemRepo[key].articleUrl;
+                article.iurl = itemRepo[key].imgUrl;
+                articles[i] = article;
+            } else {
+                articles[i] = undefined;
+            }
+            i++;
+        }
+        publisherRepo[publisher] = articles;
+    }
+}
+function setMP(publisher){
+    var articles = publisherRepo[publisher];
+    if(!articles.is(undefined)){
+        var i = 1;
+        for(var article in articles){
+            setMPContent(i, article);
+            i++;
         }
     }
 }
-function setContent(i, publisher, item, rank){
-    setTitle(i, publisher, item.title);
-    setText(i, publisher, item.text);
-    setArticleUrl(i, publisher, item.articleUrl);
-    setImgUrl(i, publisher, item.imgUrl);
-    console.log(item.title);
+function setMPContent(i, article){
+    if(article.is(undefined)){
+        setTitle(i, "undefined", "undefined");
+        setText(i, "undefined", "undefined");
+        setArticleUrl(i, "undefined", "undefined");
+        setImgUrl(i, "undefined", "undefined");
+    } else{
+        setTitle(i, article.title);
+        setText(i, article.text);
+        setArticleUrl(i, article.url);
+        setImgUrl(i, article.iurl);
+    }
+
 }
-function setTitle(i, publisher, titel){
-    document.getElementById("h" + "-" + publisher + "-" + i ).innerHTML = titel;
+function setTitle(i, titel){
+    document.getElementById("h" + "-" + i ).innerHTML = titel;
 }
-function setText(i, publisher, text){
-    document.getElementById("t" + "-"  + publisher + "-" + i ).innerHTML = text;
+function setText(i, text){
+    document.getElementById("t" + "-" + i ).innerHTML = text;
 }
-function setArticleUrl(i, publisher, url){
-    document.getElementById("l" + "-"  + publisher + "-" + i ).href = url;
+function setArticleUrl(i, url){
+    document.getElementById("l" + "-" + i ).href = url;
 }
-function setImgUrl(i, publisher, url){
-    document.getElementById("i" + "-"  + publisher + "-" + i).src = url;
+function setImgUrl(i, url){
+    document.getElementById("i" + "-" + i).src = url;
+}
+function setRank(i, rank){
+    document.getElementById("r" + "-" + i).src = rank;
 }
 httpGetAsync("/articles", parseJsonItem);
 httpGetAsync("/ranking-mp", parseMPRanking);
+
 
 

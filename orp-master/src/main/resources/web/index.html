@@ -29,35 +29,31 @@
 <body>
 
     <!-- Navigation -->
-    <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
-        <div class="container">
-            <!-- Brand and toggle get grouped for better mobile display -->
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+        <div class="container-fluid">
             <div class="navbar-header">
-                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
-                    <span class="sr-only">Toggle navigation</span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                </button>
                 <a class="navbar-brand" href="#">News</a>
             </div>
-            <!-- Collect the nav links, forms, and other content for toggling -->
-            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <div>
                 <ul class="nav navbar-nav">
-                    <li>
-                        <a href="#">Popular</a>
+                    <!--<li class="active"><a href="#">Popular</a></li>-->
+                    <li class="dropdown">
+                        <a class="dropdown-toggle" data-toggle="dropdown" href="#">Popular
+                            <span class="caret"></span></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="#">Tagesspiegel</a></li>
+                            <li><a href="#">K&ouml;lner Stadtanzeiger</a></li>
+                            <li><a href="#">Sport1</a></li>
+                            <li><a href="#">Motortalk</a></li>
+                            <li><a href="#">Gulli</a></li>
+                            <li><a href="#">Cio</a></li>
+                        </ul>
                     </li>
-                    <li>
-                        <a href="#">Recent</a>
-                    </li>
-                    <li>
-                        <a data-toggle="collapse" href="#about">About</a>
-                    </li>
+                    <li><a href="#">Recent</a></li>
+                    <li><a data-toggle="collapse" href="#about">About</a></li>
                 </ul>
             </div>
-            <!-- /.navbar-collapse -->
         </div>
-        <!-- /.container -->
     </nav>
 
     <!-- Page Content -->
@@ -65,13 +61,15 @@
 
         <!-- Page Heading -->
         <div class="row">
-            <div class="col-lg-12">
+            <div class="col-lg-10">
                 <h1 class="page-header">The News
                     <small>What's happening in the world?</small>
+
                 </h1>
             </div>
-        </div>
+
         <!-- /.row -->
+
 
         <div class = "collapse" id="about">
             <div class="well">
@@ -94,14 +92,14 @@
         <div class="row">
             <div class="col-md-7">
                 <a href="#">
-                    <img id="i-1677-1" class="img-responsive" alt="">
+                    <img id="i-1" class="img-responsive" alt="">
                 </a>
             </div>
             <div class="col-md-5">
-                <h3 id="h-1677-1"></h3>
-                <!--<h4>Subheading</h4>-->
-                <p id="t-1677-1"></p>
-                <a id="l-1677-1" class="btn btn-primary" href="#">View Article <span class="glyphicon glyphicon-chevron-right"></span></a>
+                <h3 id="h-1"></h3>
+                <h4 id="sh-1">Subheading</h4>
+                <p id="t-1"></p>
+                <a id="l-1" class="btn btn-primary" href="#">View Article <span class="glyphicon glyphicon-chevron-right"></span></a>
             </div>
         </div>
         <!-- /.row -->
@@ -112,14 +110,14 @@
         <div class="row">
             <div class="col-md-7">
                 <a href="#">
-                    <img id="i-1677-2" class="img-responsive" alt="">
+                    <img id="i-2" class="img-responsive" alt="">
                 </a>
             </div>
             <div class="col-md-5">
-                <h3 id="h-1677-2"></h3>
-                <!--<h4>Subheading</h4>-->
-                <p id="t-1677-2"></p>
-                <a id="l-1677-2" class="btn btn-primary" href="#">View Article <span class="glyphicon glyphicon-chevron-right"></span></a>
+                <h3 id="h-2"></h3>
+                <h4 id="sh-2">Subheading</h4>
+                <p id="t-2"></p>
+                <a id="l-2" class="btn btn-primary" href="#">View Article <span class="glyphicon glyphicon-chevron-right"></span></a>
             </div>
         </div>
         <!-- /.row -->
@@ -134,10 +132,10 @@
                 </a>
             </div>
             <div class="col-md-5">
-                <h3 id="h-1234-1"></h3>
-                <!--<h4>Subheading</h4>-->
-                <p id="t-1234-1"></p>
-                <a id="l-1234-2" class="btn btn-primary" href="#">View Article <span class="glyphicon glyphicon-chevron-right"></span></a>
+                <h3 id="h-3"></h3>
+                <h4 id="sh-3">Subheading</h4>
+                <p id="t-3"></p>
+                <a id="l-3" class="btn btn-primary" href="#">View Article <span class="glyphicon glyphicon-chevron-right"></span></a>
             </div>
         </div>
         <!-- /.row -->
@@ -153,10 +151,10 @@
                 </a>
             </div>
             <div class="col-md-5">
-                <h3 id="h4"></h3>
-                <!--<h4>Subheading</h4>-->
-                <p id="t4"></p>
-                <a class="btn btn-primary" href="#">View Article <span class="glyphicon glyphicon-chevron-right"></span></a>
+                <h3 id="h-4"></h3>
+                <h4 id="sh-4">Subheading</h4>
+                <p id="t-4"></p>
+                <a id="l-4" class="btn btn-primary" href="#">View Article <span class="glyphicon glyphicon-chevron-right"></span></a>
             </div>
         </div>
         <!-- /.row -->
@@ -171,10 +169,10 @@
                 </a>
             </div>
             <div class="col-md-5">
-                <h3 id="h5"></h3>
-                <!--<h4>Subheading</h4>-->
-                <p id="t5"></p>
-                <a class="btn btn-primary" href="#">View Article <span class="glyphicon glyphicon-chevron-right"></span></a>
+                <h3 id="h-5"></h3>
+                <h4 id="sh-5">Subheading</h4>
+                <p id="t-5"></p>
+                <a id="l-5" class="btn btn-primary" href="#">View Article <span class="glyphicon glyphicon-chevron-right"></span></a>
             </div>
         </div>
         <!-- /.row -->
@@ -217,7 +215,7 @@
         <footer>
             <div class="row">
                 <div class="col-lg-12">
-                    <p>Copyright &copy; Patrick Probst 2015</p>
+                    <p>&copy; Patrick Probst 2015</p>
                 </div>
             </div>
             <!-- /.row -->

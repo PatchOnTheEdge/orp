@@ -174,7 +174,7 @@ public class RequestCoordinator extends UntypedActor {
     }
   }
 
-  public static class IntermediateFilter {
+  public static class IntermediateFilter implements Serializable{
     private RankingFilter filter;
 
     public IntermediateFilter(RankingFilter filter) {
