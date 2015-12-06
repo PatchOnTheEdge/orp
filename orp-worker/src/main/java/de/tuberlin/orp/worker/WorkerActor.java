@@ -73,7 +73,7 @@ public class WorkerActor extends UntypedActor {
     log.info("Worker started.");
 
     mostPopularWorker = getContext().actorOf(MostPopularWorker.create(500, 50), "mp");
-    mostRecentWorker = getContext().actorOf(MostRecentWorker.create(50), "mr");
+    mostRecentWorker = getContext().actorOf(MostRecentWorker.create(500, 50), "mr");
 
     filterActor = getContext().actorOf(RecommendationFilter.create(), "filter");
 
@@ -134,11 +134,11 @@ public class WorkerActor extends UntypedActor {
       OrpArticleRemove removedArticle = (OrpArticleRemove) message;
 
       filterActor.tell(new RecommendationFilter.Removed(removedArticle.getItemId()), getSelf());
-      articleAggregator.tell(((OrpArticleRemove) message), getSelf());
+      articleAggregator.tell(message, getSelf());
 
     } else if (message instanceof OrpArticle){
 
-      articleAggregator.tell(((OrpArticle) message), getSelf());
+      articleAggregator.tell(message, getSelf());
 
     } else {
       unhandled(message);

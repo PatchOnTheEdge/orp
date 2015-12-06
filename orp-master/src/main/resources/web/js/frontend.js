@@ -43,7 +43,7 @@ function parseMPRanking(responseText){
 
             var articles = {};
             var article = {};
-            if(!itemRepo[key].is(undefined)){
+            if(key in itemRepo){
                 article.rank = rank;
                 article.title = itemRepo[key].title;
                 article.text = itemRepo[key].text;
@@ -60,7 +60,7 @@ function parseMPRanking(responseText){
 }
 function setMP(publisher){
     var articles = publisherRepo[publisher];
-    if(!articles.is(undefined)){
+    if(articles !== undefined){
         var i = 1;
         for(var article in articles){
             setMPContent(i, article);
@@ -69,7 +69,7 @@ function setMP(publisher){
     }
 }
 function setMPContent(i, article){
-    if(article.is(undefined)){
+    if(article !== undefined){
         setTitle(i, "undefined", "undefined");
         setText(i, "undefined", "undefined");
         setArticleUrl(i, "undefined", "undefined");

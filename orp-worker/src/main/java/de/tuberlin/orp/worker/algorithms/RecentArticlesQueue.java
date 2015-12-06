@@ -37,27 +37,4 @@ public class RecentArticlesQueue {
     recentArticles.add(article);
   }
 
-  public RankingRepository getRankingRespository() {
-    Map<String, Map<String, Date>> countMap = calculateRankings();
-
-    Map<String, Ranking> rankings = new HashMap<>(countMap.size());
-    for (Map.Entry<String, Map<String, Long>> entry : countMap.entrySet()) {
-      String key = entry.getKey();
-      MostRecentRanking value = new MostRecentRanking(entry.getValue());
-      value.sort();
-      value.slice(topListSize);
-      rankings.put(key, value);
-    }
-
-    return new RankingRepository(rankings, new MostPopularRanking());
-  }
-
-  private Map<String, OrpArticle> calculateRankings() {
-    return recentArticles.stream()
-        .collect(
-            Collectors.groupingBy(
-                OrpArticle::getPublisherId,
-                Collectors.)
-            );
-  }
 }
