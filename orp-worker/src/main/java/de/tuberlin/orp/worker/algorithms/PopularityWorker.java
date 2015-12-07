@@ -29,11 +29,15 @@ import akka.actor.UntypedActor;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.japi.Creator;
+import akka.routing.Broadcast;
 import de.tuberlin.orp.common.message.OrpContext;
+import de.tuberlin.orp.common.ranking.MostPopularRanking;
 import de.tuberlin.orp.common.repository.RankingRepository;
 import de.tuberlin.orp.worker.RequestCoordinator;
+import scala.concurrent.duration.Duration;
 
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 /**
  * An actor that can receive items and store them per publisher in a private Hashmap. The top n entries will be send to
@@ -43,6 +47,7 @@ public class PopularityWorker extends UntypedActor {
   private LoggingAdapter log = Logging.getLogger(getContext().system(), this);
 
   private OrpContextCounter contextCounter;
+  private CounterRepository counterRepository;
 
   private int maxAgeHours;
 
@@ -74,11 +79,17 @@ public class PopularityWorker extends UntypedActor {
   public PopularityWorker(int maxAgeHours) {
     this.maxAgeHours = maxAgeHours;
     this.contextCounter = new OrpContextCounter(500, 50);
+    this.counterRepository = new CounterRepository(50, 10);
   }
 
   @Override
   public void preStart() throws Exception {
     log.info("Popularity Worker started.");
+    getContext().system().scheduler().schedule(Duration.create(30, TimeUnit.MINUTES), Duration.create(30, TimeUnit.MINUTES), () -> {
+
+      counterRepository.add(contextCounter);
+
+    }, getContext().dispatcher());
     super.preStart();
     log.info(getSelf().toString());
   }
@@ -95,7 +106,7 @@ public class PopularityWorker extends UntypedActor {
 
     } else if (message.equals("getIntermediateRanking")) {
 
-      RankingRepository rankingRepository = contextCounter.getRankingRespository();
+      RankingRepository rankingRepository = counterRepository.getRankingRespository();
       //log.info("Intermediate ranking requested.");
       getSender().tell(new RequestCoordinator.IntermediateRanking(rankingRepository), getSelf());
 

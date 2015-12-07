@@ -92,6 +92,7 @@ public class WorkerActor extends UntypedActor {
 
   @Override
   public void onReceive(Object message) throws Exception {
+
     if (message instanceof OrpNotification) {
       OrpNotification notification = (OrpNotification) message;
 
