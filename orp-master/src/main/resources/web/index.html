@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
 
     <meta charset="utf-8">
@@ -13,6 +12,7 @@
 
     <!-- Bootstrap Core CSS -->
     <link href="static/css/bootstrap.min.css" rel="stylesheet">
+    <link href="static/css/1-col-portfolio.css" rel="stylesheet">
 
     <!-- Custom CSS -->
     <!--<link href="static/css/1-col-portfolio.css" rel="stylesheet">-->
@@ -20,216 +20,215 @@
     <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
     <!--[if lt IE 9]>
-        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
-        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+    <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
     <![endif]-->
 
 </head>
-
 <body>
-    <!-- Navigation -->
-    <nav class="navbar navbar-inverse navbar-fixed-top">
-        <div class="container-fluid">
-            <div class="navbar-header">
-                <a class="navbar-brand" href="#">News</a>
-            </div>
-            <div>
-                <ul class="nav navbar-nav">
-                    <!--<li class="active"><a href="#">Popular</a></li>-->
-                    <li class="dropdown">
-                        <a class="dropdown-toggle" data-toggle="dropdown" href="#">Popular
-                            <span class="caret"></span></a>
-                        <ul class="dropdown-menu">
-                            <li><a href="#" onclick=setMP("1677")>Tagesspiegel</a></li>
-                            <li><a href="#" onclick=setMp("694")>K&ouml;lner Stadtanzeiger</a></li>
-                            <li><a href="#" onclick=setMP("596")>Sport1</a></li>
-                            <li><a href="#">Motortalk</a></li>
-                            <li><a href="#">Gulli</a></li>
-                            <li><a href="#">Cio</a></li>
-                        </ul>
-                    </li>
-                    <li><a href="#">Recent</a></li>
-                    <li><a data-toggle="collapse" href="#about">About</a></li>
-                </ul>
-            </div>
+<!-- Navigation -->
+<nav class="navbar navbar-inverse navbar-fixed-top">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <a class="navbar-brand" href="#">News</a>
         </div>
-    </nav>
-
-    <!-- Page Content -->
-    <!-- /.container -->
-    <div class="container">
-
-        <!-- Page Heading -->
-        <div class="row">
-            <div class="col-lg-10">
-                <h1 class="page-header">The News
-                    <small>What's happening in the world?</small>
-
-                </h1>
-            </div>
-
-            <!-- /.row -->
-
-
-            <div class = "collapse" id="about">
-                <div class="well">
-                    <button class="btn-danger pull-right" data-toggle="collapse" href="#about"><b>X</b></button>
-                    This Service was developed as part of a project at the <a href="http://www.tu-berlin.de">Technical University Berlin</a>. The project was offered by the Distributed Artificial Intelligence Laboratory (<a href="http://www.dai-labor.de/">DAI Labor</a>). The software was developed in order to participate at the <a href="http://www.clef-newsreel.org/">CLEEF Newsreel challenge</a>. Source code can be derived from <a href="http://github.com/verbit/orp">github.com/verbit/orp</a>.
-                    <br>
-                    If you have any Questions feel free to contact me <a href="mailto:patrick.c.probst@gmail.com"><span class="glyphicon glyphicon-envelope"></a>.
-                    <br><br>
-                    <u>Legal Information: </u>
-                    <br>
-                    Patrick Probst
-                    <br>
-                    Turmstraße 61,
-                    <br>
-                    10551 Berlin
-                </div>
-            </div>
-
-            <!-- Project One -->
-            <div class="row">
-                <div class="col-md-7">
-                    <a href="#">
-                        <img id="i-1" class="img-responsive" alt="">
-                    </a>
-                </div>
-                <div class="col-md-5">
-                    <h3 id="h-1"></h3>
-                    <h4 id="sh-1">Subheading</h4>
-                    <p id="t-1"></p>
-                    <a id="l-1" class="btn btn-primary" href="#">View Article <span class="glyphicon glyphicon-chevron-right"></span></a>
-                </div>
-            </div>
-            <!-- /.row -->
-
-            <hr>
-
-            <!-- Project Two -->
-            <div class="row">
-                <div class="col-md-7">
-                    <a href="#">
-                        <img id="i-2" class="img-responsive" alt="">
-                    </a>
-                </div>
-                <div class="col-md-5">
-                    <h3 id="h-2"></h3>
-                    <h4 id="sh-2">Subheading</h4>
-                    <p id="t-2"></p>
-                    <a id="l-2" class="btn btn-primary" href="#">View Article <span class="glyphicon glyphicon-chevron-right"></span></a>
-                </div>
-            </div>
-            <!-- /.row -->
-
-            <hr>
-
-            <!-- Project Three -->
-            <div class="row">
-                <div class="col-md-7">
-                    <a href="#">
-                        <img id="i-1234-1" class="img-responsive" alt="">
-                    </a>
-                </div>
-                <div class="col-md-5">
-                    <h3 id="h-3"></h3>
-                    <h4 id="sh-3">Subheading</h4>
-                    <p id="t-3"></p>
-                    <a id="l-3" class="btn btn-primary" href="#">View Article <span class="glyphicon glyphicon-chevron-right"></span></a>
-                </div>
-            </div>
-            <!-- /.row -->
-
-            <hr>
-
-            <!-- Project Four -->
-            <div class="row">
-
-                <div class="col-md-7">
-                    <a href="#">
-                        <img class="img-responsive" alt="">
-                    </a>
-                </div>
-                <div class="col-md-5">
-                    <h3 id="h-4"></h3>
-                    <h4 id="sh-4">Subheading</h4>
-                    <p id="t-4"></p>
-                    <a id="l-4" class="btn btn-primary" href="#">View Article <span class="glyphicon glyphicon-chevron-right"></span></a>
-                </div>
-            </div>
-            <!-- /.row -->
-
-            <hr>
-
-            <!-- Project Five -->
-            <div class="row">
-                <div class="col-md-7">
-                    <a href="#">
-                        <img class="img-responsive" alt="">
-                    </a>
-                </div>
-                <div class="col-md-5">
-                    <h3 id="h-5"></h3>
-                    <h4 id="sh-5">Subheading</h4>
-                    <p id="t-5"></p>
-                    <a id="l-5" class="btn btn-primary" href="#">View Article <span class="glyphicon glyphicon-chevron-right"></span></a>
-                </div>
-            </div>
-            <!-- /.row -->
-
-            <hr>
-
-            <!-- Pagination -->
-            <div class="row text-center">
-                <div class="col-lg-12">
-                    <ul class="pagination">
-                        <li>
-                            <a href="#">&laquo;</a>
-                        </li>
-                        <li class="active">
-                            <a href="#">1</a>
-                        </li>
-                        <li>
-                            <a href="#">2</a>
-                        </li>
-                        <li>
-                            <a href="#">3</a>
-                        </li>
-                        <li>
-                            <a href="#">4</a>
-                        </li>
-                        <li>
-                            <a href="#">5</a>
-                        </li>
-                        <li>
-                            <a href="#">&raquo;</a>
-                        </li>
+        <div>
+            <ul class="nav navbar-nav">
+                <!--<li class="active"><a href="#">Popular</a></li>-->
+                <li class="dropdown">
+                    <a class="dropdown-toggle" data-toggle="dropdown" href="#">Popular
+                        <span class="caret"></span></a>
+                    <ul class="dropdown-menu">
+                        <li><a href="#" onclick=setMP("1677")>Tagesspiegel</a></li>
+                        <li><a href="#" onclick=setMP("694")>K&ouml;lner Stadtanzeiger</a></li>
+                        <li><a href="#" onclick=setMP("596")>Sport1</a></li>
+                        <li><a href="#">Motortalk</a></li>
+                        <li><a href="#">Gulli</a></li>
+                        <li><a href="#">Cio</a></li>
                     </ul>
-                </div>
-            </div>
-            <!-- /.row -->
+                </li>
+                <li><a href="#">Recent</a></li>
+                <li><a data-toggle="collapse" href="#about">About</a></li>
+            </ul>
+        </div>
+    </div>
+    <!-- /.container -->
+</nav>
 
-            <hr>
+<!-- Page Content -->
+<div class="container">
 
-            <!-- Footer -->
-            <footer>
-                <div class="row">
-                    <div class="col-lg-12">
-                        <p>&copy; Patrick Probst 2015</p>
-                    </div>
-                </div>
-                <!-- /.row -->
-            </footer>
-
+    <!-- Page Heading -->
+    <div class="row">
+        <div class="col-lg-12">
+            <h1 class="page-header">The News
+                <small id="publisher">What's happening in the world?</small>
+            </h1>
         </div>
     </div>
 
-    <!-- jQuery -->
-    <script src="static/js/jquery.min.js"></script>
+        <!-- /.row -->
 
-    <!-- Bootstrap Core JavaScript -->
-    <script src="static/js/bootstrap.min.js"></script>
-    <script src="static/js/frontend.js"></script>
+
+        <div class = "collapse" id="about">
+            <div class="well">
+                <button class="btn-danger pull-right" data-toggle="collapse" href="#about"><b>X</b></button>
+                This Service was developed as part of a project at the <a href="http://www.tu-berlin.de">Technical University Berlin</a>. The project was offered by the Distributed Artificial Intelligence Laboratory (<a href="http://www.dai-labor.de/">DAI Labor</a>). The software was developed in order to participate at the <a href="http://www.clef-newsreel.org/">CLEEF Newsreel challenge</a>. Source code can be derived from <a href="http://github.com/verbit/orp">github.com/verbit/orp</a>.
+                <br>
+                If you have any Questions feel free to contact me <a href="mailto:patrick.c.probst@gmail.com"><span class="glyphicon glyphicon-envelope"></a>.
+                <br><br>
+                <u>Legal Information: </u>
+                <br>
+                Patrick Probst
+                <br>
+                Goebenstra&szlig;e 46,
+                <br>
+                30161 Hannover
+            </div>
+        </div>
+
+        <!-- Project One -->
+        <div class="row">
+            <div class="col-md-4">
+                <a href="#">
+                    <img id="i-1" class="img-responsive" alt="" src="static/img/newspaper.jpg">
+                </a>
+            </div>
+            <div class="col-md-8">
+                <h3 id="h-1">Titel</h3>
+                <h4 id="sh-1">Subheading</h4>
+                <p id="t-1">Text</p>
+                <a id="l-1" class="btn btn-primary" href="#">View Article <span class="glyphicon glyphicon-chevron-right"></span></a>
+            </div>
+        </div>
+        <!-- /.row -->
+
+        <hr>
+
+        <!-- Project Two -->
+        <div class="row">
+            <div class="col-md-4">
+                <a href="#">
+                    <img id="i-2" class="img-responsive" alt="" src="static/img/newspaper.jpg">
+                </a>
+            </div>
+            <div class="col-md-8">
+                <h3 id="h-2">Titel</h3>
+                <h4 id="sh-2">Subheading</h4>
+                <p id="t-2">Text</p>
+                <a id="l-2" class="btn btn-primary" href="#">View Article <span class="glyphicon glyphicon-chevron-right"></span></a>
+            </div>
+        </div>
+        <!-- /.row -->
+
+        <hr>
+
+        <!-- Project Three -->
+        <div class="row">
+            <div class="col-md-4">
+                <a href="#">
+                    <img id="i-3" class="img-responsive" alt="" src="static/img/newspaper.jpg">
+                </a>
+            </div>
+            <div class="col-md-8">
+                <h3 id="h-3">Titel</h3>
+                <h4 id="sh-3">Subheading</h4>
+                <p id="t-3">Text</p>
+                <a id="l-3" class="btn btn-primary" href="#">View Article <span class="glyphicon glyphicon-chevron-right"></span></a>
+            </div>
+        </div>
+        <!-- /.row -->
+
+        <hr>
+
+        <!-- Project Four -->
+        <div class="row">
+
+            <div class="col-md-4">
+                <a href="#">
+                    <img id="i-4" class="img-responsive" alt="" src="static/img/newspaper.jpg">
+                </a>
+            </div>
+            <div class="col-md-8">
+                <h3 id="h-4">Titel</h3>
+                <h4 id="sh-4">Subheading</h4>
+                <p id="t-4">Text</p>
+                <a id="l-4" class="btn btn-primary" href="#">View Article <span class="glyphicon glyphicon-chevron-right"></span></a>
+            </div>
+        </div>
+        <!-- /.row -->
+
+        <hr>
+
+        <!-- Project Five -->
+        <div class="row">
+            <div class="col-md-4">
+                <a href="#">
+                    <img id="i-5" class="img-responsive" alt="" src="static/img/newspaper.jpg">
+                </a>
+            </div>
+            <div class="col-md-8">
+                <h3 id="h-5">Titel</h3>
+                <h4 id="sh-5">Subheading</h4>
+                <p id="t-5">Text</p>
+                <a id="l-5" class="btn btn-primary" href="#">View Article <span class="glyphicon glyphicon-chevron-right"></span></a>
+            </div>
+        </div>
+        <!-- /.row -->
+
+        <hr>
+
+        <!-- Pagination -->
+        <!--<div class="row text-center">-->
+            <!--<div class="col-lg-12">-->
+                <!--<ul class="pagination">-->
+                    <!--<li>-->
+                        <!--<a href="#">&laquo;</a>-->
+                    <!--</li>-->
+                    <!--<li class="active">-->
+                        <!--<a href="#">1</a>-->
+                    <!--</li>-->
+                    <!--<li>-->
+                        <!--<a href="#">2</a>-->
+                    <!--</li>-->
+                    <!--<li>-->
+                        <!--<a href="#">3</a>-->
+                    <!--</li>-->
+                    <!--<li>-->
+                        <!--<a href="#">4</a>-->
+                    <!--</li>-->
+                    <!--<li>-->
+                        <!--<a href="#">5</a>-->
+                    <!--</li>-->
+                    <!--<li>-->
+                        <!--<a href="#">&raquo;</a>-->
+                    <!--</li>-->
+                <!--</ul>-->
+            <!--</div>-->
+        <!--</div>-->
+        <!-- /.row -->
+
+        <hr>
+
+        <!-- Footer -->
+        <footer>
+            <div class="row">
+                <div class="col-lg-12">
+                    <p>&copy; Patrick Probst 2015</p>
+                </div>
+            </div>
+            <!-- /.row -->
+        </footer>
+
+    </div>
+</div>
+
+<!-- jQuery -->
+<script src="static/js/jquery.min.js"></script>
+
+<!-- Bootstrap Core JavaScript -->
+<script src="static/js/bootstrap.min.js"></script>
+<script src="static/js/frontend.js"></script>
 
 </body>
 

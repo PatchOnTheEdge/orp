@@ -62,6 +62,7 @@ public class MasterServer {
     Cluster cluster = Cluster.get(system);
     ActorRef popularMergerActor = system.actorOf(MostPopularMerger.create(), "popularMerger");
     ActorRef recentMergerActor = system.actorOf(MostRecentMerger.create(), "recentMerger");
+    ActorRef popularityMergerActor = system.actorOf(MostRecentMerger.create(), "popularityMerger");
     ActorRef statisticsManager = system.actorOf(StatisticsManager.create(), "statistics");
     ActorRef articleMerger = system.actorOf(ArticleMerger.create(),"articles");
     ActorRef searchHandler = system.actorOf(SearchHandler.create(articleMerger), "search");

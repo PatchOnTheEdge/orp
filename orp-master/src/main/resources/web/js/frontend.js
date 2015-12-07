@@ -18,7 +18,6 @@ function httpGetAsync(theUrl, callback) {
 
 
 function parseJsonItem(responseText){
-    itemRepo = {};
     var items = JSON.parse(responseText).items;
 
     for(i in items){
@@ -28,24 +27,24 @@ function parseJsonItem(responseText){
     }
 }
 function parseMPRanking(responseText){
-    publisherRepo = {};
     var rankings = JSON.parse(responseText).rankings;
 
     for(p in rankings){
         var publisher = rankings[p].publisherId;
         var ranking = rankings[p].ranking;
-
+        var articles = {};
         var i = 1;
         for(r in ranking){
             //if(i == 3){break;}
             var key = ranking[r].key;
             var rank = ranking[r].rank;
 
-            var articles = {};
+
             var article = {};
             if(key in itemRepo){
                 article.rank = rank;
                 article.title = itemRepo[key].title;
+                article.kicker = itemRepo[key].kicker;
                 article.text = itemRepo[key].text;
                 article.url = itemRepo[key].articleUrl;
                 article.iurl = itemRepo[key].imgUrl;
@@ -58,22 +57,30 @@ function parseMPRanking(responseText){
         publisherRepo[publisher] = articles;
     }
 }
+function setPublisher(publisher) {
+    switch (publisher){
+        case "1677": document.getElementById("publisher").innerHTML = "Tagesspiegel";
+    }
+}
 function setMP(publisher){
+    setPublisher(publisher);
     var articles = publisherRepo[publisher];
+
     if(articles !== undefined){
-        var i = 1;
-        for(var article in articles){
-            setMPContent(i, article);
-            i++;
+        for(i in articles){
+            console.log(i + articles[i].title);
+            setMPContent(i, articles[i]);
         }
+    } else {
+        console.log("No Articles for publisher with id = " + publisher);
     }
 }
 function setMPContent(i, article){
-    if(article !== undefined){
-        setTitle(i, "undefined", "undefined");
-        setText(i, "undefined", "undefined");
-        setArticleUrl(i, "undefined", "undefined");
-        setImgUrl(i, "undefined", "undefined");
+    if(article == undefined){
+        setTitle(i, "undefined");
+        setText(i, "undefined");
+        setArticleUrl(i, "undefined");
+        setImgUrl(i, "undefined");
     } else{
         setTitle(i, article.title);
         setText(i, article.text);
@@ -99,6 +106,6 @@ function setRank(i, rank){
 }
 httpGetAsync("/articles", parseJsonItem);
 httpGetAsync("/ranking-mp", parseMPRanking);
-
+//console.log(itemRepo[1]);
 
 

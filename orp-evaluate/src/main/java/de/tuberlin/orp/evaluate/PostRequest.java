@@ -81,7 +81,7 @@ public class PostRequest {
   }
 
   private static void postJsonData(JsonNode json) {
-//    System.out.println("json Data: " + json.toString());
+    System.out.println("json Data: " + json.toString());
     String urlQuery = "";
     String eventType;
     eventType = json.get("event_type").asText();

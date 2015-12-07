@@ -30,8 +30,9 @@ import akka.actor.UntypedActor;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import de.tuberlin.orp.common.message.*;
-import de.tuberlin.orp.worker.algorithms.MostPopularWorker;
-import de.tuberlin.orp.worker.algorithms.MostRecentWorker;
+import de.tuberlin.orp.worker.algorithms.mostPopular.MostPopularWorker;
+import de.tuberlin.orp.worker.algorithms.mostRecent.MostRecentWorker;
+import de.tuberlin.orp.worker.algorithms.popularityTrend.PopularityWorker;
 import oshi.SystemInfo;
 import oshi.hardware.HardwareAbstractionLayer;
 import oshi.hardware.Processor;
@@ -49,6 +50,7 @@ public class WorkerActor extends UntypedActor {
 
   private ActorRef mostPopularWorker;
   private ActorRef mostRecentWorker;
+  private ActorRef popularityWorker;
   private ActorRef filterActor;
   private ActorRef statisticsAggregator;
   private ActorRef requestCoordinator;
@@ -74,10 +76,12 @@ public class WorkerActor extends UntypedActor {
 
     mostPopularWorker = getContext().actorOf(MostPopularWorker.create(500, 50), "mp");
     mostRecentWorker = getContext().actorOf(MostRecentWorker.create(500, 50), "mr");
+    popularityWorker = getContext().actorOf(PopularityWorker.create(500, 10, 50, 30), "p");
+
 
     filterActor = getContext().actorOf(RecommendationFilter.create(), "filter");
 
-    requestCoordinator = getContext().actorOf(RequestCoordinator.create(mostPopularWorker, mostRecentWorker, filterActor), "coordinator");
+    requestCoordinator = getContext().actorOf(RequestCoordinator.create(mostPopularWorker, mostRecentWorker, popularityWorker, filterActor), "coordinator");
 
     getContext().system().scheduler().schedule(Duration.Zero(), Duration.create(1, TimeUnit.SECONDS), () -> {
 
