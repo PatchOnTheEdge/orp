@@ -85,11 +85,11 @@ public class WorkerActor extends UntypedActor {
 
     getContext().system().scheduler().schedule(Duration.Zero(), Duration.create(1, TimeUnit.SECONDS), () -> {
 
-      double cpu = Arrays.stream(hardware.getProcessors())
-          .mapToDouble(Processor::getSystemCpuLoadBetweenTicks)
-          .sum();
-
-      double memory = hardware.getMemory().getAvailable() / (double) hardware.getMemory().getTotal();
+//      double cpu = Arrays.stream(hardware.getProcessors())
+//          .mapToDouble(Processor::getSystemCpuLoadBetweenTicks)
+//          .sum();
+//
+//      double memory = hardware.getMemory().getAvailable() / (double) hardware.getMemory().getTotal();
 
     }, getContext().dispatcher());
   }
