@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import de.tuberlin.orp.common.Utils;
 import io.verbit.ski.core.json.Json;
 
+import java.io.Serializable;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Set;
@@ -12,7 +13,7 @@ import java.util.Set;
 /**
  * Created by Patch on 20.10.2015.
  */
-public class MostRecentRanking implements Ranking<MostRecentRanking>{
+public class MostRecentRanking implements Ranking<MostRecentRanking>, Serializable{
   private LinkedHashMap<String, Date> ranking;
 
   public MostRecentRanking() {

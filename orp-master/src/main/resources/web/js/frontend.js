@@ -60,8 +60,10 @@ function parseMPRanking(responseText){
 function setPublisher(publisher) {
     switch (publisher){
         case "1677": document.getElementById("publisher").innerHTML = "Tagesspiegel";
-        case "694": document.getElementById("publisher").innerHTML = "Publisher 2";
-        case "35774" : document.getElementById("publisher").innerHTML = "Publisher 3";
+        case "596": document.getElementById("publisher").innerHTML = "Sport1";
+        case "418": document.getElementById("publisher").innerHTML = "K&ouml;lner Stadtanzeiger";
+        case "694": document.getElementById("publisher").innerHTML = "Motortalk";
+        case "35774" : document.getElementById("publisher").innerHTML = "Gulli";
     }
 }
 function setMP(publisher){

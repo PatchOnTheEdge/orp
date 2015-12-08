@@ -29,6 +29,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import de.tuberlin.orp.common.Utils;
 import io.verbit.ski.core.json.Json;
 
+import java.io.Serializable;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -36,7 +37,7 @@ import java.util.Set;
 /**
  * MostPopularRanking represents a Mapping from OrpArticle to Number of Clicks
  */
-public class MostPopularRanking implements Ranking<MostPopularRanking> {
+public class MostPopularRanking implements Ranking<MostPopularRanking>, Serializable {
   private LinkedHashMap<String, Long> ranking;
 
   public MostPopularRanking() {
