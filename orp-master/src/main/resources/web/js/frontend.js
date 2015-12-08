@@ -60,6 +60,8 @@ function parseMPRanking(responseText){
 function setPublisher(publisher) {
     switch (publisher){
         case "1677": document.getElementById("publisher").innerHTML = "Tagesspiegel";
+        case "694": document.getElementById("publisher").innerHTML = "Publisher 2";
+        case "35774" : document.getElementById("publisher").innerHTML = "Publisher 3";
     }
 }
 function setMP(publisher){

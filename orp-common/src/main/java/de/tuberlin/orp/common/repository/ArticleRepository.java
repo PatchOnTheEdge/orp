@@ -60,6 +60,9 @@ public class ArticleRepository implements Serializable{
   public void remove(OrpArticleRemove toRemove){
     String itemId = toRemove.getItemId();
     String publisherId = toRemove.getPublisherId();
-    publisherItemIdMap.get(publisherId).remove(itemId);
+    Map<String, OrpArticle> articleMap = publisherItemIdMap.get(publisherId);
+    if (articleMap != null){
+      articleMap.remove(itemId);
+    }
   }
 }
