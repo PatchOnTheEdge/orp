@@ -59,11 +59,12 @@ function parseMPRanking(responseText){
 }
 function setPublisher(publisher) {
     switch (publisher){
-        case "1677": document.getElementById("publisher").innerHTML = "Tagesspiegel";
-        case "596": document.getElementById("publisher").innerHTML = "Sport1";
-        case "418": document.getElementById("publisher").innerHTML = "K&ouml;lner Stadtanzeiger";
-        case "694": document.getElementById("publisher").innerHTML = "Motortalk";
-        case "35774" : document.getElementById("publisher").innerHTML = "Gulli";
+        case "1677": document.getElementById("publisher").innerHTML = "Tagesspiegel"; break;
+        case "596": document.getElementById("publisher").innerHTML = "Sport1"; break;
+        case "418": document.getElementById("publisher").innerHTML = "K&ouml;lner Stadtanzeiger"; break;
+        case "694": document.getElementById("publisher").innerHTML = "Motortalk"; break;
+        case "35774" : document.getElementById("publisher").innerHTML = "Gulli"; break;
+        case "13554" : document.getElementById("publisher").innerHTML = "Cio"; break;
     }
 }
 function setMP(publisher){
