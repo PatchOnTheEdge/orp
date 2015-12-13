@@ -161,7 +161,7 @@ public class RequestCoordinator extends UntypedActor {
             Iterator<Object> it = parameter.iterator();
             IntermediateRanking ranking = (IntermediateRanking) it.next();
             IntermediateFilter filter = (IntermediateFilter) it.next();
-            log.info(String.format("size(Ranking) = %s. size(Filter) = %s + %s",
+            log.debug(String.format("size(Ranking) = %s. size(Filter) = %s + %s",
                 ranking.rankingRepository.getRankings().size(),
                 filter.getFilter().getRecommended().size(), filter.getFilter().getRemoved().size()));
             log.debug(ranking.toString());
