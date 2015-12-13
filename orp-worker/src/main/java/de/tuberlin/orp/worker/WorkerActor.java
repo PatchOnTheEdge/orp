@@ -121,7 +121,8 @@ public class WorkerActor extends UntypedActor {
             mostPopularWorker.tell(context, getSelf());
             mostRecentWorker.tell(context, getSelf());
 
-            filterActor.tell(new RecommendationFilter.Clicked(userId, itemId), getSelf());
+            //Approach without filtering clicked items
+            //filterActor.tell(new RecommendationFilter.Clicked(userId, itemId), getSelf());
           }
 
           break;

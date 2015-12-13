@@ -36,12 +36,12 @@ import java.util.concurrent.Future;
 
 public class PostRequest {
 
-  public static String HOST = "37.120.189.25";
+  public static String HOST = "localhost";
   //"37.120.189.25";
-
+//orp.plista.com/api/vector_resoultion.php?vid=11&aid=
   public static void main(String[] args) throws Exception {
 //    G:\Projects\orp\test.data G:\Projects\orp\test.item 5 5
-    // C:\Users\Patch\projects\orp\test.data.json C:\Users\Patch\projects\orp\test.item.json 5 5
+    // C:\Users\Patch\projects\orp\test.data C:\Users\Patch\projects\orp\test.item 5 5
     // C:\Users\Patch\projects\json\CLEF-2015-Task2-Json07\Json-07\2014-07-01.data\2014-07-01.data C:\Users\Patch\projects\json\CLEF-2015-Task2-Json07\Json-07\2014-07-01.items\2014-07-01.items
 //    G:\json\CLEF-2015-Task2-Json07\Json-07\2014-07-01.data\2014-07-01.data G:\json\CLEF-2015-Task2-Json07\Json-07\2014-07-01.items\2014-07-01.items 1000 1000
     String filePathData = args[0];
@@ -77,14 +77,19 @@ public class PostRequest {
     Future<HttpResponse<String>> httpResponseFuture = Unirest.post("http://" + HOST + ":9000/item")
         .field("body", jsonNode.toString())
         .asStringAsync();
-
+    try {
+      Thread.sleep(10);
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
   }
 
   private static void postJsonData(JsonNode json) {
-    System.out.println("json Data: " + json.toString());
+//    System.out.println("json Data: " + json.toString());
     String urlQuery = "";
     String eventType;
     eventType = json.get("event_type").asText();
+
 
     switch (eventType) {
       case "recommendation_request":

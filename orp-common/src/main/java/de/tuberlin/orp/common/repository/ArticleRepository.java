@@ -13,6 +13,7 @@ import java.util.*;
 public class ArticleRepository implements Serializable{
   //Map from PublisherId -> ItemId -> OrpArticle;
   private Map<String, Map<String, OrpArticle>> publisherItemIdMap;
+  //Properties
 
 
   public ArticleRepository() {

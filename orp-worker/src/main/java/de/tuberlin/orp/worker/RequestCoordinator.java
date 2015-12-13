@@ -99,6 +99,7 @@ public class RequestCoordinator extends UntypedActor {
       getSender().tell(ranking.orElse(new MostPopularRanking()), getSelf());
 
 
+      //TODO Handle removed items for all mergers
     } else if (message instanceof MostPopularMerger.MergedRanking) {
 
       // cache merged results
@@ -111,6 +112,7 @@ public class RequestCoordinator extends UntypedActor {
       // calculate new intermediate results
       Future<Object> intermediateRankingFuture = Patterns.ask(mostPopularWorker, "getIntermediateRanking", 200);
       Future<Object> intermediateFilterFuture = Patterns.ask(filterActor, "getIntermediateFilter", 200);
+
 
       //Get Ranking from MostPopular Worker
       Future<MostPopularMerger.WorkerResult> workerResultFuture = getMostPopularWorkerResultFuture(intermediateRankingFuture, intermediateFilterFuture);
@@ -131,8 +133,8 @@ public class RequestCoordinator extends UntypedActor {
 
       // cache merged results
       PopulaityMerger.MergedRanking mergedRankingMessage = (PopulaityMerger.MergedRanking) message;
-      mostPopularRanking = mergedRankingMessage.getRankingRepository();
-      filter = mergedRankingMessage.getFilter();
+      trendRanking = mergedRankingMessage.getRankingRepository();
+      //filter = mergedRankingMessage.getFilter();
 
       log.debug("Calculating intermediate ranking.");
 
@@ -159,6 +161,9 @@ public class RequestCoordinator extends UntypedActor {
             Iterator<Object> it = parameter.iterator();
             IntermediateRanking ranking = (IntermediateRanking) it.next();
             IntermediateFilter filter = (IntermediateFilter) it.next();
+            log.info(String.format("size(Ranking) = %s. size(Filter) = %s + %s",
+                ranking.rankingRepository.getRankings().size(),
+                filter.getFilter().getRecommended().size(), filter.getFilter().getRemoved().size()));
             log.debug(ranking.toString());
             return new MostPopularMerger.WorkerResult(
                 ranking.getRankingRepository(),

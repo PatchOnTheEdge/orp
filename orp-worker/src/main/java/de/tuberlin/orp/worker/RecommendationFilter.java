@@ -120,6 +120,7 @@ public class RecommendationFilter extends UntypedActor {
     } else if (message.equals("getIntermediateFilter")) {
 
       getSender().tell(new RequestCoordinator.IntermediateFilter(new RankingFilter(removed, recommended)), getSelf());
+      //removed = new HashSet<>();
 
     } else {
       unhandled(message);
@@ -142,7 +143,7 @@ public class RecommendationFilter extends UntypedActor {
     for (String key : toRemove) {
       lastUpdated.remove(key);
       recommended.remove(key);
-      removed.remove(key); //todo sensefull
+      //removed.remove(key); //todo sensefull
     }
   }
 

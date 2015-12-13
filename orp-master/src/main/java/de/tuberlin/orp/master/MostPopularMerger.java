@@ -70,6 +70,7 @@ public class MostPopularMerger extends UntypedActor {
       log.debug(merger.toString());
       workerRouter.tell(new Broadcast(new MergedRanking(merger, filter)), getSelf());
       merger = new RankingRepository(new MostPopularRanking());
+      filter = new RankingFilter();
 
     }, getContext().dispatcher());
 
