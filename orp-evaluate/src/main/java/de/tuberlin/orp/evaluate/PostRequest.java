@@ -40,10 +40,8 @@ public class PostRequest {
   //"37.120.189.25";
 //orp.plista.com/api/vector_resoultion.php?vid=11&aid=
   public static void main(String[] args) throws Exception {
-//    G:\Projects\orp\test.data G:\Projects\orp\test.item 5 5
     // C:\Users\Patch\projects\orp\test.data C:\Users\Patch\projects\orp\test.item 5 5
     // C:\Users\Patch\projects\json\CLEF-2015-Task2-Json07\Json-07\2014-07-01.data\2014-07-01.data C:\Users\Patch\projects\json\CLEF-2015-Task2-Json07\Json-07\2014-07-01.items\2014-07-01.items
-//    G:\json\CLEF-2015-Task2-Json07\Json-07\2014-07-01.data\2014-07-01.data G:\json\CLEF-2015-Task2-Json07\Json-07\2014-07-01.items\2014-07-01.items 1000 1000
     String filePathData = args[0];
     String filePathItem = args[1];
     int limitData = Integer.parseInt(args[2]);
@@ -69,7 +67,7 @@ public class PostRequest {
   }
 
   private static void postJsonItem(JsonNode jsonNode) {
-//    System.out.println("json Item: " + jsonNode.toString());
+    System.out.println("json Item: " + jsonNode.toString());
     String id = jsonNode.get("id").asText();
     String title = jsonNode.get("title").asText();
     String flag = jsonNode.get("flag").asText();
@@ -85,7 +83,7 @@ public class PostRequest {
   }
 
   private static void postJsonData(JsonNode json) {
-//    System.out.println("json Data: " + json.toString());
+    System.out.println("json Data: " + json.toString());
     String urlQuery = "";
     String eventType;
     eventType = json.get("event_type").asText();

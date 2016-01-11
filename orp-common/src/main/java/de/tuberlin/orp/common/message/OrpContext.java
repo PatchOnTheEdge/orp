@@ -32,6 +32,7 @@ public class OrpContext implements Serializable {
   private String publisherId;
   private String itemId;
   private String userId;
+  private String category;
   private int limit;
 
   public OrpContext() {
@@ -41,6 +42,7 @@ public class OrpContext implements Serializable {
     this.publisherId = jsonNode.at("/context/simple/27").asText();
     this.itemId = jsonNode.at("/context/simple/25").asText();
     this.userId = jsonNode.at("/context/simple/57").asText();
+    this.category = jsonNode.at("/context/simple/11").asText().split(",")[0];
     this.limit = jsonNode.path("limit").asInt(20);
   }
 
@@ -54,6 +56,10 @@ public class OrpContext implements Serializable {
 
   public String getUserId() {
     return userId;
+  }
+
+  public String getCategory() {
+    return category;
   }
 
   public int getLimit() {

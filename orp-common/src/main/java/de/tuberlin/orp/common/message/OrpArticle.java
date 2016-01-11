@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.verbit.ski.core.json.Json;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Date;
 
 /**
@@ -17,6 +18,7 @@ public class OrpArticle implements Serializable{
   private String articleURL;
   private String imgURL;
   private String publisherId;
+  private String category;
   private Date date;
 
   public OrpArticle(JsonNode json) {
