@@ -113,7 +113,7 @@ public class WorkerServer {
     Optional<JsonNode> jsonBody = context.request().formParam("body").asJson();
     JsonNode json = jsonBody.get();
 
-    System.err.println(json);
+    System.err.println("Received Error: " + json);
 
     return noContent();
   }

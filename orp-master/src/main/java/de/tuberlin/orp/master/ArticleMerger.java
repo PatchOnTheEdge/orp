@@ -82,7 +82,7 @@ public class ArticleMerger extends UntypedActor {
     if(message instanceof ArticleAggregatorResult){
 
       ArticleAggregatorResult aggregatorResult = (ArticleAggregatorResult) message;
-      ArrayDeque<OrpArticle> newArticles = aggregatorResult.getNewArticles();
+      HashSet<OrpArticle> newArticles = aggregatorResult.getNewArticles();
       Set<OrpArticleRemove> removedArticles = aggregatorResult.getRemovedArticles();
 
 //      log.info("Received Aggregator Result. Nr of Articles = " + newArticles.size());
@@ -123,15 +123,15 @@ public class ArticleMerger extends UntypedActor {
   }
 
   public static class ArticleAggregatorResult implements Serializable{
-    private ArrayDeque<OrpArticle> newArticles;
+    private HashSet<OrpArticle> newArticles;
     private HashSet<OrpArticleRemove> removedArticles;
 
-    public ArticleAggregatorResult(ArrayDeque<OrpArticle> newArticles, HashSet<OrpArticleRemove> removedArticles) {
+    public ArticleAggregatorResult(HashSet<OrpArticle> newArticles, HashSet<OrpArticleRemove> removedArticles) {
       this.newArticles = newArticles;
       this.removedArticles = removedArticles;
     }
 
-    public ArrayDeque<OrpArticle> getNewArticles() {
+    public HashSet<OrpArticle> getNewArticles() {
       return newArticles;
     }
 

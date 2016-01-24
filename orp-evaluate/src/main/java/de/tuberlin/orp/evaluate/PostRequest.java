@@ -67,7 +67,7 @@ public class PostRequest {
   }
 
   private static void postJsonItem(JsonNode jsonNode) {
-    System.out.println("json Item: " + jsonNode.toString());
+//    System.out.println("json Item: " + jsonNode.toString());
     String id = jsonNode.get("id").asText();
     String title = jsonNode.get("title").asText();
     String flag = jsonNode.get("flag").asText();
@@ -75,15 +75,15 @@ public class PostRequest {
     Future<HttpResponse<String>> httpResponseFuture = Unirest.post("http://" + HOST + ":9000/item")
         .field("body", jsonNode.toString())
         .asStringAsync();
-    try {
-      Thread.sleep(10);
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-    }
+//    try {
+//      Thread.sleep(10);
+//    } catch (InterruptedException e) {
+//      e.printStackTrace();
+//    }
   }
 
   private static void postJsonData(JsonNode json) {
-    System.out.println("json Data: " + json.toString());
+//    System.out.println("json Data: " + json.toString());
     String urlQuery = "";
     String eventType;
     eventType = json.get("event_type").asText();

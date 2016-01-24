@@ -25,6 +25,7 @@
 package de.tuberlin.orp.common.repository;
 
 import de.tuberlin.orp.common.ranking.MostPopularRanking;
+import de.tuberlin.orp.common.ranking.MostRecentRanking;
 import de.tuberlin.orp.common.ranking.Ranking;
 
 import java.io.Serializable;
@@ -69,12 +70,12 @@ public class RankingRepository  implements Serializable{
         Ranking ranking = mergedRankings.get(publisher);
         ranking.merge(rankings.get(publisher));
       }
-//    } else if (this.type instanceof MostRecentRanking){
-//      for (String publisher : rankings.keySet()) {
-//        mergedRankings.putIfAbsent(publisher, new MostRecentRanking());
-//        Ranking ranking = mergedRankings.get(publisher);
-//        ranking.merge(rankings.get(publisher));
-//      }
+    } else if (this.type instanceof MostRecentRanking){
+      for (String publisher : rankings.keySet()) {
+        mergedRankings.putIfAbsent(publisher, new MostRecentRanking());
+        Ranking ranking = mergedRankings.get(publisher);
+        ranking.merge(rankings.get(publisher));
+      }
     }
   }
   @Override

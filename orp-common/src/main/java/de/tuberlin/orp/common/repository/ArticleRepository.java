@@ -37,10 +37,9 @@ public class ArticleRepository implements Serializable{
     }
   }
 
-  public void merge(ArrayDeque<OrpArticle> newArticles) {
-
-    while(newArticles.iterator().hasNext()){
-      add(newArticles.removeLast());
+  public void merge(HashSet<OrpArticle> newArticles) {
+    for (OrpArticle newArticle : newArticles) {
+      add(newArticle);
     }
   }
 

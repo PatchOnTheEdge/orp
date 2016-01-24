@@ -33,10 +33,7 @@ import akka.dispatch.Mapper;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.pattern.Patterns;
-import de.tuberlin.orp.common.ranking.MostPopularRanking;
-import de.tuberlin.orp.common.ranking.MostRecentRanking;
-import de.tuberlin.orp.common.ranking.Ranking;
-import de.tuberlin.orp.common.ranking.RankingFilter;
+import de.tuberlin.orp.common.ranking.*;
 import de.tuberlin.orp.common.message.OrpContext;
 import de.tuberlin.orp.common.message.OrpRequest;
 import de.tuberlin.orp.common.repository.RankingRepository;
@@ -79,7 +76,7 @@ public class RequestCoordinator extends UntypedActor {
 
     this.mostPopularRanking = new RankingRepository(new MostPopularRanking());
     this.mostRecentRanking = new RankingRepository(new MostRecentRanking());
-    this.trendRanking = new RankingRepository(new MostPopularRanking());
+    this.trendRanking = new RankingRepository(new PopularCategoryRanking());
     this.filter = new RankingFilter();
   }
 
@@ -92,14 +89,14 @@ public class RequestCoordinator extends UntypedActor {
       String userId = context.getUserId();
       int limit = context.getLimit();
 
-      log.info(String.format("Received request: publisherId = %s, userId = %s", publisherId, userId));
+      log.debug(String.format("Received request: publisherId = %s, userId = %s", publisherId, userId));
 
       Optional<Ranking> mpRanking = this.mostPopularRanking.getRanking(publisherId);
       Optional<Ranking> mrRanking = this.mostRecentRanking.getRanking(publisherId);
 
-      mrRanking.ifPresent(ranking2 -> filter.filter(ranking2, context));
-      mpRanking.ifPresent(ranking1 -> filter.filter(ranking1, context).mix(mrRanking.get(),0.7, limit));
-
+      mrRanking.ifPresent(ranking2 -> filter.filter(ranking2, context).slice(limit));
+      mpRanking.ifPresent(ranking1 -> filter.filter(ranking1, context).slice(limit));
+//      mpRanking.ifPresent(ranking1 -> filter.filter(ranking1, context).mix(mrRanking.get(), 0.7, limit));
 
       getSender().tell(mpRanking.orElse(new MostPopularRanking()), getSelf());
 
@@ -145,10 +142,9 @@ public class RequestCoordinator extends UntypedActor {
 
       // calculate new intermediate results
       Future<Object> intermediateRankingFuture = Patterns.ask(popularityWorker, "getIntermediateRanking", 200);
-      Future<Object> intermediateFilterFuture = Patterns.ask(filterActor, "getIntermediateFilter", 200);
 
       //Get Ranking from MostPopular Worker
-      Future<PopulaityMerger.WorkerResult> workerResultFuture = getPopularityWorkerResultFuture(intermediateRankingFuture, intermediateFilterFuture);
+      Future<PopulaityMerger.WorkerResult> workerResultFuture = getPopularityWorkerResultFuture(intermediateRankingFuture);
       Patterns.pipe(workerResultFuture, getContext().dispatcher()).to(getSender(), getSelf());
 
     } else {
@@ -190,19 +186,18 @@ public class RequestCoordinator extends UntypedActor {
               }
             }, getContext().dispatcher());
   }
-  private Future<PopulaityMerger.WorkerResult> getPopularityWorkerResultFuture(Future<Object> intermediateRankingFuture, Future<Object> intermediateFilterFuture) {
+
+  private Future<PopulaityMerger.WorkerResult> getPopularityWorkerResultFuture(Future<Object> intermediateRankingFuture) {
     return Futures
-        .sequence(Arrays.asList(intermediateRankingFuture, intermediateFilterFuture), getContext().dispatcher())
+        .sequence(Arrays.asList(intermediateRankingFuture), getContext().dispatcher())
         .map(new Mapper<Iterable<Object>, PopulaityMerger.WorkerResult>() {
           @Override
           public PopulaityMerger.WorkerResult apply(Iterable<Object> parameter) {
             Iterator<Object> it = parameter.iterator();
             IntermediateRanking ranking = (IntermediateRanking) it.next();
-            IntermediateFilter filter = (IntermediateFilter) it.next();
             log.debug(ranking.toString());
             return new PopulaityMerger.WorkerResult(
-                ranking.getRankingRepository(),
-                filter.getFilter());
+                ranking.getRankingRepository());
           }
         }, getContext().dispatcher());
   }

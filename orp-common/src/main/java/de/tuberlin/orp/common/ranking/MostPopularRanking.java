@@ -70,10 +70,10 @@ public class MostPopularRanking extends Ranking<MostPopularRanking> {
 
     while (result.size() < limit){
       double r = Math.random();
-      if (r <= p){
+      if (r <= p && iterator1.hasNext()){
         Map.Entry<String, Long> entry = iterator1.next();
         result.put(entry.getKey(), entry.getValue());
-      } else {
+      } else if (iterator2.hasNext()){
         Map.Entry<String, Long> entry = iterator2.next();
         result.put(entry.getKey(), entry.getValue());
       }

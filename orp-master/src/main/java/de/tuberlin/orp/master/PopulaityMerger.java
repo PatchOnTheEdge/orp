@@ -45,7 +45,6 @@ public class PopulaityMerger extends UntypedActor {
 
   private ActorRef workerRouter;
 
-  private RankingFilter filter;
   private RankingRepository merger;
 
 
@@ -58,7 +57,6 @@ public class PopulaityMerger extends UntypedActor {
     log.info("Merger started");
 
     merger = new RankingRepository(new MostPopularRanking());
-    filter = new RankingFilter();
 
     workerRouter = getContext().actorOf(FromConfig.getInstance().props(Props.empty()), "workerRouter");
 
@@ -68,7 +66,7 @@ public class PopulaityMerger extends UntypedActor {
 
       merger.sortRankings();
       log.debug(merger.toString());
-      workerRouter.tell(new Broadcast(new MergedRanking(merger, filter)), getSelf());
+      workerRouter.tell(new Broadcast(new MergedRanking(merger)), getSelf());
       merger = new RankingRepository(new MostPopularRanking());
 
     }, getContext().dispatcher());
@@ -84,7 +82,6 @@ public class PopulaityMerger extends UntypedActor {
       WorkerResult result = (WorkerResult) message;
       log.debug("Received intermediate ranking from " + getSender().toString());
 
-      filter.merge(result.getFilter());
       merger.merge(result.getRankingRepository());
 
     }
@@ -98,19 +95,13 @@ public class PopulaityMerger extends UntypedActor {
 
   public static class WorkerResult implements Serializable {
     private final RankingRepository rankings;
-    private final RankingFilter filter;
 
-    public WorkerResult(RankingRepository rankingRepository, RankingFilter filter) {
+    public WorkerResult(RankingRepository rankingRepository) {
       this.rankings = rankingRepository;
-      this.filter = filter;
     }
 
     public RankingRepository getRankingRepository() {
       return rankings;
-    }
-
-    public RankingFilter getFilter() {
-      return filter;
     }
   }
 
@@ -125,9 +116,8 @@ public class PopulaityMerger extends UntypedActor {
     private RankingRepository rankingRepository;
     private RankingFilter filter;
 
-    public MergedRanking(RankingRepository rankingRepository, RankingFilter filter) {
+    public MergedRanking(RankingRepository rankingRepository) {
       this.rankingRepository = rankingRepository;
-      this.filter = filter;
     }
 
     public RankingRepository getRankingRepository() {

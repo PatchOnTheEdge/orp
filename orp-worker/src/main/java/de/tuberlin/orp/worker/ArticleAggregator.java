@@ -22,13 +22,13 @@ public class ArticleAggregator extends UntypedActor {
   private LoggingAdapter log = Logging.getLogger(getContext().system(), this);
   private ActorSelection articleMerger;
   private ArticleRepository articles;
-  private ArrayDeque<OrpArticle> newArticles;
+  private HashSet<OrpArticle> newArticles;
   private HashSet<OrpArticleRemove> removedArticles;
 
   public ArticleAggregator(ActorSelection articleMerger) {
     this.articleMerger = articleMerger;
     this.articles = new ArticleRepository();
-    this.newArticles = new ArrayDeque<>();
+    this.newArticles = new HashSet<>();
     this.removedArticles = new HashSet<>();
   }
   public static Props create(ActorSelection articleMerger) {
@@ -73,7 +73,7 @@ public class ArticleAggregator extends UntypedActor {
       getSender().tell(articleAggregatorResult, getSelf());
 
       this.articles = ((ArticleMerger.MergedArticles) message).getArticles();
-      this.newArticles = new ArrayDeque<>();
+      this.newArticles = new HashSet<>();
       this.removedArticles = new HashSet<>();
 
     } else if (message instanceof ArticleCategory){
