@@ -50,7 +50,7 @@ public class ArticleMerger extends UntypedActor {
     workerRouter = getContext().actorOf(FromConfig.getInstance().props(Props.empty()), "workerRouter");
 
     // asks every 2 seconds for the intermediate ranking
-    getContext().system().scheduler().schedule(Duration.Zero(), Duration.create(2, TimeUnit.SECONDS), () -> {
+    getContext().system().scheduler().schedule(Duration.Zero(), Duration.create(1, TimeUnit.SECONDS), () -> {
 
       workerRouter.tell(new Broadcast(new MergedArticles(articles)), getSelf());
 //      articles = new ArticleRepository();
@@ -79,15 +79,16 @@ public class ArticleMerger extends UntypedActor {
   @Override
   public void onReceive(Object message) {
 
-    if(message instanceof ArticleAggregatorResult){
+    if(message instanceof NewArticles){
 
-      ArticleAggregatorResult aggregatorResult = (ArticleAggregatorResult) message;
-      HashSet<OrpArticle> newArticles = aggregatorResult.getNewArticles();
-      Set<OrpArticleRemove> removedArticles = aggregatorResult.getRemovedArticles();
-
-//      log.info("Received Aggregator Result. Nr of Articles = " + newArticles.size());
-
+      NewArticles articles = (NewArticles) message;
+      HashSet<OrpArticle> newArticles = articles.getNewArticles();
       this.articles.merge(newArticles);
+
+    } else if (message instanceof RemovedArticles) {
+
+      RemovedArticles articles = (RemovedArticles) message;
+      HashSet<OrpArticleRemove> removedArticles = articles.getRemovedArticles();
       this.articles.remove(removedArticles);
 
     } else if (message.equals("getArticles")) {
@@ -122,17 +123,22 @@ public class ArticleMerger extends UntypedActor {
     }
   }
 
-  public static class ArticleAggregatorResult implements Serializable{
+  public static class NewArticles implements Serializable{
     private HashSet<OrpArticle> newArticles;
-    private HashSet<OrpArticleRemove> removedArticles;
 
-    public ArticleAggregatorResult(HashSet<OrpArticle> newArticles, HashSet<OrpArticleRemove> removedArticles) {
+    public NewArticles(HashSet<OrpArticle> newArticles) {
       this.newArticles = newArticles;
-      this.removedArticles = removedArticles;
     }
 
     public HashSet<OrpArticle> getNewArticles() {
       return newArticles;
+    }
+  }
+  public static class RemovedArticles implements Serializable{
+    private HashSet<OrpArticleRemove> removedArticles;
+
+    public RemovedArticles(HashSet<OrpArticleRemove> removedArticles) {
+      this.removedArticles = removedArticles;
     }
 
     public HashSet<OrpArticleRemove> getRemovedArticles() {

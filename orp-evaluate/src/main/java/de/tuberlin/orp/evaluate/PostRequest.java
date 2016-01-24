@@ -75,11 +75,11 @@ public class PostRequest {
     Future<HttpResponse<String>> httpResponseFuture = Unirest.post("http://" + HOST + ":9000/item")
         .field("body", jsonNode.toString())
         .asStringAsync();
-//    try {
-//      Thread.sleep(10);
-//    } catch (InterruptedException e) {
-//      e.printStackTrace();
-//    }
+    try {
+      Thread.sleep(5);
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
   }
 
   private static void postJsonData(JsonNode json) {
@@ -120,11 +120,11 @@ public class PostRequest {
       new Thread(onCompleted).start();
     }
 //    System.out.println("Http Respone Status: " + httpResponse.getStatus());
-    try {
-      Thread.sleep(10);
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-    }
+//    try {
+//      Thread.sleep(10);
+//    } catch (InterruptedException e) {
+//      e.printStackTrace();
+//    }
   }
 
   private synchronized static void printResponse(HttpResponse<?> response) {

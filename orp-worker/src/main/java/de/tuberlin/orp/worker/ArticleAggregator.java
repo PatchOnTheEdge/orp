@@ -68,9 +68,12 @@ public class ArticleAggregator extends UntypedActor {
 
     } else if (message instanceof ArticleMerger.MergedArticles){
 
-      ArticleMerger.ArticleAggregatorResult articleAggregatorResult = new ArticleMerger.ArticleAggregatorResult(this.newArticles, this.removedArticles);
-      log.debug("new Articles = " + newArticles.size() + ". removed = " + removedArticles.size());
-      getSender().tell(articleAggregatorResult, getSelf());
+      ArticleMerger.NewArticles msg1 = new ArticleMerger.NewArticles(this.newArticles);
+      ArticleMerger.RemovedArticles msg2 = new ArticleMerger.RemovedArticles(this.removedArticles);
+
+//      log.debug("new Articles = " + newArticles.size() + ". removed = " + removedArticles.size());
+      getSender().tell(msg1, getSelf());
+      getSender().tell(msg2, getSelf());
 
       this.articles = ((ArticleMerger.MergedArticles) message).getArticles();
       this.newArticles = new HashSet<>();

@@ -9,6 +9,7 @@ import de.tuberlin.orp.common.message.OrpArticleRemove;
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.time.Instant;
 import java.util.*;
 
 /**
@@ -25,15 +26,14 @@ public class ArticleRepository implements Serializable{
 
   public void clean(int itemStorageDays){
     //Get maximum age for items
-    Calendar currentCalendar = Calendar.getInstance();
-    currentCalendar.add(Calendar.DATE, -itemStorageDays);
-    Date time = currentCalendar.getTime();
+    Long time = Instant.now().getEpochSecond();
 
     //Delete items older than maximum age
     for (String publisherId : publisherItemIdMap.keySet()) {
       Map<String, OrpArticle> items = publisherItemIdMap.get(publisherId);
       items.keySet().stream().filter(item ->
-          items.get(item).getDate().before(time)).forEach(items::remove);
+          time - items.get(item).getDate() < 86400 * itemStorageDays)
+          .forEach(items::remove);
     }
   }
 
