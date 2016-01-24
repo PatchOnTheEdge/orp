@@ -24,12 +24,6 @@
 
 package de.tuberlin.orp.common.ranking;
 
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import de.tuberlin.orp.common.Utils;
-import io.verbit.ski.core.json.Json;
-
-import java.io.Serializable;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -37,8 +31,7 @@ import java.util.Set;
 /**
  * MostPopularRanking represents a Mapping from OrpArticle to Number of Clicks
  */
-public class PopularCategoryRanking implements Ranking<PopularCategoryRanking>, Serializable {
-  private LinkedHashMap<String, Long> ranking;
+public class PopularCategoryRanking extends Ranking<PopularCategoryRanking>{
 
   public PopularCategoryRanking() {
     ranking = new LinkedHashMap<>();
@@ -50,10 +43,6 @@ public class PopularCategoryRanking implements Ranking<PopularCategoryRanking>, 
 
   public PopularCategoryRanking(Map<String, Long> ranking) {
     this.ranking = new LinkedHashMap<>(ranking);
-  }
-
-  public LinkedHashMap<String, Long> getRanking() {
-    return ranking;
   }
 
   @Override
@@ -76,35 +65,7 @@ public class PopularCategoryRanking implements Ranking<PopularCategoryRanking>, 
   }
 
   @Override
-  public void sort() {
-    this.ranking = Utils.sortMapByEntry(this.ranking, (o1, o2) -> (int) (o2.getValue() - o1.getValue()));
-  }
-
-  @Override
-  public void slice(int limit) {
-    ranking = Utils.sliceMap(ranking, limit);
-  }
-
-  @Override
   public Ranking<PopularCategoryRanking> mix(Ranking ranking, double p, int limit) {
     return null;
-  }
-
-  @Override
-  public String toString() {
-    return ranking.toString();
-  }
-
-  @Override
-  public ArrayNode toJson(){
-    ObjectNode jsonNodes = Json.newObject();
-    ArrayNode rankings = jsonNodes.putArray("ranking");
-    for (String key : this.ranking.keySet()) {
-      ObjectNode newRank = Json.newObject();
-      newRank.put("key",key);
-      newRank.put("rank",this.ranking.get(key));
-      rankings.add(newRank);
-    }
-    return rankings;
   }
 }

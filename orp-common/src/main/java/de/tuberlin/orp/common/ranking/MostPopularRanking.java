@@ -24,19 +24,12 @@
 
 package de.tuberlin.orp.common.ranking;
 
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import de.tuberlin.orp.common.Utils;
-import io.verbit.ski.core.json.Json;
-
-import java.io.Serializable;
 import java.util.*;
 
 /**
  * MostPopularRanking represents a Mapping from OrpArticle to Number of Clicks
  */
-public class MostPopularRanking implements Ranking<MostPopularRanking>, Serializable {
-  private LinkedHashMap<String, Long> ranking;
+public class MostPopularRanking extends Ranking<MostPopularRanking> {
 
   public MostPopularRanking() {
     ranking = new LinkedHashMap<>();
@@ -48,10 +41,6 @@ public class MostPopularRanking implements Ranking<MostPopularRanking>, Serializ
 
   public MostPopularRanking(Map<String, Long> ranking) {
     this.ranking = new LinkedHashMap<>(ranking);
-  }
-
-  public LinkedHashMap<String, Long> getRanking() {
-    return ranking;
   }
 
   @Override
@@ -74,17 +63,7 @@ public class MostPopularRanking implements Ranking<MostPopularRanking>, Serializ
   }
 
   @Override
-  public void sort() {
-    this.ranking = Utils.sortMapByEntry(this.ranking, (o1, o2) -> (int) (o2.getValue() - o1.getValue()));
-  }
-
-  @Override
-  public void slice(int limit) {
-    ranking = Utils.sliceMap(ranking, limit);
-  }
-
-  @Override
-  public Ranking<MostPopularRanking> mix(Ranking ranking, double p, int limit) {
+  public MostPopularRanking mix(Ranking ranking, double p, int limit) {
     LinkedHashMap<String, Long> result = new LinkedHashMap<>();
     Iterator<Map.Entry<String, Long>> iterator1 = ranking.getRanking().entrySet().iterator();
     Iterator<Map.Entry<String, Long>> iterator2 = this.ranking.entrySet().iterator();
@@ -94,30 +73,13 @@ public class MostPopularRanking implements Ranking<MostPopularRanking>, Serializ
       if (r <= p){
         Map.Entry<String, Long> entry = iterator1.next();
         result.put(entry.getKey(), entry.getValue());
+        System.out.println("case1");
       } else {
         Map.Entry<String, Long> entry = iterator2.next();
         result.put(entry.getKey(), entry.getValue());
+        System.out.println("case2");
       }
     }
     return new MostPopularRanking(result);
-  }
-
-
-  @Override
-  public String toString() {
-    return ranking.toString();
-  }
-
-  @Override
-  public ArrayNode toJson(){
-    ObjectNode jsonNodes = Json.newObject();
-    ArrayNode rankings = jsonNodes.putArray("ranking");
-    for (String key : this.ranking.keySet()) {
-      ObjectNode newRank = Json.newObject();
-      newRank.put("key",key);
-      newRank.put("rank",this.ranking.get(key));
-      rankings.add(newRank);
-    }
-    return rankings;
   }
 }

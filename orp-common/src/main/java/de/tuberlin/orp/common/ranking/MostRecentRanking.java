@@ -1,20 +1,11 @@
 package de.tuberlin.orp.common.ranking;
 
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import de.tuberlin.orp.common.Utils;
-import io.verbit.ski.core.json.Json;
-
-import java.io.Serializable;
-import java.util.Date;
-import java.util.LinkedHashMap;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by Patch on 20.10.2015.
  */
-public class MostRecentRanking implements Ranking<MostRecentRanking>, Serializable{
-  private LinkedHashMap<String, Long> ranking;
+public class MostRecentRanking extends Ranking<MostRecentRanking>{
 
   public MostRecentRanking() {
     this.ranking = new LinkedHashMap<>();
@@ -26,10 +17,6 @@ public class MostRecentRanking implements Ranking<MostRecentRanking>, Serializab
 
   public MostRecentRanking(MostRecentRanking mostRecentRanking) {
     this.ranking = new LinkedHashMap<>(ranking);
-  }
-
-  public LinkedHashMap<String, Long> getRanking() {
-    return this.ranking;
   }
 
   @Override
@@ -49,7 +36,7 @@ public class MostRecentRanking implements Ranking<MostRecentRanking>, Serializab
 
 
   @Override
-  public Ranking<MostRecentRanking> filter(Set<String> keys) {
+  public MostRecentRanking filter(Set<String> keys) {
     MostRecentRanking copy = new MostRecentRanking(this);
     if (keys != null){
       for (String key : keys) {
@@ -60,30 +47,21 @@ public class MostRecentRanking implements Ranking<MostRecentRanking>, Serializab
   }
 
   @Override
-  public void sort() {
-    ranking = Utils.sortMapByEntry(this.ranking, (d1,d2) -> d1.getValue().compareTo(d2.getValue()));
-  }
+  public MostRecentRanking mix(Ranking ranking, double p, int limit) {
+    LinkedHashMap<String, Long> result = new LinkedHashMap<>();
+    Iterator<Map.Entry<String, Long>> iterator1 = ranking.getRanking().entrySet().iterator();
+    Iterator<Map.Entry<String, Long>> iterator2 = this.ranking.entrySet().iterator();
 
-  @Override
-  public void slice(int limit) {
-    this.ranking = Utils.sliceMap(this.ranking, limit);
-  }
-
-  @Override
-  public Ranking<MostRecentRanking> mix(Ranking ranking, double p, int limit) {
-    return null;
-  }
-
-  @Override
-  public ArrayNode toJson() {
-    ObjectNode jsonNodes = Json.newObject();
-    ArrayNode rankings = jsonNodes.putArray("ranking");
-    for (String key : this.ranking.keySet()) {
-      ObjectNode newRank = Json.newObject();
-      newRank.put("key",key);
-      newRank.put("rank",this.ranking.get(key).toString());
-      rankings.add(newRank);
+    while (result.size() < limit){
+      double r = Math.random();
+      if (r <= p){
+        Map.Entry<String, Long> entry = iterator1.next();
+        result.put(entry.getKey(), entry.getValue());
+      } else {
+        Map.Entry<String, Long> entry = iterator2.next();
+        result.put(entry.getKey(), entry.getValue());
+      }
     }
-    return rankings;
+    return new MostRecentRanking(result);
   }
 }

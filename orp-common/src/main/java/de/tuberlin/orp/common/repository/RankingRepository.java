@@ -50,10 +50,8 @@ public class RankingRepository  implements Serializable{
     this.type = type;
   }
 
-  public Optional<Ranking> getRanking(String key, int limit) {
-    Ranking ranking = rankings.get(key);
-    ranking.slice(limit);
-    return Optional.ofNullable(ranking);
+  public Optional<Ranking> getRanking(String key) {
+    return Optional.ofNullable(rankings.get(key));
   }
 
   public Map<String, Ranking> getRankings() {
