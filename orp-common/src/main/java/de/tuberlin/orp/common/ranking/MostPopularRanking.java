@@ -73,11 +73,9 @@ public class MostPopularRanking extends Ranking<MostPopularRanking> {
       if (r <= p){
         Map.Entry<String, Long> entry = iterator1.next();
         result.put(entry.getKey(), entry.getValue());
-        System.out.println("case1");
       } else {
         Map.Entry<String, Long> entry = iterator2.next();
         result.put(entry.getKey(), entry.getValue());
-        System.out.println("case2");
       }
     }
     return new MostPopularRanking(result);
