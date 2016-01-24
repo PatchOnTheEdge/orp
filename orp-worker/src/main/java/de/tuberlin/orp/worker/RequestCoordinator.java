@@ -47,10 +47,7 @@ import de.tuberlin.orp.worker.algorithms.popularityTrend.PopularityWorker;
 import scala.concurrent.Future;
 
 import java.io.Serializable;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * This Actor coordinates requests.
@@ -63,18 +60,21 @@ public class RequestCoordinator extends UntypedActor {
   private ActorRef mostPopularWorker;
   private ActorRef mostRecentWorker;
   private ActorRef popularityWorker;
+  private ActorRef popularCategoryWorker;
   private ActorRef filterActor;
 
   private RankingRepository mostPopularRanking;
   private RankingRepository mostRecentRanking;
   private RankingRepository trendRanking;
+  private RankingRepository popularCategoryRanking;
 
   private RankingFilter filter;
 
-  public RequestCoordinator(ActorRef mostPopularWorker, ActorRef mostRecentWorker, ActorRef popularityWorker, ActorRef filterActor) {
+  public RequestCoordinator(ActorRef mostPopularWorker, ActorRef mostRecentWorker, ActorRef popularityWorker, ActorRef popularCategoryWorker, ActorRef filterActor) {
     this.mostPopularWorker = mostPopularWorker;
     this.mostRecentWorker = mostRecentWorker;
     this.popularityWorker = popularityWorker;
+    this.popularCategoryWorker = popularCategoryWorker;
     this.filterActor = filterActor;
 
     this.mostPopularRanking = new RankingRepository(new MostPopularRanking());
@@ -90,13 +90,17 @@ public class RequestCoordinator extends UntypedActor {
       OrpContext context = ((OrpRequest) message).getContext();
       String publisherId = context.getPublisherId();
       String userId = context.getUserId();
+      int limit = context.getLimit();
 
       log.info(String.format("Received request: publisherId = %s, userId = %s", publisherId, userId));
 
-      Optional<Ranking> ranking = this.mostPopularRanking.getRanking(publisherId);
-      ranking.ifPresent(ranking1 -> filter.filter(ranking1, context));
+      Optional<Ranking> mpRanking = this.mostPopularRanking.getRanking(publisherId, limit);
+      Optional<Ranking> mrRanking = this.mostRecentRanking.getRanking(publisherId, limit);
 
-      getSender().tell(ranking.orElse(new MostPopularRanking()), getSelf());
+      mpRanking.ifPresent(ranking1 -> filter.filter(ranking1, context));
+      mrRanking.ifPresent(ranking2 -> filter.filter(ranking2, context));
+
+      getSender().tell(mpRanking.orElse(new MostPopularRanking()), getSelf());
 
 
       //TODO Handle removed items for all mergers
@@ -202,9 +206,9 @@ public class RequestCoordinator extends UntypedActor {
         }, getContext().dispatcher());
   }
 
-  public static Props create(ActorRef mostPopularWorker, ActorRef mostRecentWorker, ActorRef popularityWorker, ActorRef filterActor) {
+  public static Props create(ActorRef mostPopularWorker, ActorRef mostRecentWorker, ActorRef popularityWorker, ActorRef popularCategoryWorker, ActorRef filterActor) {
     return Props.create(RequestCoordinator.class, () -> {
-      return new RequestCoordinator(mostPopularWorker, mostRecentWorker, popularityWorker, filterActor);
+      return new RequestCoordinator(mostPopularWorker, mostRecentWorker, popularityWorker, popularCategoryWorker, filterActor);
     });
   }
 

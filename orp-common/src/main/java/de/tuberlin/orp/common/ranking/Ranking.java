@@ -10,7 +10,7 @@ import java.util.Set;
  * Created by Patch on 20.10.2015.
  */
 public interface Ranking<T> extends Serializable {
-  LinkedHashMap getRanking();
+  LinkedHashMap<String, Long> getRanking();
 
   void merge(Ranking<T> ranking);
 
@@ -19,6 +19,8 @@ public interface Ranking<T> extends Serializable {
   void sort();
 
   void slice(int limit);
+
+  Ranking<T> mix(Ranking ranking, double p, int limit);
 
   String toString();
 

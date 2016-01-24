@@ -25,12 +25,9 @@
 package de.tuberlin.orp.common.repository;
 
 import de.tuberlin.orp.common.ranking.MostPopularRanking;
-import de.tuberlin.orp.common.ranking.MostRecentRanking;
 import de.tuberlin.orp.common.ranking.Ranking;
 
 import java.io.Serializable;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -53,8 +50,10 @@ public class RankingRepository  implements Serializable{
     this.type = type;
   }
 
-  public Optional<Ranking> getRanking(String key) {
-    return Optional.ofNullable(rankings.get(key));
+  public Optional<Ranking> getRanking(String key, int limit) {
+    Ranking ranking = rankings.get(key);
+    ranking.slice(limit);
+    return Optional.ofNullable(ranking);
   }
 
   public Map<String, Ranking> getRankings() {
@@ -72,14 +71,13 @@ public class RankingRepository  implements Serializable{
         Ranking ranking = mergedRankings.get(publisher);
         ranking.merge(rankings.get(publisher));
       }
-    } else if (this.type instanceof MostRecentRanking){
-      for (String publisher : rankings.keySet()) {
-        mergedRankings.putIfAbsent(publisher, new MostRecentRanking());
-        Ranking ranking = mergedRankings.get(publisher);
-        ranking.merge(rankings.get(publisher));
-      }
+//    } else if (this.type instanceof MostRecentRanking){
+//      for (String publisher : rankings.keySet()) {
+//        mergedRankings.putIfAbsent(publisher, new MostRecentRanking());
+//        Ranking ranking = mergedRankings.get(publisher);
+//        ranking.merge(rankings.get(publisher));
+//      }
     }
-
   }
   @Override
   public String toString() {

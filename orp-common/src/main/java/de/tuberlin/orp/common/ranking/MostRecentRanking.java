@@ -14,13 +14,13 @@ import java.util.Set;
  * Created by Patch on 20.10.2015.
  */
 public class MostRecentRanking implements Ranking<MostRecentRanking>, Serializable{
-  private LinkedHashMap<String, Date> ranking;
+  private LinkedHashMap<String, Long> ranking;
 
   public MostRecentRanking() {
     this.ranking = new LinkedHashMap<>();
   }
 
-  public MostRecentRanking(LinkedHashMap<String, Date> ranking) {
+  public MostRecentRanking(LinkedHashMap<String, Long> ranking) {
     this.ranking = ranking;
   }
 
@@ -28,20 +28,20 @@ public class MostRecentRanking implements Ranking<MostRecentRanking>, Serializab
     this.ranking = new LinkedHashMap<>(ranking);
   }
 
-  public LinkedHashMap<String, Date> getRanking() {
+  public LinkedHashMap<String, Long> getRanking() {
     return this.ranking;
   }
 
   @Override
   public void merge(Ranking<MostRecentRanking> ranking) {
-    LinkedHashMap<String, Date> newRanking = ranking.getRanking();
+    LinkedHashMap<String, Long> newRanking = ranking.getRanking();
     for (String key : newRanking.keySet()) {
       this.ranking.merge(key, newRanking.get(key), this::newestDate);
     }
   }
 
-  private Date newestDate(Date date1, Date date2) {
-    if (date1.after(date2)){
+  private Long newestDate(Long date1, Long date2) {
+    if (date1 >= date2){
       return date1;
     }
     return date2;
@@ -67,6 +67,11 @@ public class MostRecentRanking implements Ranking<MostRecentRanking>, Serializab
   @Override
   public void slice(int limit) {
     this.ranking = Utils.sliceMap(this.ranking, limit);
+  }
+
+  @Override
+  public Ranking<MostRecentRanking> mix(Ranking ranking, double p, int limit) {
+    return null;
   }
 
   @Override

@@ -6,12 +6,14 @@ import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.japi.Creator;
 import de.tuberlin.orp.common.message.OrpContext;
+import de.tuberlin.orp.common.ranking.MostPopularRanking;
 import de.tuberlin.orp.common.ranking.MostRecentRanking;
 import de.tuberlin.orp.common.ranking.Ranking;
 import de.tuberlin.orp.common.repository.RankingRepository;
 import de.tuberlin.orp.master.MostRecentMerger;
 import de.tuberlin.orp.worker.RequestCoordinator;
 
+import java.time.Instant;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -46,7 +48,7 @@ public class MostRecentWorker extends UntypedActor {
     return Props.create(MostRecentWorker.class, new MostRecentlyWorkerCreator(contextWindowSize, topListSize));
   }
   public MostRecentWorker(int contextWindowSize, int topListSize) {
-    this.rankingRepository = new RankingRepository(new MostRecentRanking());
+    this.rankingRepository = new RankingRepository(new MostPopularRanking());
     this.recentArticles = new RecentArticlesQueue(contextWindowSize, topListSize);
   }
 
@@ -70,8 +72,8 @@ public class MostRecentWorker extends UntypedActor {
       Map<String, Ranking> rankings = rankingRepository.getRankings();
       MostRecentRanking ranking = (MostRecentRanking) rankings.getOrDefault(publisherId, new MostRecentRanking());
 
-      LinkedHashMap<String, Date> map = new LinkedHashMap<String, Date>();
-      map.put(itemId, new Date());
+      LinkedHashMap<String, Long> map = new LinkedHashMap<String, Long>();
+      map.put(itemId, Instant.now().getEpochSecond());
       MostRecentRanking newRanking = new MostRecentRanking(map);
       ranking.merge(newRanking);
 

@@ -40,7 +40,7 @@ public class PostRequest {
   //"37.120.189.25";
 //orp.plista.com/api/vector_resoultion.php?vid=11&aid=
   public static void main(String[] args) throws Exception {
-    // C:\Users\Patch\projects\orp\test.data C:\Users\Patch\projects\orp\test.item 5 5
+    // C:\Users\Patch\projects\orp\test.data C:\Users\Patch\projects\orp\test.item 30 10
     // C:\Users\Patch\projects\json\CLEF-2015-Task2-Json07\Json-07\2014-07-01.data\2014-07-01.data C:\Users\Patch\projects\json\CLEF-2015-Task2-Json07\Json-07\2014-07-01.items\2014-07-01.items
     String filePathData = args[0];
     String filePathItem = args[1];
@@ -120,6 +120,11 @@ public class PostRequest {
       new Thread(onCompleted).start();
     }
 //    System.out.println("Http Respone Status: " + httpResponse.getStatus());
+    try {
+      Thread.sleep(10);
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
   }
 
   private synchronized static void printResponse(HttpResponse<?> response) {

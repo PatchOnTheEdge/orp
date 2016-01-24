@@ -34,7 +34,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import de.tuberlin.orp.common.message.OrpArticle;
 import de.tuberlin.orp.common.ranking.MostPopularRanking;
 import de.tuberlin.orp.common.message.OrpArticleRemove;
-import de.tuberlin.orp.common.ranking.MostRecentRanking;
 import de.tuberlin.orp.common.ranking.Ranking;
 import io.verbit.ski.akka.Akka;
 import io.verbit.ski.core.Ski;
@@ -129,12 +128,12 @@ public class MasterServer {
                         public Result apply(Object object) {
                           ObjectNode result = Json.newObject();
 
-                          Map<String, MostRecentRanking> rankings = (Map<String, MostRecentRanking>) object;
+                          Map<String, MostPopularRanking> rankings = (Map<String, MostPopularRanking>) object;
                           Set<String> publishers = rankings.keySet();
                           ArrayNode data = result.putArray("rankings");
 
                           for (String publisher : publishers) {
-                            MostRecentRanking mostRecentRanking = rankings.get(publisher);
+                            MostPopularRanking mostRecentRanking = rankings.get(publisher);
                             ObjectNode publisherNode = Json.newObject();
                             publisherNode.put("publisherId", publisher);
                             ArrayNode rankingNode = publisherNode.putArray("ranking");

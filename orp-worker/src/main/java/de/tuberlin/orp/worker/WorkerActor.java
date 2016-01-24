@@ -32,6 +32,7 @@ import akka.event.LoggingAdapter;
 import de.tuberlin.orp.common.message.*;
 import de.tuberlin.orp.worker.algorithms.mostPopular.MostPopularWorker;
 import de.tuberlin.orp.worker.algorithms.mostRecent.MostRecentWorker;
+import de.tuberlin.orp.worker.algorithms.popularCategory.PopularCategoryWorker;
 import de.tuberlin.orp.worker.algorithms.popularityTrend.PopularityWorker;
 import oshi.SystemInfo;
 import oshi.hardware.HardwareAbstractionLayer;
@@ -51,12 +52,11 @@ public class WorkerActor extends UntypedActor {
   private ActorRef mostPopularWorker;
   private ActorRef mostRecentWorker;
   private ActorRef popularityWorker;
+  private ActorRef popularCategoryWorker;
   private ActorRef filterActor;
   private ActorRef statisticsAggregator;
   private ActorRef requestCoordinator;
   private ActorRef articleAggregator;
-
-  private HardwareAbstractionLayer hardware = new SystemInfo().getHardware();
 
   public WorkerActor(ActorRef statisticsAggregator, ActorRef articleAggregator) {
     this.statisticsAggregator = statisticsAggregator;
@@ -77,21 +77,11 @@ public class WorkerActor extends UntypedActor {
     mostPopularWorker = getContext().actorOf(MostPopularWorker.create(500, 50), "mp");
     mostRecentWorker = getContext().actorOf(MostRecentWorker.create(500, 50), "mr");
     popularityWorker = getContext().actorOf(PopularityWorker.create(500, 10, 50, 30), "p");
-
+    popularCategoryWorker = getContext().actorOf(PopularCategoryWorker.create(1000, 50), "pc");
 
     filterActor = getContext().actorOf(RecommendationFilter.create(), "filter");
 
-    requestCoordinator = getContext().actorOf(RequestCoordinator.create(mostPopularWorker, mostRecentWorker, popularityWorker, filterActor), "coordinator");
-
-    getContext().system().scheduler().schedule(Duration.Zero(), Duration.create(1, TimeUnit.SECONDS), () -> {
-
-//      double cpu = Arrays.stream(hardware.getProcessors())
-//          .mapToDouble(Processor::getSystemCpuLoadBetweenTicks)
-//          .sum();
-//
-//      double memory = hardware.getMemory().getAvailable() / (double) hardware.getMemory().getTotal();
-
-    }, getContext().dispatcher());
+    requestCoordinator = getContext().actorOf(RequestCoordinator.create(mostPopularWorker, mostRecentWorker, popularityWorker, popularCategoryWorker, filterActor), "coordinator");
   }
 
   @Override
@@ -112,23 +102,23 @@ public class WorkerActor extends UntypedActor {
       String category = context.getCategory();
 
       statisticsAggregator.tell("notification", getSelf());
+      articleAggregator.tell(new ArticleAggregator.ArticleCategory(publisherId, itemId, category), getSelf());
 
       switch (notificationType) {
         case "event_notification":
-
-//          statisticsAggregator.tell("request", getSelf()); ???Wrong position? moved to OrpRequest
-
           if (!publisherId.equals("") && !itemId.equals("") && !itemId.equals("0")) {
             mostPopularWorker.tell(context, getSelf());
             mostRecentWorker.tell(context, getSelf());
+//            popularityWorker.tell(context, getSelf());
+            popularCategoryWorker.tell(context, getSelf());
 
-            //Approach without filtering clicked items
-            //filterActor.tell(new RecommendationFilter.Clicked(userId, itemId), getSelf());
+            if (!userId.equals("0")){
+              filterActor.tell(new RecommendationFilter.Clicked(userId, itemId), getSelf());
+            }
           }
-
           break;
-
       }
+
     } else if (message instanceof OrpRequest) {
 
       statisticsAggregator.tell("request", getSelf());

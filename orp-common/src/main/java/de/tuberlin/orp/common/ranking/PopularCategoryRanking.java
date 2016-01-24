@@ -30,23 +30,25 @@ import de.tuberlin.orp.common.Utils;
 import io.verbit.ski.core.json.Json;
 
 import java.io.Serializable;
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * MostPopularRanking represents a Mapping from OrpArticle to Number of Clicks
  */
-public class MostPopularRanking implements Ranking<MostPopularRanking>, Serializable {
+public class PopularCategoryRanking implements Ranking<PopularCategoryRanking>, Serializable {
   private LinkedHashMap<String, Long> ranking;
 
-  public MostPopularRanking() {
+  public PopularCategoryRanking() {
     ranking = new LinkedHashMap<>();
   }
 
-  public MostPopularRanking(MostPopularRanking mostPopularRanking) {
+  public PopularCategoryRanking(PopularCategoryRanking mostPopularRanking) {
     this.ranking = mostPopularRanking.getRanking();
   }
 
-  public MostPopularRanking(Map<String, Long> ranking) {
+  public PopularCategoryRanking(Map<String, Long> ranking) {
     this.ranking = new LinkedHashMap<>(ranking);
   }
 
@@ -55,7 +57,7 @@ public class MostPopularRanking implements Ranking<MostPopularRanking>, Serializ
   }
 
   @Override
-  public void merge(Ranking<MostPopularRanking> ranking) {
+  public void merge(Ranking<PopularCategoryRanking> ranking) {
     LinkedHashMap<String, Long> newRanking = ranking.getRanking();
     for (String key : newRanking.keySet()) {
       this.ranking.merge(key, newRanking.get(key), Long::sum);
@@ -63,8 +65,8 @@ public class MostPopularRanking implements Ranking<MostPopularRanking>, Serializ
   }
 
   @Override
-  public MostPopularRanking filter(Set<String> keys) {
-    MostPopularRanking copy = new MostPopularRanking(this);
+  public PopularCategoryRanking filter(Set<String> keys) {
+    PopularCategoryRanking copy = new PopularCategoryRanking(this);
     if (keys != null) {
       for (String key : keys) {
         copy.getRanking().remove(key);
@@ -84,24 +86,9 @@ public class MostPopularRanking implements Ranking<MostPopularRanking>, Serializ
   }
 
   @Override
-  public Ranking<MostPopularRanking> mix(Ranking ranking, double p, int limit) {
-    LinkedHashMap<String, Long> result = new LinkedHashMap<>();
-    Iterator<Map.Entry<String, Long>> iterator1 = ranking.getRanking().entrySet().iterator();
-    Iterator<Map.Entry<String, Long>> iterator2 = this.ranking.entrySet().iterator();
-
-    while (result.size() < limit){
-      double r = Math.random();
-      if (r <= p){
-        Map.Entry<String, Long> entry = iterator1.next();
-        result.put(entry.getKey(), entry.getValue());
-      } else {
-        Map.Entry<String, Long> entry = iterator2.next();
-        result.put(entry.getKey(), entry.getValue());
-      }
-    }
-    return new MostPopularRanking(result);
+  public Ranking<PopularCategoryRanking> mix(Ranking ranking, double p, int limit) {
+    return null;
   }
-
 
   @Override
   public String toString() {

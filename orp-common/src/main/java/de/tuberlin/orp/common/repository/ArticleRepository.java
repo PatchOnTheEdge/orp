@@ -1,20 +1,23 @@
 package de.tuberlin.orp.common.repository;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import de.tuberlin.orp.common.JsonReader;
 import de.tuberlin.orp.common.LiFoRingBuffer;
 import de.tuberlin.orp.common.message.OrpArticle;
 import de.tuberlin.orp.common.message.OrpArticleRemove;
 
-import java.io.Serializable;
+import java.io.*;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.*;
 
 /**
  * Created by patch on 10.11.2015.
  */
 public class ArticleRepository implements Serializable{
+
   //Map from PublisherId -> ItemId -> OrpArticle;
   private Map<String, Map<String, OrpArticle>> publisherItemIdMap;
-  //Properties
-
 
   public ArticleRepository() {
     this.publisherItemIdMap = new HashMap<>();
@@ -46,7 +49,8 @@ public class ArticleRepository implements Serializable{
     String publisherId = article.getPublisherId();
 
     publisherItemIdMap.putIfAbsent(publisherId, new HashMap<>());
-    publisherItemIdMap.get(publisherId).put(itemId, article);
+    Map<String, OrpArticle> articleMap = publisherItemIdMap.get(publisherId);
+    articleMap.put(itemId, article);
   }
 
 
@@ -58,7 +62,7 @@ public class ArticleRepository implements Serializable{
     removedArticles.forEach(this::remove);
   }
 
-  public void remove(OrpArticleRemove toRemove){
+  public void remove(OrpArticleRemove toRemove) {
     String itemId = toRemove.getItemId();
     String publisherId = toRemove.getPublisherId();
     Map<String, OrpArticle> articleMap = publisherItemIdMap.get(publisherId);
@@ -66,4 +70,5 @@ public class ArticleRepository implements Serializable{
       articleMap.remove(itemId);
     }
   }
+
 }

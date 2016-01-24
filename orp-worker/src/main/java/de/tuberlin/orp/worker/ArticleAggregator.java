@@ -9,8 +9,11 @@ import de.tuberlin.orp.common.repository.ArticleRepository;
 import de.tuberlin.orp.common.message.OrpArticle;
 import de.tuberlin.orp.common.message.OrpArticleRemove;
 import de.tuberlin.orp.master.ArticleMerger;
+import scala.concurrent.duration.Duration;
 
+import java.io.Serializable;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by patch on 10.11.2015.
@@ -37,6 +40,12 @@ public class ArticleAggregator extends UntypedActor {
   @Override
   public void preStart() throws Exception {
     log.info("Article Aggregator started");
+
+    getContext().system().scheduler().schedule(Duration.create(10, TimeUnit.SECONDS), Duration.create(30, TimeUnit.SECONDS), () -> {
+
+//      articles.storeCategories();
+
+    }, getContext().dispatcher());
 
     super.preStart();
   }
@@ -67,10 +76,24 @@ public class ArticleAggregator extends UntypedActor {
       this.newArticles = new ArrayDeque<>();
       this.removedArticles = new HashSet<>();
 
+    } else if (message instanceof ArticleCategory){
+
+      ArticleCategory categoryMessage = (ArticleCategory) message;
+//      articles.setCategory(categoryMessage.publisherId, categoryMessage.itemId, categoryMessage.category);
+
     } else {
       unhandled(message);
     }
+  }
 
-
+  public static class ArticleCategory implements Serializable{
+    private String publisherId;
+    private String itemId;
+    private String category;
+    public ArticleCategory(String publisherId, String itemId, String category) {
+      this.publisherId = publisherId;
+      this.itemId = itemId;
+      this.category = category;
+    }
   }
 }

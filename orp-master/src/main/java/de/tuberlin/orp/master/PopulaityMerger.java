@@ -96,7 +96,6 @@ public class PopulaityMerger extends UntypedActor {
     }
   }
 
-
   public static class WorkerResult implements Serializable {
     private final RankingRepository rankings;
     private final RankingFilter filter;

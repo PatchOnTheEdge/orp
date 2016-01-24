@@ -28,15 +28,14 @@ public class OrpArticle implements Serializable{
     this.articleURL = json.get("url").asText();
     this.imgURL = json.get("img").asText();
     this.publisherId = json.get("domainid").asText();
+    this.category = null;
     this.date = new Date();
   }
-  public OrpArticle(String itemId, String publisherId){
+
+  public OrpArticle(String itemId, String publisherId, String category) {
     this.itemId = itemId;
     this.publisherId = publisherId;
-    this.title = "unknown";
-    this.text = "unknown";
-    this.articleURL  = "";
-    this.imgURL = "";
+    this.category = category;
     this.date = new Date();
   }
 
@@ -66,6 +65,14 @@ public class OrpArticle implements Serializable{
 
   public Date getDate() {
     return date;
+  }
+
+  public String getCategory() {
+    return category;
+  }
+
+  public void setCategory(String category) {
+    this.category = category;
   }
 
   public ObjectNode getJson(){
