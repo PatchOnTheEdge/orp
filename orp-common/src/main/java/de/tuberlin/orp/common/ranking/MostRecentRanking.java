@@ -12,11 +12,11 @@ public class MostRecentRanking extends Ranking<MostRecentRanking>{
   }
 
   public MostRecentRanking(LinkedHashMap<String, Long> ranking) {
-    this.ranking = ranking;
+    this.ranking = new LinkedHashMap<>(ranking);
   }
 
   public MostRecentRanking(MostRecentRanking mostRecentRanking) {
-    this.ranking = new LinkedHashMap<>(ranking);
+    this.ranking = mostRecentRanking.getRanking();
   }
 
   @Override

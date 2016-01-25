@@ -32,7 +32,7 @@ import java.util.*;
 public class MostPopularRanking extends Ranking<MostPopularRanking> {
 
   public MostPopularRanking() {
-    ranking = new LinkedHashMap<>();
+    this.ranking = new LinkedHashMap<>();
   }
 
   public MostPopularRanking(MostPopularRanking mostPopularRanking) {

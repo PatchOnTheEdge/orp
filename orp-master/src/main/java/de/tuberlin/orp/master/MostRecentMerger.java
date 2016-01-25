@@ -9,6 +9,7 @@ import akka.japi.Creator;
 import akka.routing.Broadcast;
 import akka.routing.FromConfig;
 import de.tuberlin.orp.common.ranking.MostPopularRanking;
+import de.tuberlin.orp.common.ranking.MostRecentRanking;
 import de.tuberlin.orp.common.repository.RankingRepository;
 import scala.concurrent.duration.Duration;
 
@@ -22,7 +23,6 @@ public class MostRecentMerger extends UntypedActor{
   private LoggingAdapter log = Logging.getLogger(getContext().system(), this);
 
   private ActorRef workerRouter;
-
   private RankingRepository merger;
 
 
@@ -34,7 +34,7 @@ public class MostRecentMerger extends UntypedActor{
   public void preStart() throws Exception {
     log.info("Most Recent Merger started");
 
-    merger = new RankingRepository(new MostPopularRanking());
+    merger = new RankingRepository(new MostRecentRanking());
 
     workerRouter = getContext().actorOf(FromConfig.getInstance().props(Props.empty()), "workerRouter");
 
@@ -45,7 +45,7 @@ public class MostRecentMerger extends UntypedActor{
       merger.sortRankings();
       log.debug(merger.toString());
       workerRouter.tell(new Broadcast(new MergedRanking(merger)), getSelf());
-      merger = new RankingRepository(new MostPopularRanking());
+      merger = new RankingRepository(new MostRecentRanking());
 
     }, getContext().dispatcher());
 
@@ -64,7 +64,7 @@ public class MostRecentMerger extends UntypedActor{
 
     }
     else if (message.equals("getMergerResult")){
-      getSender().tell(this.merger.getRankings(),getSelf());
+      getSender().tell(this.merger.getRankings(), getSelf());
     }
     else {
       unhandled(message);

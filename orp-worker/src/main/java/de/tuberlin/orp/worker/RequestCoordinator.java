@@ -27,7 +27,6 @@ package de.tuberlin.orp.worker;
 import akka.actor.ActorRef;
 import akka.actor.Props;
 import akka.actor.UntypedActor;
-import akka.actor.dsl.Creators;
 import akka.dispatch.Futures;
 import akka.dispatch.Mapper;
 import akka.event.Logging;
@@ -41,7 +40,6 @@ import de.tuberlin.orp.master.FilterMerger;
 import de.tuberlin.orp.master.MostPopularMerger;
 import de.tuberlin.orp.master.MostRecentMerger;
 import de.tuberlin.orp.master.PopulaityMerger;
-import de.tuberlin.orp.worker.algorithms.popularityTrend.PopularityWorker;
 import scala.concurrent.Future;
 
 import java.io.Serializable;
@@ -104,6 +102,7 @@ public class RequestCoordinator extends UntypedActor {
 
       //TODO Handle removed items for all mergers
     } else if (message instanceof MostPopularMerger.MergedRanking) {
+      ActorRef sender = getSender();
 
       // cache merged results
       MostPopularMerger.MergedRanking mergedRankingMessage = (MostPopularMerger.MergedRanking) message;
@@ -114,9 +113,10 @@ public class RequestCoordinator extends UntypedActor {
 
       //Get Ranking from MostPopular Worker
       Future<MostPopularMerger.WorkerResult> workerResultFuture = getMostPopularWorkerResultFuture(intermediateRankingFuture);
-      Patterns.pipe(workerResultFuture, getContext().dispatcher()).to(getSender(), getSelf());
+      Patterns.pipe(workerResultFuture, getContext().dispatcher()).to(sender, getSelf());
 
     } else if (message instanceof MostRecentMerger.MergedRanking) {
+      ActorRef sender = getSender();
 
       // cache merged results
       MostRecentMerger.MergedRanking mergedRankingMessage = (MostRecentMerger.MergedRanking) message;
@@ -127,7 +127,7 @@ public class RequestCoordinator extends UntypedActor {
 
       //Get Ranking from Worker
       Future<MostRecentMerger.WorkerResult> workerResultFuture = getMostRecentWorkerResultFuture(intermediateRankingFuture);
-      Patterns.pipe(workerResultFuture, getContext().dispatcher()).to(getSender(), getSelf());
+      Patterns.pipe(workerResultFuture, getContext().dispatcher()).to(sender, getSelf());
 
 
     } else if (message instanceof PopulaityMerger.MergedRanking) {
@@ -139,17 +139,17 @@ public class RequestCoordinator extends UntypedActor {
       Patterns.pipe(workerResultFuture, getContext().dispatcher()).to(getSender(), getSelf());
 
     } else if (message instanceof FilterMerger.MergedFilter) {
+      ActorRef sender = getSender();
 
       FilterMerger.MergedFilter mergedFilter = (FilterMerger.MergedFilter) message;
       filter = mergedFilter.getFilter();
 
       Future<Object> intermediateFilterFuture = Patterns.ask(filterActor, "getIntermediateFilter", 200);
       Future<FilterMerger.FilterResult> workerResultFuture = getFilterWorkerResultFuture(intermediateFilterFuture);
-      Patterns.pipe(workerResultFuture, getContext().dispatcher()).to(getSender(), getSelf());
+      Patterns.pipe(workerResultFuture, getContext().dispatcher()).to(sender, getSelf());
 
 
     } else {
-
       unhandled(message);
 
     }
@@ -196,8 +196,8 @@ public class RequestCoordinator extends UntypedActor {
               public MostRecentMerger.WorkerResult apply(Iterable<Object> parameter) {
                 Iterator<Object> it = parameter.iterator();
                 IntermediateRanking ranking = (IntermediateRanking) it.next();
-                return new MostRecentMerger.WorkerResult(
-                    ranking.getRankingRepository());
+
+                return new MostRecentMerger.WorkerResult(ranking.getRankingRepository());
               }
             }, getContext().dispatcher());
   }
@@ -210,8 +210,8 @@ public class RequestCoordinator extends UntypedActor {
           public PopulaityMerger.WorkerResult apply(Iterable<Object> parameter) {
             Iterator<Object> it = parameter.iterator();
             IntermediateRanking ranking = (IntermediateRanking) it.next();
-            return new PopulaityMerger.WorkerResult(
-                ranking.getRankingRepository());
+
+            return new PopulaityMerger.WorkerResult(ranking.getRankingRepository());
           }
         }, getContext().dispatcher());
   }

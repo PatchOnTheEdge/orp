@@ -75,9 +75,9 @@ public class WorkerActor extends UntypedActor {
     log.info("Worker started.");
 
     mostPopularWorker = getContext().actorOf(MostPopularWorker.create(500, 50), "mp");
-    mostRecentWorker = getContext().actorOf(MostRecentWorker.create(500, 50), "mr");
-    popularityWorker = getContext().actorOf(PopularityWorker.create(500, 10, 50, 30), "p");
-    popularCategoryWorker = getContext().actorOf(PopularCategoryWorker.create(1000, 50), "pc");
+    mostRecentWorker = getContext().actorOf(MostRecentWorker.create(500, 10), "mr");
+//    popularityWorker = getContext().actorOf(PopularityWorker.create(500, 10, 50, 30), "p");
+//    popularCategoryWorker = getContext().actorOf(PopularCategoryWorker.create(1000, 50), "pc");
 
     filterActor = getContext().actorOf(RecommendationFilter.create(), "filter");
 
@@ -110,8 +110,8 @@ public class WorkerActor extends UntypedActor {
           if (!publisherId.equals("") && !itemId.equals("") && !itemId.equals("0")) {
             mostPopularWorker.tell(context, getSelf());
             mostRecentWorker.tell(context, getSelf());
-            popularityWorker.tell(context, getSelf());
-            popularCategoryWorker.tell(context, getSelf());
+//            popularityWorker.tell(context, getSelf());
+//            popularCategoryWorker.tell(context, getSelf());
 
             if (!userId.equals("0")){
               filterActor.tell(new RecommendationFilter.Clicked(userId, itemId), getSelf());
