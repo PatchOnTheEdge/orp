@@ -34,7 +34,6 @@ public class MostRecentRanking extends Ranking<MostRecentRanking>{
     return date2;
   }
 
-
   @Override
   public MostRecentRanking filter(Set<String> keys) {
     MostRecentRanking copy = new MostRecentRanking(this);

@@ -37,6 +37,7 @@ import de.tuberlin.orp.common.ranking.*;
 import de.tuberlin.orp.common.message.OrpContext;
 import de.tuberlin.orp.common.message.OrpRequest;
 import de.tuberlin.orp.common.repository.RankingRepository;
+import de.tuberlin.orp.master.FilterMerger;
 import de.tuberlin.orp.master.MostPopularMerger;
 import de.tuberlin.orp.master.MostRecentMerger;
 import de.tuberlin.orp.master.PopulaityMerger;
@@ -107,45 +108,45 @@ public class RequestCoordinator extends UntypedActor {
       // cache merged results
       MostPopularMerger.MergedRanking mergedRankingMessage = (MostPopularMerger.MergedRanking) message;
       mostPopularRanking = mergedRankingMessage.getRankingRepository();
-      filter = mergedRankingMessage.getFilter();
-
-      log.debug("Calculating intermediate ranking.");
 
       // calculate new intermediate results
       Future<Object> intermediateRankingFuture = Patterns.ask(mostPopularWorker, "getIntermediateRanking", 200);
-      Future<Object> intermediateFilterFuture = Patterns.ask(filterActor, "getIntermediateFilter", 200);
-
 
       //Get Ranking from MostPopular Worker
-      Future<MostPopularMerger.WorkerResult> workerResultFuture = getMostPopularWorkerResultFuture(intermediateRankingFuture, intermediateFilterFuture);
+      Future<MostPopularMerger.WorkerResult> workerResultFuture = getMostPopularWorkerResultFuture(intermediateRankingFuture);
       Patterns.pipe(workerResultFuture, getContext().dispatcher()).to(getSender(), getSelf());
 
     } else if (message instanceof MostRecentMerger.MergedRanking) {
 
+      // cache merged results
       MostRecentMerger.MergedRanking mergedRankingMessage = (MostRecentMerger.MergedRanking) message;
       mostRecentRanking = mergedRankingMessage.getRankingRepository();
 
+      // calculate new intermediate results
       Future<Object> intermediateRankingFuture = Patterns.ask(mostRecentWorker, "getIntermediateRanking", 200);
 
+      //Get Ranking from Worker
       Future<MostRecentMerger.WorkerResult> workerResultFuture = getMostRecentWorkerResultFuture(intermediateRankingFuture);
       Patterns.pipe(workerResultFuture, getContext().dispatcher()).to(getSender(), getSelf());
 
 
     } else if (message instanceof PopulaityMerger.MergedRanking) {
 
-      // cache merged results
       PopulaityMerger.MergedRanking mergedRankingMessage = (PopulaityMerger.MergedRanking) message;
       trendRanking = mergedRankingMessage.getRankingRepository();
-      //filter = mergedRankingMessage.getFilter();
-
-      log.debug("Calculating intermediate ranking.");
-
-      // calculate new intermediate results
       Future<Object> intermediateRankingFuture = Patterns.ask(popularityWorker, "getIntermediateRanking", 200);
-
-      //Get Ranking from MostPopular Worker
       Future<PopulaityMerger.WorkerResult> workerResultFuture = getPopularityWorkerResultFuture(intermediateRankingFuture);
       Patterns.pipe(workerResultFuture, getContext().dispatcher()).to(getSender(), getSelf());
+
+    } else if (message instanceof FilterMerger.MergedFilter) {
+
+      FilterMerger.MergedFilter mergedFilter = (FilterMerger.MergedFilter) message;
+      filter = mergedFilter.getFilter();
+
+      Future<Object> intermediateFilterFuture = Patterns.ask(filterActor, "getIntermediateFilter", 200);
+      Future<FilterMerger.FilterResult> workerResultFuture = getFilterWorkerResultFuture(intermediateFilterFuture);
+      Patterns.pipe(workerResultFuture, getContext().dispatcher()).to(getSender(), getSelf());
+
 
     } else {
 
@@ -153,22 +154,37 @@ public class RequestCoordinator extends UntypedActor {
 
     }
   }
-  private Future<MostPopularMerger.WorkerResult> getMostPopularWorkerResultFuture(Future<Object> intermediateRankingFuture, Future<Object> intermediateFilterFuture) {
+
+  private Future<FilterMerger.FilterResult> getFilterWorkerResultFuture(Future<Object> intermediateFilterFuture) {
     return Futures
-        .sequence(Arrays.asList(intermediateRankingFuture, intermediateFilterFuture), getContext().dispatcher())
+        .sequence(Arrays.asList(intermediateFilterFuture), getContext().dispatcher())
+        .map(new Mapper<Iterable<Object>, FilterMerger.FilterResult>() {
+          @Override
+          public FilterMerger.FilterResult apply(Iterable<Object> parameter) {
+            Iterator<Object> it = parameter.iterator();
+            IntermediateFilter filter = (IntermediateFilter) it.next();
+
+            log.info(String.format("size(Filter Recommended) = %s. size(Filter Removed) = %s",
+                filter.getFilter().getRecommended().size(),
+                filter.getFilter().getRemoved().size()));
+
+            return new FilterMerger.FilterResult(filter.getFilter());
+          }
+        }, getContext().dispatcher());
+  }
+
+  private Future<MostPopularMerger.WorkerResult> getMostPopularWorkerResultFuture(Future<Object> intermediateRankingFuture) {
+    return Futures
+        .sequence(Arrays.asList(intermediateRankingFuture), getContext().dispatcher())
         .map(new Mapper<Iterable<Object>, MostPopularMerger.WorkerResult>() {
           @Override
           public MostPopularMerger.WorkerResult apply(Iterable<Object> parameter) {
             Iterator<Object> it = parameter.iterator();
             IntermediateRanking ranking = (IntermediateRanking) it.next();
-            IntermediateFilter filter = (IntermediateFilter) it.next();
-            log.debug(String.format("size(Ranking) = %s. size(Filter) = %s + %s",
-                ranking.rankingRepository.getRankings().size(),
-                filter.getFilter().getRecommended().size(), filter.getFilter().getRemoved().size()));
-            log.debug(ranking.toString());
-            return new MostPopularMerger.WorkerResult(
-                ranking.getRankingRepository(),
-                filter.getFilter());
+
+            log.debug(String.format("size(Ranking) = %s.", ranking.rankingRepository.getRankings().size()));
+
+            return new MostPopularMerger.WorkerResult(ranking.getRankingRepository());
           }
         }, getContext().dispatcher());
   }
@@ -180,7 +196,6 @@ public class RequestCoordinator extends UntypedActor {
               public MostRecentMerger.WorkerResult apply(Iterable<Object> parameter) {
                 Iterator<Object> it = parameter.iterator();
                 IntermediateRanking ranking = (IntermediateRanking) it.next();
-                log.debug(ranking.toString());
                 return new MostRecentMerger.WorkerResult(
                     ranking.getRankingRepository());
               }
@@ -195,7 +210,6 @@ public class RequestCoordinator extends UntypedActor {
           public PopulaityMerger.WorkerResult apply(Iterable<Object> parameter) {
             Iterator<Object> it = parameter.iterator();
             IntermediateRanking ranking = (IntermediateRanking) it.next();
-            log.debug(ranking.toString());
             return new PopulaityMerger.WorkerResult(
                 ranking.getRankingRepository());
           }

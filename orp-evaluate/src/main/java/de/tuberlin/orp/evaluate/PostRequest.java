@@ -120,11 +120,11 @@ public class PostRequest {
       new Thread(onCompleted).start();
     }
 //    System.out.println("Http Respone Status: " + httpResponse.getStatus());
-//    try {
-//      Thread.sleep(10);
-//    } catch (InterruptedException e) {
-//      e.printStackTrace();
-//    }
+    try {
+      Thread.sleep(10);
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
   }
 
   private synchronized static void printResponse(HttpResponse<?> response) {

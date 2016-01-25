@@ -121,6 +121,7 @@ public class RecommendationFilter extends UntypedActor {
 
       getSender().tell(new RequestCoordinator.IntermediateFilter(new RankingFilter(removed, recommended)), getSelf());
       removed = new HashSet<>();
+      recommended = new HashMap<>();
 
     } else {
       unhandled(message);

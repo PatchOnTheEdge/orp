@@ -106,10 +106,11 @@ public class WorkerActor extends UntypedActor {
 
       switch (notificationType) {
         case "event_notification":
+
           if (!publisherId.equals("") && !itemId.equals("") && !itemId.equals("0")) {
             mostPopularWorker.tell(context, getSelf());
             mostRecentWorker.tell(context, getSelf());
-//            popularityWorker.tell(context, getSelf());
+            popularityWorker.tell(context, getSelf());
             popularCategoryWorker.tell(context, getSelf());
 
             if (!userId.equals("0")){

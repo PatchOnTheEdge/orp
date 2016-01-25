@@ -45,7 +45,6 @@ public class MostPopularMerger extends UntypedActor {
 
   private ActorRef workerRouter;
 
-  private RankingFilter filter;
   private RankingRepository merger;
 
 
@@ -58,7 +57,6 @@ public class MostPopularMerger extends UntypedActor {
     log.info("Merger started");
 
     merger = new RankingRepository(new MostPopularRanking());
-    filter = new RankingFilter();
 
     workerRouter = getContext().actorOf(FromConfig.getInstance().props(Props.empty()), "workerRouter");
 
@@ -68,9 +66,8 @@ public class MostPopularMerger extends UntypedActor {
 
       merger.sortRankings();
       log.debug(merger.toString());
-      workerRouter.tell(new Broadcast(new MergedRanking(merger, filter)), getSelf());
+      workerRouter.tell(new Broadcast(new MergedRanking(merger)), getSelf());
       merger = new RankingRepository(new MostPopularRanking());
-      filter = new RankingFilter();
 
     }, getContext().dispatcher());
 
@@ -80,19 +77,15 @@ public class MostPopularMerger extends UntypedActor {
   public void onReceive(Object message) throws Exception {
     if (message instanceof MostPopularMerger.WorkerResult) {
 
-      // build cache and send it after timeout
-
       WorkerResult result = (WorkerResult) message;
       log.debug("Received intermediate ranking from " + getSender().toString());
-
-      filter.merge(result.getFilter());
       merger.merge(result.getRankingRepository());
 
-    }
-    else if (message.equals("getMergerResult")){
+    } else if (message.equals("getMergerResult")){
+
       getSender().tell(this.merger.getRankings(),getSelf());
-    }
-    else {
+
+    } else {
       unhandled(message);
     }
   }
@@ -100,19 +93,13 @@ public class MostPopularMerger extends UntypedActor {
 
   public static class WorkerResult implements Serializable {
     private final RankingRepository rankings;
-    private final RankingFilter filter;
 
-    public WorkerResult(RankingRepository rankingRepository, RankingFilter filter) {
+    public WorkerResult(RankingRepository rankingRepository) {
       this.rankings = rankingRepository;
-      this.filter = filter;
     }
 
     public RankingRepository getRankingRepository() {
       return rankings;
-    }
-
-    public RankingFilter getFilter() {
-      return filter;
     }
   }
 
@@ -125,19 +112,13 @@ public class MostPopularMerger extends UntypedActor {
 
   public static class MergedRanking implements Serializable {
     private RankingRepository rankingRepository;
-    private RankingFilter filter;
 
-    public MergedRanking(RankingRepository rankingRepository, RankingFilter filter) {
+    public MergedRanking(RankingRepository rankingRepository) {
       this.rankingRepository = rankingRepository;
-      this.filter = filter;
     }
 
     public RankingRepository getRankingRepository() {
       return rankingRepository;
-    }
-
-    public RankingFilter getFilter() {
-      return filter;
     }
   }
 }
