@@ -164,7 +164,7 @@ public class RequestCoordinator extends UntypedActor {
             Iterator<Object> it = parameter.iterator();
             IntermediateFilter filter = (IntermediateFilter) it.next();
 
-            log.info(String.format("size(Filter Recommended) = %s. size(Filter Removed) = %s",
+            log.debug(String.format("size(Filter Recommended) = %s. size(Filter Removed) = %s",
                 filter.getFilter().getRecommended().size(),
                 filter.getFilter().getRemoved().size()));
 
