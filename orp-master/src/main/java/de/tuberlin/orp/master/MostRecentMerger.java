@@ -36,7 +36,7 @@ public class MostRecentMerger extends UntypedActor{
 
     merger = new RankingRepository(new MostRecentRanking());
 
-    workerRouter = getContext().actorOf(FromConfig.getInstance().props(Props.empty()), "workerRouter");
+    workerRouter = getContext().actorOf(FromConfig.getInstance().props(Props.empty()), "workerRouter2");
 
 
     // asks every 2 seconds for the intermediate ranking

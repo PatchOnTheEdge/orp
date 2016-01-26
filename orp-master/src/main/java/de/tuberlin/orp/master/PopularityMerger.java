@@ -40,7 +40,7 @@ import scala.concurrent.duration.Duration;
 import java.io.Serializable;
 import java.util.concurrent.TimeUnit;
 
-public class PopulaityMerger extends UntypedActor {
+public class PopularityMerger extends UntypedActor {
   private LoggingAdapter log = Logging.getLogger(getContext().system(), this);
 
   private ActorRef workerRouter;
@@ -49,7 +49,7 @@ public class PopulaityMerger extends UntypedActor {
 
 
   public static Props create() {
-    return Props.create(PopulaityMerger.class, new PopularityMergerCreator());
+    return Props.create(PopularityMerger.class, new PopularityMergerCreator());
   }
 
   @Override
@@ -58,7 +58,7 @@ public class PopulaityMerger extends UntypedActor {
 
     merger = new RankingRepository(new MostPopularRanking());
 
-    workerRouter = getContext().actorOf(FromConfig.getInstance().props(Props.empty()), "workerRouter");
+    workerRouter = getContext().actorOf(FromConfig.getInstance().props(Props.empty()), "workerRouter3");
 
 
     // asks every 2 seconds for the intermediate ranking
@@ -75,7 +75,7 @@ public class PopulaityMerger extends UntypedActor {
 
   @Override
   public void onReceive(Object message) throws Exception {
-    if (message instanceof PopulaityMerger.WorkerResult) {
+    if (message instanceof PopularityMerger.WorkerResult) {
 
       // build cache and send it after timeout
 
@@ -105,10 +105,10 @@ public class PopulaityMerger extends UntypedActor {
     }
   }
 
-  private static class PopularityMergerCreator implements Creator<PopulaityMerger> {
+  private static class PopularityMergerCreator implements Creator<PopularityMerger> {
     @Override
-    public PopulaityMerger create() throws Exception {
-      return new PopulaityMerger();
+    public PopularityMerger create() throws Exception {
+      return new PopularityMerger();
     }
   }
 

@@ -29,9 +29,7 @@ import de.tuberlin.orp.common.ranking.MostRecentRanking;
 import de.tuberlin.orp.common.ranking.Ranking;
 
 import java.io.Serializable;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * A Ranking Repository represents a mapping from publisher to ranking
@@ -96,4 +94,9 @@ public class RankingRepository  implements Serializable{
     rankings.forEach((publisher, ranking) -> ranking.sort());
   }
 
+  public RankingRepository mix(RankingRepository otherRanking, double p) {
+    LinkedHashMap<String, Long> result = new LinkedHashMap<>();
+    Iterator<Map.Entry<String, Ranking>> iterator1 = rankings.entrySet().iterator();
+    return null;
+  }
 }

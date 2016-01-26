@@ -33,13 +33,10 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import de.tuberlin.orp.common.message.OrpArticle;
 import de.tuberlin.orp.common.ranking.MostPopularRanking;
-import de.tuberlin.orp.common.message.OrpArticleRemove;
-import de.tuberlin.orp.common.ranking.Ranking;
+import de.tuberlin.orp.common.ranking.MostRecentRanking;
 import io.verbit.ski.akka.Akka;
 import io.verbit.ski.core.Ski;
 import io.verbit.ski.core.http.result.Result;
-import io.verbit.ski.core.http.result.AsyncResult;
-import io.verbit.ski.core.http.result.SimpleResult;
 import io.verbit.ski.core.json.Json;
 import scala.concurrent.Future;
 
@@ -61,7 +58,7 @@ public class MasterServer {
     Cluster cluster = Cluster.get(system);
     ActorRef popularMergerActor = system.actorOf(MostPopularMerger.create(), "popularMerger");
     ActorRef recentMergerActor = system.actorOf(MostRecentMerger.create(), "recentMerger");
-//    ActorRef popularityMergerActor = system.actorOf(PopulaityMerger.create(), "popularityMerger");
+    ActorRef popularityMergerActor = system.actorOf(PopularityMerger.create(), "popularityMerger");
     ActorRef statisticsManager = system.actorOf(StatisticsManager.create(), "statistics");
     ActorRef articleMerger = system.actorOf(ArticleMerger.create(),"articles");
     ActorRef searchHandler = system.actorOf(SearchHandler.create(articleMerger), "search");
@@ -129,12 +126,12 @@ public class MasterServer {
                         public Result apply(Object object) {
                           ObjectNode result = Json.newObject();
 
-                          Map<String, MostPopularRanking> rankings = (Map<String, MostPopularRanking>) object;
+                          Map<String, MostRecentRanking> rankings = (Map<String, MostRecentRanking>) object;
                           Set<String> publishers = rankings.keySet();
                           ArrayNode data = result.putArray("rankings");
 
                           for (String publisher : publishers) {
-                            MostPopularRanking mostRecentRanking = rankings.get(publisher);
+                            MostRecentRanking mostRecentRanking = rankings.get(publisher);
                             ObjectNode publisherNode = Json.newObject();
                             publisherNode.put("publisherId", publisher);
                             ArrayNode rankingNode = publisherNode.putArray("ranking");

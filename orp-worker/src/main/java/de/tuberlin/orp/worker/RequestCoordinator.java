@@ -32,6 +32,8 @@ import akka.dispatch.Mapper;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.pattern.Patterns;
+import akka.routing.Broadcast;
+import akka.routing.FromConfig;
 import de.tuberlin.orp.common.ranking.*;
 import de.tuberlin.orp.common.message.OrpContext;
 import de.tuberlin.orp.common.message.OrpRequest;
@@ -39,11 +41,13 @@ import de.tuberlin.orp.common.repository.RankingRepository;
 import de.tuberlin.orp.master.FilterMerger;
 import de.tuberlin.orp.master.MostPopularMerger;
 import de.tuberlin.orp.master.MostRecentMerger;
-import de.tuberlin.orp.master.PopulaityMerger;
+import de.tuberlin.orp.master.PopularityMerger;
 import scala.concurrent.Future;
+import scala.concurrent.duration.Duration;
 
 import java.io.Serializable;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 /**
  * This Actor coordinates requests.
@@ -80,6 +84,15 @@ public class RequestCoordinator extends UntypedActor {
   }
 
   @Override
+  public void preStart() throws Exception {
+
+//    Calculate Ranking Mix
+    getContext().system().scheduler().schedule(Duration.create(5, TimeUnit.SECONDS), Duration.create(10, TimeUnit.SECONDS), () -> {
+      RankingRepository mixedRanking = this.mostPopularRanking.mix(this.mostRecentRanking, 0.5);
+    }, getContext().dispatcher());
+
+  }
+  @Override
   public void onReceive(Object message) throws Exception {
     if (message instanceof OrpRequest) {
 
@@ -91,22 +104,17 @@ public class RequestCoordinator extends UntypedActor {
       log.debug(String.format("Received request: publisherId = %s, userId = %s", publisherId, userId));
 
       Optional<Ranking> mpRanking = this.mostPopularRanking.getRanking(publisherId);
-      Optional<Ranking> mrRanking = this.mostRecentRanking.getRanking(publisherId);
-
-      mrRanking.ifPresent(ranking2 -> filter.filter(ranking2, context).slice(limit));
       mpRanking.ifPresent(ranking1 -> filter.filter(ranking1, context).slice(limit));
-//      mpRanking.ifPresent(ranking1 -> filter.filter(ranking1, context).mix(mrRanking.get(), 0.7, limit));
 
       getSender().tell(mpRanking.orElse(new MostPopularRanking()), getSelf());
 
-
-      //TODO Handle removed items for all mergers
     } else if (message instanceof MostPopularMerger.MergedRanking) {
+
       ActorRef sender = getSender();
 
       // cache merged results
       MostPopularMerger.MergedRanking mergedRankingMessage = (MostPopularMerger.MergedRanking) message;
-      mostPopularRanking = mergedRankingMessage.getRankingRepository();
+      this.mostPopularRanking = mergedRankingMessage.getRankingRepository();
 
       // calculate new intermediate results
       Future<Object> intermediateRankingFuture = Patterns.ask(mostPopularWorker, "getIntermediateRanking", 200);
@@ -115,12 +123,14 @@ public class RequestCoordinator extends UntypedActor {
       Future<MostPopularMerger.WorkerResult> workerResultFuture = getMostPopularWorkerResultFuture(intermediateRankingFuture);
       Patterns.pipe(workerResultFuture, getContext().dispatcher()).to(sender, getSelf());
 
+
     } else if (message instanceof MostRecentMerger.MergedRanking) {
+
       ActorRef sender = getSender();
 
       // cache merged results
       MostRecentMerger.MergedRanking mergedRankingMessage = (MostRecentMerger.MergedRanking) message;
-      mostRecentRanking = mergedRankingMessage.getRankingRepository();
+      this.mostRecentRanking = mergedRankingMessage.getRankingRepository();
 
       // calculate new intermediate results
       Future<Object> intermediateRankingFuture = Patterns.ask(mostRecentWorker, "getIntermediateRanking", 200);
@@ -130,12 +140,12 @@ public class RequestCoordinator extends UntypedActor {
       Patterns.pipe(workerResultFuture, getContext().dispatcher()).to(sender, getSelf());
 
 
-    } else if (message instanceof PopulaityMerger.MergedRanking) {
+    } else if (message instanceof PopularityMerger.MergedRanking) {
 
-      PopulaityMerger.MergedRanking mergedRankingMessage = (PopulaityMerger.MergedRanking) message;
+      PopularityMerger.MergedRanking mergedRankingMessage = (PopularityMerger.MergedRanking) message;
       trendRanking = mergedRankingMessage.getRankingRepository();
       Future<Object> intermediateRankingFuture = Patterns.ask(popularityWorker, "getIntermediateRanking", 200);
-      Future<PopulaityMerger.WorkerResult> workerResultFuture = getPopularityWorkerResultFuture(intermediateRankingFuture);
+      Future<PopularityMerger.WorkerResult> workerResultFuture = getPopularityWorkerResultFuture(intermediateRankingFuture);
       Patterns.pipe(workerResultFuture, getContext().dispatcher()).to(getSender(), getSelf());
 
     } else if (message instanceof FilterMerger.MergedFilter) {
@@ -202,16 +212,16 @@ public class RequestCoordinator extends UntypedActor {
             }, getContext().dispatcher());
   }
 
-  private Future<PopulaityMerger.WorkerResult> getPopularityWorkerResultFuture(Future<Object> intermediateRankingFuture) {
+  private Future<PopularityMerger.WorkerResult> getPopularityWorkerResultFuture(Future<Object> intermediateRankingFuture) {
     return Futures
         .sequence(Arrays.asList(intermediateRankingFuture), getContext().dispatcher())
-        .map(new Mapper<Iterable<Object>, PopulaityMerger.WorkerResult>() {
+        .map(new Mapper<Iterable<Object>, PopularityMerger.WorkerResult>() {
           @Override
-          public PopulaityMerger.WorkerResult apply(Iterable<Object> parameter) {
+          public PopularityMerger.WorkerResult apply(Iterable<Object> parameter) {
             Iterator<Object> it = parameter.iterator();
             IntermediateRanking ranking = (IntermediateRanking) it.next();
 
-            return new PopulaityMerger.WorkerResult(ranking.getRankingRepository());
+            return new PopularityMerger.WorkerResult(ranking.getRankingRepository());
           }
         }, getContext().dispatcher());
   }

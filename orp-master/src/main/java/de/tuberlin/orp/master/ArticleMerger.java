@@ -47,7 +47,7 @@ public class ArticleMerger extends UntypedActor {
   public void preStart() throws Exception {
     log.info("OrpArticle Handler started.");
 
-    workerRouter = getContext().actorOf(FromConfig.getInstance().props(Props.empty()), "workerRouter");
+    workerRouter = getContext().actorOf(FromConfig.getInstance().props(Props.empty()), "workerRouter4");
 
     // asks every 2 seconds for the intermediate ranking
     getContext().system().scheduler().schedule(Duration.Zero(), Duration.create(1, TimeUnit.SECONDS), () -> {
