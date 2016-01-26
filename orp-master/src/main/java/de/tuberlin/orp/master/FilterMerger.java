@@ -40,7 +40,7 @@ public class FilterMerger extends UntypedActor {
 
 
     // asks every 2 seconds for the intermediate ranking
-    getContext().system().scheduler().schedule(Duration.Zero(), Duration.create(2, TimeUnit.SECONDS), () -> {
+    getContext().system().scheduler().schedule(Duration.Zero(), Duration.create(10, TimeUnit.SECONDS), () -> {
 
       workerRouter.tell(new Broadcast(new MergedFilter(filter)), getSelf());
 

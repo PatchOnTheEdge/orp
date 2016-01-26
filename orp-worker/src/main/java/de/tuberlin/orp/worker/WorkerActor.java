@@ -113,9 +113,9 @@ public class WorkerActor extends UntypedActor {
 //            popularityWorker.tell(context, getSelf());
 //            popularCategoryWorker.tell(context, getSelf());
 
-            if (!userId.equals("0")){
-              filterActor.tell(new RecommendationFilter.Clicked(userId, itemId), getSelf());
-            }
+//            if (!userId.equals("0")){
+//              filterActor.tell(new RecommendationFilter.Clicked(userId, itemId), getSelf());
+//            }
           }
           break;
       }

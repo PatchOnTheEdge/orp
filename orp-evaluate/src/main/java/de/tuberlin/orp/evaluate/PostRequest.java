@@ -42,6 +42,8 @@ public class PostRequest {
   public static void main(String[] args) throws Exception {
     // C:\Users\Patch\projects\orp\test.data C:\Users\Patch\projects\orp\test.item 31 10
     // C:\Users\Patch\projects\json\CLEF-2015-Task2-Json07\Json-07\2014-07-01.data\2014-07-01.data C:\Users\Patch\projects\json\CLEF-2015-Task2-Json07\Json-07\2014-07-01.items\2014-07-01.items
+    // G:\json\CLEF-2015-Task2-Json07\Json-07\2014-07-01.data\2014-07-01.data G:\json\CLEF-2015-Task2-Json07\Json-07\2014-07-01.items\2014-07-01.items 10000 10000
+
     String filePathData = args[0];
     String filePathItem = args[1];
     int limitData = Integer.parseInt(args[2]);
@@ -120,11 +122,11 @@ public class PostRequest {
       new Thread(onCompleted).start();
     }
 //    System.out.println("Http Respone Status: " + httpResponse.getStatus());
-    try {
-      Thread.sleep(10);
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-    }
+//    try {
+//      Thread.sleep(1);
+//    } catch (InterruptedException e) {
+//      e.printStackTrace();
+//    }
   }
 
   private synchronized static void printResponse(HttpResponse<?> response) {
