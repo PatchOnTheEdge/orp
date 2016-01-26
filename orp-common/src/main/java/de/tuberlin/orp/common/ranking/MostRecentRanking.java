@@ -26,6 +26,13 @@ public class MostRecentRanking extends Ranking<MostRecentRanking>{
       this.ranking.merge(key, newRanking.get(key), this::newestDate);
     }
   }
+  public void mergeAndSlice(Ranking<MostRecentRanking> ranking, int limit) {
+    ranking.slice(limit);
+    LinkedHashMap<String, Long> newRanking = ranking.getRanking();
+    for (String key : newRanking.keySet()) {
+      this.ranking.merge(key, newRanking.get(key), this::newestDate);
+    }
+  }
 
   private Long newestDate(Long date1, Long date2) {
     if (date1 >= date2){

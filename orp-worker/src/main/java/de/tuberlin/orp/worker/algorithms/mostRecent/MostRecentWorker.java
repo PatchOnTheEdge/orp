@@ -23,6 +23,7 @@ import java.util.Map;
  */
 public class MostRecentWorker extends UntypedActor {
   private LoggingAdapter log = Logging.getLogger(getContext().system(), this);
+  private int contextWindowSize;
 
   //Maps a Publisher to his recent OrpArticle Buffer
   private RankingRepository rankingRepository;
@@ -48,6 +49,7 @@ public class MostRecentWorker extends UntypedActor {
     return Props.create(MostRecentWorker.class, new MostRecentlyWorkerCreator(contextWindowSize, topListSize));
   }
   public MostRecentWorker(int contextWindowSize, int topListSize) {
+    this.contextWindowSize = contextWindowSize;
     this.rankingRepository = new RankingRepository(new MostPopularRanking());
     this.recentArticles = new RecentArticlesQueue(contextWindowSize, topListSize);
   }
@@ -75,7 +77,7 @@ public class MostRecentWorker extends UntypedActor {
       LinkedHashMap<String, Long> map = new LinkedHashMap<String, Long>();
       map.put(itemId, Instant.now().getEpochSecond());
       MostRecentRanking newRanking = new MostRecentRanking(map);
-      ranking.merge(newRanking);
+      ranking.mergeAndSlice(newRanking, this.contextWindowSize);
 
       rankings.put(publisherId, ranking);
 

@@ -78,7 +78,7 @@ public class PostRequest {
         .field("body", jsonNode.toString())
         .asStringAsync();
     try {
-      Thread.sleep(5);
+      Thread.sleep(1);
     } catch (InterruptedException e) {
       e.printStackTrace();
     }
