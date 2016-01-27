@@ -67,6 +67,7 @@ public class RequestCoordinator extends UntypedActor {
   private RankingRepository mostRecentRanking;
   private RankingRepository trendRanking;
   private RankingRepository popularCategoryRanking;
+  private RankingRepository mixedRanking;
 
   private RankingFilter filter;
 
@@ -87,9 +88,9 @@ public class RequestCoordinator extends UntypedActor {
   public void preStart() throws Exception {
 
 //    Calculate Ranking Mix
-    getContext().system().scheduler().schedule(Duration.create(5, TimeUnit.SECONDS), Duration.create(10, TimeUnit.SECONDS), () -> {
-      RankingRepository mixedRanking = this.mostPopularRanking.mix(this.mostRecentRanking, 0.5);
-    }, getContext().dispatcher());
+//    getContext().system().scheduler().schedule(Duration.create(5, TimeUnit.SECONDS), Duration.create(10, TimeUnit.SECONDS), () -> {
+//      RankingRepository mixedRanking = this.mostPopularRanking.mix(this.mostRecentRanking, 0.5);
+//    }, getContext().dispatcher());
 
   }
   @Override
@@ -104,9 +105,12 @@ public class RequestCoordinator extends UntypedActor {
       log.debug(String.format("Received request: publisherId = %s, userId = %s", publisherId, userId));
 
       Optional<Ranking> mpRanking = this.mostPopularRanking.getRanking(publisherId);
-      mpRanking.ifPresent(ranking1 -> filter.filter(ranking1, context).slice(limit));
+      mpRanking.ifPresent(ranking1 -> filter.filter(ranking1, context));
 
       getSender().tell(mpRanking.orElse(new MostPopularRanking()), getSelf());
+
+//      Optional<Ranking> mrRanking = this.mostRecentRanking.getRanking(publisherId);
+//      mrRanking.ifPresent(ranking2 -> filter.filter(ranking2, context).slice(limit));
 
     } else if (message instanceof MostPopularMerger.MergedRanking) {
 

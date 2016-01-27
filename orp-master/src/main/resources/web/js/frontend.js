@@ -73,8 +73,10 @@ function setMP(publisher){
 
     if(articles !== undefined){
         for(i in articles){
-            console.log(i + articles[i].title);
-            setMPContent(i, articles[i]);
+            if(articles[i] != undefined){
+                console.log(i + articles[i].title);
+                setMPContent(i, articles[i]);
+            }
         }
     } else {
         console.log("No Articles for publisher with id = " + publisher);
