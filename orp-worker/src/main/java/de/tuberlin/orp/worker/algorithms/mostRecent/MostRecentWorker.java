@@ -52,7 +52,7 @@ public class MostRecentWorker extends UntypedActor {
     } else if (message.equals("getIntermediateRanking")) {
 
       RankingRepository rankingRepository = recentArticles.getRankingRepository();
-      log.info("Intermediate ranking requested." + rankingRepository.toString());
+      log.debug("Intermediate ranking requested." + rankingRepository.toString());
 
       getSender().tell(new RequestCoordinator.IntermediateRanking(rankingRepository), getSelf());
 
