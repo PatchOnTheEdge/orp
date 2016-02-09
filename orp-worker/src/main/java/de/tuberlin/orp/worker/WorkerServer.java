@@ -52,6 +52,7 @@ import scala.concurrent.Future;
 
 import java.io.File;
 import java.io.PrintWriter;
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -113,7 +114,7 @@ public class WorkerServer {
     Optional<JsonNode> jsonBody = context.request().formParam("body").asJson();
     JsonNode json = jsonBody.get();
 
-    System.err.println("Received Error: " + json);
+    System.err.println(Instant.now() + ": Received Error: " + json);
 
     return noContent();
   }

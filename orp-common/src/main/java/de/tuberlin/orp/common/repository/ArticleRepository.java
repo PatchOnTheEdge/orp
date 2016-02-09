@@ -18,7 +18,7 @@ import java.util.*;
 public class ArticleRepository implements Serializable{
 
   //Map from PublisherId -> ItemId -> OrpArticle;
-  private Map<String, Map<String, OrpArticle>> publisherItemIdMap;
+  private final Map<String, Map<String, OrpArticle>> publisherItemIdMap;
 
   public ArticleRepository() {
     this.publisherItemIdMap = new HashMap<>();
@@ -28,12 +28,14 @@ public class ArticleRepository implements Serializable{
     //Get maximum age for items
     Long time = Instant.now().getEpochSecond();
 
-    //Delete items older than maximum age
-    for (String publisherId : publisherItemIdMap.keySet()) {
-      Map<String, OrpArticle> items = publisherItemIdMap.get(publisherId);
-      items.keySet().stream().filter(item ->
-          time - items.get(item).getDate() < 86400 * itemStorageDays)
-          .forEach(items::remove);
+    synchronized (publisherItemIdMap){
+      //Delete items older than maximum age
+      for (String publisherId : publisherItemIdMap.keySet()) {
+        Map<String, OrpArticle> items = publisherItemIdMap.get(publisherId);
+        items.keySet().stream().filter(item ->
+            time - items.get(item).getDate() < 86400 * itemStorageDays)
+            .forEach(items::remove);
+      }
     }
   }
 

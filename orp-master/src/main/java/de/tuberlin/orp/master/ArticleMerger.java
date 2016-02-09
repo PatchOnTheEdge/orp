@@ -63,7 +63,7 @@ public class ArticleMerger extends UntypedActor {
     //Every Hour: clean items older than itemStorageDays;
     getContext().system().scheduler().schedule(Duration.create(1, TimeUnit.HOURS), Duration.create(1, TimeUnit.HOURS), () -> {
 
-      log.info("Deleting items older than " + itemStorageDays + " days.");
+      log.debug("Deleting items older than " + itemStorageDays + " days.");
       articles.clean(itemStorageDays);
 
     }, getContext().dispatcher());

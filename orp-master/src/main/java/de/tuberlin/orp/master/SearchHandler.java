@@ -91,7 +91,7 @@ public class SearchHandler extends UntypedActor {
             docSet.add(doc);
           }
           indexWriter.addDocuments(docSet);
-          log.info("Building new Index successful!");
+          log.debug("Building new Index successful!");
 
         } catch (IOException e) {
           log.error("Indexing items failed!");
