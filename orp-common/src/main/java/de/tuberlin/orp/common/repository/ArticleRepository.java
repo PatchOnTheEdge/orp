@@ -28,14 +28,13 @@ public class ArticleRepository implements Serializable{
     //Get maximum age for items
     Long time = Instant.now().getEpochSecond();
 
-    synchronized (publisherItemIdMap){
-      //Delete items older than maximum age
-      for (String publisherId : publisherItemIdMap.keySet()) {
-        Map<String, OrpArticle> items = publisherItemIdMap.get(publisherId);
-        items.keySet().stream().filter(item ->
-            time - items.get(item).getDate() < 86400 * itemStorageDays)
-            .forEach(items::remove);
-      }
+
+    //Delete items older than maximum age
+    for (String publisherId : publisherItemIdMap.keySet()) {
+      Map<String, OrpArticle> items = publisherItemIdMap.get(publisherId);
+      items.keySet().stream().filter(item ->
+          time - items.get(item).getDate() < 86400 * itemStorageDays)
+          .forEach(items::remove);
     }
   }
 
