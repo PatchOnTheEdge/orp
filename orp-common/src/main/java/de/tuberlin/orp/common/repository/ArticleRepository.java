@@ -27,15 +27,22 @@ public class ArticleRepository implements Serializable{
   public void clean(int itemStorageDays){
     //Get maximum age for items
     Long time = Instant.now().getEpochSecond();
+    HashMap<String, Map<String, OrpArticle>> copyMap = new HashMap<>(publisherItemIdMap);
 
 
     //Delete items older than maximum age
-    for (String publisherId : publisherItemIdMap.keySet()) {
-      Map<String, OrpArticle> items = publisherItemIdMap.get(publisherId);
-      items.keySet().stream().filter(item ->
-          time - items.get(item).getDate() < 86400 * itemStorageDays)
-          .forEach(items::remove);
+    for (String publisherId : copyMap.keySet()) {
+      Map<String, OrpArticle> items = copyMap.get(publisherId);
+      HashSet<String> toRemove = new HashSet<>();
+      for (String id : items.keySet()) {
+        if (time - items.get(id).getDate() < 86400 * itemStorageDays) {
+          toRemove.add(id);
+        }
+      }
+      items.remove(toRemove);
+      copyMap.put(publisherId, items);
     }
+    publisherItemIdMap.putAll(copyMap);
   }
 
   public void merge(HashSet<OrpArticle> newArticles) {
