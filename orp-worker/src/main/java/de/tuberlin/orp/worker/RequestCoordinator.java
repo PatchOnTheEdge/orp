@@ -96,6 +96,7 @@ public class RequestCoordinator extends UntypedActor {
   @Override
   public void onReceive(Object message) throws Exception {
     if (message instanceof OrpRequest) {
+      ActorRef sender = getSender();
 
       OrpContext context = ((OrpRequest) message).getContext();
       String publisherId = context.getPublisherId();
@@ -107,7 +108,7 @@ public class RequestCoordinator extends UntypedActor {
       Optional<Ranking> mpRanking = this.mostPopularRanking.getRanking(publisherId);
       mpRanking.ifPresent(ranking1 -> filter.filter(ranking1, context));
 
-      getSender().tell(mpRanking.orElse(new MostPopularRanking()), getSelf());
+      sender.tell(mpRanking.orElse(new MostPopularRanking()), getSelf());
 
 //      Optional<Ranking> mrRanking = this.mostRecentRanking.getRanking(publisherId);
 //      mrRanking.ifPresent(ranking2 -> filter.filter(ranking2, context).slice(limit));
@@ -145,12 +146,13 @@ public class RequestCoordinator extends UntypedActor {
 
 
     } else if (message instanceof PopularityMerger.MergedRanking) {
+      ActorRef sender = getSender();
 
       PopularityMerger.MergedRanking mergedRankingMessage = (PopularityMerger.MergedRanking) message;
       trendRanking = mergedRankingMessage.getRankingRepository();
       Future<Object> intermediateRankingFuture = Patterns.ask(popularityWorker, "getIntermediateRanking", 200);
       Future<PopularityMerger.WorkerResult> workerResultFuture = getPopularityWorkerResultFuture(intermediateRankingFuture);
-      Patterns.pipe(workerResultFuture, getContext().dispatcher()).to(getSender(), getSelf());
+      Patterns.pipe(workerResultFuture, getContext().dispatcher()).to(sender, getSelf());
 
     } else if (message instanceof FilterMerger.MergedFilter) {
       ActorRef sender = getSender();
