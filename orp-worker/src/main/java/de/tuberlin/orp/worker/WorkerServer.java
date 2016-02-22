@@ -85,13 +85,12 @@ public class WorkerServer {
     ActorRef workerActor = system.actorOf(WorkerActor.create(statisticsActor, articleAggregator), "orp");
 
 
-//    File itemLogFile = new File(args[0]);
+//    File itemLogFile = new File("log.txt");
 //    PrintWriter printWriter = new PrintWriter(itemLogFile);
 
     Ski.builder()
         .setHost(host)
         .setPort(port)
-//        .setListener(saveRequest(printWriter))
         .addRoutes(
             post("/error").route(context -> {
               return forwardError(workerActor, context);
@@ -106,8 +105,9 @@ public class WorkerServer {
               return forwardRecommendationRequest(system, statisticsActor, workerActor, context);
             })
         )
+//        .setListener(saveRequest(printWriter))
         .build()
-        .start();
+        .run();
   }
 
   private static Result forwardError(ActorRef workerActor, RequestContext context) {
@@ -115,6 +115,7 @@ public class WorkerServer {
     JsonNode json = jsonBody.get();
 
     System.err.println(Instant.now() + ": Received Error: " + json);
+
 
     return noContent();
   }
@@ -221,8 +222,9 @@ public class WorkerServer {
         ObjectNode result = Json.newObject().put("path", path)
             .put("queryString", queryString).put("timestamp", date.toString());
         result.set("body", json);
+        System.out.println("test");
 
-        printWriter.write(result.toString() + "\n");
+        printWriter.print(result.toString() + "\n");
       }
     };
   }

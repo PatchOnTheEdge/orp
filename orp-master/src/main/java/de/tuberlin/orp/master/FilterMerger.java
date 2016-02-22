@@ -36,7 +36,7 @@ public class FilterMerger extends UntypedActor {
 
     filter = new RankingFilter();
 
-    workerRouter = getContext().actorOf(FromConfig.getInstance().props(Props.empty()), "workerRouter5");
+    workerRouter = getContext().actorOf(FromConfig.getInstance().props(Props.empty()), "workerRouter");
 
 
     // asks every 2 seconds for the intermediate ranking
