@@ -92,7 +92,7 @@ public class WorkerActor extends UntypedActor {
 
       String notificationType = notification.getType();
 
-      log.debug(String.format("Received notification of type \"%s\"", notificationType));
+      log.info(String.format("Received notification of type \"%s\"", notificationType));
 
       OrpContext context = notification.getContext();
 
