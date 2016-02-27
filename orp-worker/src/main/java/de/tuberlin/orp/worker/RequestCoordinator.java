@@ -87,6 +87,7 @@ public class RequestCoordinator extends UntypedActor {
   @Override
   public void preStart() throws Exception {
 
+    log.info("Coordinator started");
 //    Calculate Ranking Mix
 //    getContext().system().scheduler().schedule(Duration.create(5, TimeUnit.SECONDS), Duration.create(10, TimeUnit.SECONDS), () -> {
 //      RankingRepository mixedRanking = this.mostPopularRanking.mix(this.mostRecentRanking, 0.5);

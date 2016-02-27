@@ -79,7 +79,7 @@ public class MostPopularWorker extends UntypedActor {
 
   @Override
   public void preStart() throws Exception {
-    log.info("MostPopularCategoryRanking Worker started.");
+    log.info("Most Popular Worker started.");
     super.preStart();
     log.info(getSelf().toString());
   }

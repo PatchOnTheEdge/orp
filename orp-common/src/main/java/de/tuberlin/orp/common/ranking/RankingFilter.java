@@ -60,9 +60,10 @@ public class RankingFilter implements Serializable {
     toRemove.addAll(recommended.getOrDefault(context.getUserId(), Collections.emptySet()));
     toRemove.addAll(removed);
 
+    toFilter.filter(toRemove);
     toFilter.slice(context.getLimit());
 
-    return toFilter.filter(toRemove);
+    return toFilter;
   }
 
   public Set<String> getRemoved() {

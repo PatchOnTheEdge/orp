@@ -42,10 +42,10 @@ import java.util.concurrent.TimeUnit;
 public class RecommendationFilter extends UntypedActor {
   private LoggingAdapter log = Logging.getLogger(getContext().system(), this);
 
-  //todo is removed exploding?
   private Set<String> removed;
-  private Map<String, Long> lastUpdated;
+  private Map<String, Long> lastUpdatedRemoved;
   private Map<String, Set<String>> recommended;
+  private Map<String, Long> lastUpdatedRecommended;
 
   public static Props create() {
     return Props.create(RecommendationFilter.class, new RecommendationFilterCreator());
@@ -53,8 +53,9 @@ public class RecommendationFilter extends UntypedActor {
 
   public RecommendationFilter() {
     removed = new HashSet<>();
-    lastUpdated = new HashMap<>();
+    lastUpdatedRemoved = new HashMap<>();
     recommended = new HashMap<>();
+    lastUpdatedRecommended = new HashMap<>();
   }
 
   public static class Removed implements Serializable {
@@ -99,14 +100,19 @@ public class RecommendationFilter extends UntypedActor {
     log.info("Recommendation filter started");
     getContext().system().scheduler().schedule(Duration.Zero(), Duration.create(1, TimeUnit.MINUTES), () -> {
       cleanRecommended();
+      cleanRemoved();
     }, getContext().dispatcher());
   }
+
 
   @Override
   public void onReceive(Object message) throws Exception {
     if (message instanceof Removed) {
 
-      removed.add(((Removed) message).getItemId());
+      Removed removed = (Removed) message;
+      this.removed.add(removed.getItemId());
+
+      lastUpdatedRemoved.put(removed.getItemId(), System.currentTimeMillis());
 
     } else if (message instanceof Clicked) {
 
@@ -115,13 +121,11 @@ public class RecommendationFilter extends UntypedActor {
       Set<String> itemsRecommended = recommended.get(clicked.getUserId());
       itemsRecommended.add(clicked.getItemId());
 
-      lastUpdated.put(clicked.getUserId(), System.currentTimeMillis());
+      lastUpdatedRecommended.put(clicked.getUserId(), System.currentTimeMillis());
 
     } else if (message.equals("getIntermediateFilter")) {
 
       getSender().tell(new RequestCoordinator.IntermediateFilter(new RankingFilter(removed, recommended)), getSelf());
-      removed = new HashSet<>();
-      recommended = new HashMap<>();
 
     } else {
       unhandled(message);
@@ -135,19 +139,31 @@ public class RecommendationFilter extends UntypedActor {
   private void cleanRecommended() {
     long now = System.currentTimeMillis();
     Set<String> toRemove = new HashSet<>();
-    for (String key : lastUpdated.keySet()) {
-      long userLastUpdated = lastUpdated.get(key);
+    for (String key : lastUpdatedRecommended.keySet()) {
+      long userLastUpdated = lastUpdatedRecommended.get(key);
       if (now - userLastUpdated > 1000 * 60 * 30) {
         toRemove.add(key);
       }
     }
     for (String key : toRemove) {
-      lastUpdated.remove(key);
+      lastUpdatedRecommended.remove(key);
       recommended.remove(key);
-      //removed.remove(key); //todo sensefull
     }
   }
-
+  private void cleanRemoved() {
+    long now = System.currentTimeMillis();
+    Set<String> toRemove = new HashSet<>();
+    for (String key : lastUpdatedRemoved.keySet()) {
+      long timeLastUpdated = lastUpdatedRemoved.get(key);
+      if (now - timeLastUpdated > 1000 * 60 * 30) {
+        toRemove.add(key);
+      }
+    }
+    for (String key : toRemove) {
+      lastUpdatedRemoved.remove(key);
+      removed.remove(key);
+    }
+  }
   private static class RecommendationFilterCreator implements Creator<RecommendationFilter> {
     @Override
     public RecommendationFilter create() throws Exception {
