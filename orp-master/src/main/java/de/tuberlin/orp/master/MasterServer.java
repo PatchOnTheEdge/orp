@@ -101,7 +101,7 @@ public class MasterServer {
               return Akka.wrap(result, system.dispatcher());
             }),
 
-//            get("/throughput").route(context -> render("web/templates/index.twig", Json.newObject())),
+            get("/throughput").route(context -> render("web/templates/index.twig", Json.newObject())),
 
             get("/articles").routeAsync(context -> {
               Future<Result> result =
@@ -192,6 +192,8 @@ public class MasterServer {
           Json.newObject()
               .put("timestamp", statsEntries.getValue().getTimestamp())
               .put("throughput", statsEntries.getValue().getThroughput())
+              .put("notification", statsEntries.getValue().getNotificationCounter())
+              .put("request", statsEntries.getValue().getRequestCounter())
       );
     }
     return result;

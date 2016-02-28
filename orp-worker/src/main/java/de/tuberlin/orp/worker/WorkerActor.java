@@ -101,11 +101,12 @@ public class WorkerActor extends UntypedActor {
       String userId = context.getUserId();
       String category = context.getCategory();
 
-      statisticsAggregator.tell("notification", getSelf());
       articleAggregator.tell(new ArticleAggregator.ArticleCategory(publisherId, itemId, category), getSelf());
 
       switch (notificationType) {
         case "event_notification":
+
+          statisticsAggregator.tell("notification", getSelf());
 
           if (!publisherId.equals("") && !itemId.equals("") && !itemId.equals("0")) {
             mostPopularWorker.tell(context, getSelf());
@@ -113,10 +114,14 @@ public class WorkerActor extends UntypedActor {
 //            popularityWorker.tell(context, getSelf());
 //            popularCategoryWorker.tell(context, getSelf());
 
-//            if (!userId.equals("0")){
-//              filterActor.tell(new RecommendationFilter.Clicked(userId, itemId), getSelf());
-//            }
+            if (!userId.equals("0")){
+              filterActor.tell(new RecommendationFilter.Clicked(userId, itemId), getSelf());
+            }
           }
+          break;
+        case "click":
+          log.info("Click!");
+          statisticsAggregator.tell("click", getSelf());
           break;
       }
 

@@ -61,6 +61,7 @@ import static io.verbit.ski.core.http.result.SimpleResult.ok;
 import static io.verbit.ski.core.route.RouteBuilder.post;
 
 public class WorkerServer {
+  private static LoggingAdapter log;
 
   public static void main(String[] args) throws Exception {
 
@@ -71,6 +72,7 @@ public class WorkerServer {
     ActorSystem system = ActorSystem.create("ClusterSystem");
     Cluster cluster = Cluster.get(system);
 
+    log = system.log();
     String master = system.settings().config().getString("master");
 
     // statistics
@@ -148,13 +150,13 @@ public class WorkerServer {
 
     long start = System.currentTimeMillis();
 
-    Future<Result> future = Patterns.ask(workerActor, orpRequest, 1000)
+    Future<Result> future = Patterns.ask(workerActor, orpRequest, 1500)
         .map(new Mapper<Object, Result>() {
           @Override
           public Result apply(Object o) {
-            if (o == null) {
-              return ok(Json.newObject());
-            }
+//            if (o == null) {
+//              return ok(Json.newObject());
+//            }
 
             MostPopularRanking mostPopularRanking = (MostPopularRanking) o;
 
@@ -184,6 +186,7 @@ public class WorkerServer {
             long responseTime = System.currentTimeMillis() - start;
             statisticsActor.tell(new StatisticsAggregator.ResponseTime(responseTime), ActorRef.noSender());
 
+            log.info("Sending Recommendation = " + result);
             return ok(result);
           }
         }, system.dispatcher());

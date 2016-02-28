@@ -78,7 +78,7 @@ public class StatisticsAggregator extends UntypedActor {
 
       double throughput = requestCounter / (double) aggregationInterval.toSeconds();
       statisticsManager.tell(new StatisticsManager.WorkerStatistics(System.currentTimeMillis(),
-          throughput, responseTimes), getSelf());
+          throughput, responseTimes, requestCounter, notificationCounter), getSelf());
       requestCounter = 0;
       notificationCounter = 0;
       responseTimes = new HashMap<>();

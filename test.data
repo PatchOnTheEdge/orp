@@ -28,4 +28,4 @@
 {"event_type":"impression","context":{"simple":{"25":9,"27":694,"57":0}}}
 {"event_type":"impression","context":{"simple":{"25":9,"27":694,"57":0}}}
 {"event_type":"impression","context":{"simple":{"25":10,"27":694,"57":0}}}
-{"event_type":"recommendation_request","context":{"simple":{"25":1,"27":1677,"57":0},"lists":{"10":[6,13,1768,1769,1770]}},"limit":5}
+{"event_type":"recommendation_request","context":{"simple":{"25":1,"27":1677,"57":0},"lists":{"10":[6,13,1768,1769,1770]}},"limit":1}

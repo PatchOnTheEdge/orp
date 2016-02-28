@@ -108,6 +108,7 @@ public class RequestCoordinator extends UntypedActor {
 
       Optional<Ranking> mpRanking = this.mostPopularRanking.getRanking(publisherId);
       mpRanking.ifPresent(ranking1 -> filter.filter(ranking1, context));
+//      mpRanking.ifPresent(ranking -> log.info("Sending MP Ranking"+ ranking.toString()));
 
       sender.tell(mpRanking.orElse(new MostPopularRanking()), getSelf());
 

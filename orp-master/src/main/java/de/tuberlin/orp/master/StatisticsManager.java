@@ -87,11 +87,16 @@ public class StatisticsManager extends UntypedActor {
     private long timestamp;
     private double throughput;
     private Map<Short, Long> responseTimes;
+    private long requestCounter;
+    private long notificationCounter;
 
-    public WorkerStatistics(long timestamp, double throughput, Map<Short, Long> responseTimes) {
+    public WorkerStatistics(long timestamp, double throughput, Map<Short, Long> responseTimes,
+                            long requestCounter, long notificationCounter) {
       this.timestamp = timestamp;
       this.throughput = throughput;
       this.responseTimes = responseTimes;
+      this.requestCounter = requestCounter;
+      this.notificationCounter = notificationCounter;
     }
 
     public long getTimestamp() {
@@ -104,6 +109,14 @@ public class StatisticsManager extends UntypedActor {
 
     public Map<Short, Long> getResponseTimes() {
       return responseTimes;
+    }
+
+    public long getRequestCounter() {
+      return requestCounter;
+    }
+
+    public long getNotificationCounter() {
+      return notificationCounter;
     }
   }
 
