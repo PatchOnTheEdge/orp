@@ -36,7 +36,7 @@ import java.util.concurrent.Future;
 
 public class PostRequest {
 
-  public static String HOST = "localhost";
+  public static String HOST = "37.120.189.25";
   //"37.120.189.25";
 //orp.plista.com/api/vector_resoultion.php?vid=11&aid=
   public static void main(String[] args) throws Exception {

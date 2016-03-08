@@ -65,6 +65,7 @@ import static io.verbit.ski.core.route.RouteBuilder.post;
 
 public class WorkerServer {
   private static LoggingAdapter log;
+  private static boolean LOG_REQUESTS = true;
 
   public static void main(String[] args) throws Exception {
 
@@ -92,14 +93,17 @@ public class WorkerServer {
 
     File itemLogFile = new File("log.txt");
     PrintWriter printWriter = new PrintWriter(itemLogFile);
+    log.info("Writing Request Log at " + System.getProperty("user.dir"));
 
     Ski.builder()
         .setHost(host)
         .setPort(port)
         .addHooks(onRequest((context, next) -> {
-              String request = requestToString(context.request());
-              printWriter.print(request + "\n");
-              printWriter.flush();
+              if (LOG_REQUESTS) {
+                String request = requestToString(context.request());
+                printWriter.print(request + "\n");
+                printWriter.flush();
+              }
               return next.handle(context);
             }).withDefaultPriority()
         )
