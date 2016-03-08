@@ -44,6 +44,8 @@ import de.tuberlin.orp.common.message.OrpRequest;
 import io.verbit.ski.akka.Akka;
 import io.verbit.ski.core.DefaultSkiListener;
 import io.verbit.ski.core.Ski;
+import io.verbit.ski.core.http.Request;
+import io.verbit.ski.core.http.RequestBody;
 import io.verbit.ski.core.http.result.AsyncResult;
 import io.verbit.ski.core.http.context.RequestContext;
 import io.verbit.ski.core.http.result.Result;
@@ -58,6 +60,7 @@ import java.util.stream.Collectors;
 
 import static io.verbit.ski.core.http.result.SimpleResult.noContent;
 import static io.verbit.ski.core.http.result.SimpleResult.ok;
+import static io.verbit.ski.core.plugin.hooks.Hooks.onRequest;
 import static io.verbit.ski.core.route.RouteBuilder.post;
 
 public class WorkerServer {
@@ -87,12 +90,19 @@ public class WorkerServer {
     ActorRef workerActor = system.actorOf(WorkerActor.create(statisticsActor, articleAggregator), "orp");
 
 
-//    File itemLogFile = new File("log.txt");
-//    PrintWriter printWriter = new PrintWriter(itemLogFile);
+    File itemLogFile = new File("log.txt");
+    PrintWriter printWriter = new PrintWriter(itemLogFile);
 
     Ski.builder()
         .setHost(host)
         .setPort(port)
+        .addHooks(onRequest((context, next) -> {
+              String request = requestToString(context.request());
+              printWriter.print(request + "\n");
+              printWriter.flush();
+              return next.handle(context);
+            }).withDefaultPriority()
+        )
         .addRoutes(
             post("/error").route(context -> {
               return forwardError(workerActor, context);
@@ -106,11 +116,12 @@ public class WorkerServer {
             post("/recommendation").routeAsync(context -> {
               return forwardRecommendationRequest(system, statisticsActor, workerActor, context);
             })
-        )
-//        .setListener(saveRequest(printWriter))
+    )
         .build()
         .run();
   }
+
+
 
   private static Result forwardError(ActorRef workerActor, RequestContext context) {
     Optional<JsonNode> jsonBody = context.request().formParam("body").asJson();
@@ -207,29 +218,21 @@ public class WorkerServer {
     return noContent();
   }
 
-  private static DefaultSkiListener saveRequest(final PrintWriter printWriter) {
-    return new DefaultSkiListener() {
-      @Override
-      public void onRequest(RequestContext context) {
-        super.onRequest(context);
-        Map<String, List<String>> bodyForm = context.request().body().asForm();
-        JsonNode json = Json.newObject();
-        String bodyString = "";
-        if (!bodyForm.isEmpty()) {
-          bodyString = queryParamsToString(bodyForm);
-          json = Json.parse(bodyString);
-        }
-        String path = context.request().path();
-        String queryString = queryParamsToString(context.request().queryParams());
-        Date date = new Date();
-        ObjectNode result = Json.newObject().put("path", path)
-            .put("queryString", queryString).put("timestamp", date.toString());
-        result.set("body", json);
-        System.out.println("test");
-
-        printWriter.print(result.toString() + "\n");
-      }
-    };
+  private static String requestToString(Request request){
+    Map<String, List<String>> bodyForm = request.body().asForm();
+    JsonNode json = Json.newObject();
+    String bodyString = "";
+    if (!bodyForm.isEmpty()) {
+      bodyString = queryParamsToString(bodyForm);
+      json = Json.parse(bodyString);
+    }
+    String path = request.path();
+    String queryString = queryParamsToString(request.queryParams());
+    Date date = new Date();
+    ObjectNode result = Json.newObject().put("path", path)
+        .put("queryString", queryString).put("timestamp", date.toString());
+    result.set("body", json);
+    return result.toString();
   }
 
   private static String queryParamsToString(Map<String, List<String>> map){

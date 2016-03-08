@@ -38,12 +38,14 @@ import io.verbit.ski.akka.Akka;
 import io.verbit.ski.core.Ski;
 import io.verbit.ski.core.http.result.Result;
 import io.verbit.ski.core.json.Json;
+import io.verbit.ski.core.plugin.hooks.Hook;
 import scala.concurrent.Future;
 
 import java.util.*;
 
 import static de.tuberlin.orp.common.Utils.itemMapAsJson;
 import static io.verbit.ski.core.http.result.SimpleResult.ok;
+import static io.verbit.ski.core.plugin.hooks.Hooks.onRequest;
 import static io.verbit.ski.core.route.RouteBuilder.get;
 import static io.verbit.ski.template.mustache.MustacheTemplateResult.render;
 

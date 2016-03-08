@@ -118,6 +118,7 @@ public class WorkerActor extends UntypedActor {
 //              filterActor.tell(new RecommendationFilter.Clicked(userId, itemId), getSelf());
 //            }
           }
+
           break;
         case "click":
           log.info("Click!");
