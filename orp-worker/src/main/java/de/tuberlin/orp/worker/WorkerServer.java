@@ -128,7 +128,7 @@ public class WorkerServer {
     JsonNode json = jsonBody.get();
     int flag = json.get("flag").asInt();
 
-    if (flag == 0){
+    if ((flag & 1) == 1){
       //Article is recommendable
       OrpArticle article = new OrpArticle(json);
       workerActor.tell(article, ActorRef.noSender());
