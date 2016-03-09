@@ -97,15 +97,6 @@ public class WorkerServer {
     Ski.builder()
         .setHost(host)
         .setPort(port)
-        .addHooks(onRequest((context, next) -> {
-              if (LOG_REQUESTS) {
-                String request = requestToString(context.request());
-                printWriter.print(request + "\n");
-                printWriter.flush();
-              }
-              return next.handle(context);
-            }).withDefaultPriority()
-        )
         .addRoutes(
             post("/error").route(context -> {
               return forwardError(workerActor, context);
@@ -118,10 +109,17 @@ public class WorkerServer {
             }),
             post("/recommendation").routeAsync(context -> {
               return forwardRecommendationRequest(system, statisticsActor, workerActor, context);
-            })
-        )
+            }))
+        .addHooks(onRequest((context, next) -> {
+          if (LOG_REQUESTS) {
+            String request = requestToString(context.request());
+            printWriter.print(request + "\n");
+            printWriter.flush();
+          }
+          return next.handle(context);
+        }).withDefaultPriority())
         .build()
-        .start();
+        .run();
   }
 
   private static Result forwardError(ActorRef workerActor, RequestContext context) {
