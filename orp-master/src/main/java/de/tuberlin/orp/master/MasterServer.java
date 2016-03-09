@@ -178,7 +178,7 @@ public class MasterServer {
             })
         )
         .build()
-        .run();
+        .start();
   }
 
   private static ObjectNode getStatisticsAsJson(StatisticsManager.StatisticsMessage parameter) {

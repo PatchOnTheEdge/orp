@@ -72,7 +72,6 @@ public class WorkerServer {
     String host = "0.0.0.0";
     int port = 9000;
 
-
     ActorSystem system = ActorSystem.create("ClusterSystem");
     Cluster cluster = Cluster.get(system);
 
@@ -120,12 +119,10 @@ public class WorkerServer {
             post("/recommendation").routeAsync(context -> {
               return forwardRecommendationRequest(system, statisticsActor, workerActor, context);
             })
-    )
+        )
         .build()
-        .run();
+        .start();
   }
-
-
 
   private static Result forwardError(ActorRef workerActor, RequestContext context) {
     Optional<JsonNode> jsonBody = context.request().formParam("body").asJson();

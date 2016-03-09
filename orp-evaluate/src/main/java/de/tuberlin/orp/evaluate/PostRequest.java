@@ -36,7 +36,7 @@ import java.util.concurrent.Future;
 
 public class PostRequest {
 
-  public static String HOST = "37.120.189.25";
+  public static String HOST = "localhost";
   //"37.120.189.25";
 //orp.plista.com/api/vector_resoultion.php?vid=11&aid=
   public static void main(String[] args) throws Exception {
@@ -52,10 +52,6 @@ public class PostRequest {
     File fileData = new File(filePathData);
     File fileItem = new File(filePathItem);
 
-    //Stream<String> stringStreamData = Files.lines(fileData.toPath(), Charset.defaultCharset());
-    //Stream<String> stringStreamItem = Files.lines(fileItem.toPath(), Charset.defaultCharset());
-
-
     Files.lines(fileData.toPath(), Charset.defaultCharset())
         .limit(limitData).map(Json::parse)
         .forEach(PostRequest::postJsonData);
@@ -70,9 +66,6 @@ public class PostRequest {
 
   private static void postJsonItem(JsonNode jsonNode) {
     System.out.println("json Item: " + jsonNode.toString());
-    String id = jsonNode.get("id").asText();
-    String title = jsonNode.get("title").asText();
-    String flag = jsonNode.get("flag").asText();
 
     Future<HttpResponse<String>> httpResponseFuture = Unirest.post("http://" + HOST + ":9000/item")
         .field("body", jsonNode.toString())
@@ -89,7 +82,6 @@ public class PostRequest {
     String urlQuery = "";
     String eventType;
     eventType = json.get("event_type").asText();
-
 
     switch (eventType) {
       case "recommendation_request":
