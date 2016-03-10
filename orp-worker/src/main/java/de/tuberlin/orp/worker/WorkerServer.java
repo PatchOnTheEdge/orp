@@ -218,9 +218,8 @@ public class WorkerServer {
   }
 
   private static String requestToString(Request request){
-    RequestBody body = request.body();
     Map<String, List<String>> bodyForm = new HashMap<>();
-    if (body != null){
+    if (request.contentType() != null){
       bodyForm = request.body().asForm();
     }
     JsonNode json = Json.newObject();
