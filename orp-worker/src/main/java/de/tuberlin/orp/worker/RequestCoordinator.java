@@ -182,10 +182,6 @@ public class RequestCoordinator extends UntypedActor {
             Iterator<Object> it = parameter.iterator();
             IntermediateFilter filter = (IntermediateFilter) it.next();
 
-            log.debug(String.format("size(Filter Recommended) = %s. size(Filter Removed) = %s",
-                filter.getFilter().getRecommended().size(),
-                filter.getFilter().getRemoved().size()));
-
             return new FilterMerger.FilterResult(filter.getFilter());
           }
         }, getContext().dispatcher());
@@ -199,8 +195,6 @@ public class RequestCoordinator extends UntypedActor {
           public MostPopularMerger.WorkerResult apply(Iterable<Object> parameter) {
             Iterator<Object> it = parameter.iterator();
             IntermediateRanking ranking = (IntermediateRanking) it.next();
-
-            log.debug(String.format("size(Ranking) = %s.", ranking.rankingRepository.getRankings().size()));
 
             return new MostPopularMerger.WorkerResult(ranking.getRankingRepository());
           }

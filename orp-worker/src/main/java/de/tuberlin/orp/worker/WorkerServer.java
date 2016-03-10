@@ -128,7 +128,6 @@ public class WorkerServer {
 
     System.err.println(Instant.now() + ": Received Error: " + json);
 
-
     return noContent();
   }
 
@@ -142,8 +141,7 @@ public class WorkerServer {
       //Article is recommendable
       OrpArticle article = new OrpArticle(json);
       workerActor.tell(article, ActorRef.noSender());
-    }
-    else {
+    } else {
       //Article shall be removed
       OrpArticleRemove toRemove = new OrpArticleRemove(json.get("id").asText(), json.get("domainid").asText());
       workerActor.tell(toRemove, ActorRef.noSender());
@@ -164,9 +162,9 @@ public class WorkerServer {
         .map(new Mapper<Object, Result>() {
           @Override
           public Result apply(Object o) {
-//            if (o == null) {
-//              return ok(Json.newObject());
-//            }
+            if (o == null) {
+              return ok(Json.newObject());
+            }
 
             MostPopularRanking mostPopularRanking = (MostPopularRanking) o;
 
