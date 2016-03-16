@@ -33,14 +33,6 @@ import de.tuberlin.orp.common.message.*;
 import de.tuberlin.orp.worker.algorithms.mostPopular.MostPopularWorker;
 import de.tuberlin.orp.worker.algorithms.mostRecent.MostRecentWorker;
 import de.tuberlin.orp.worker.algorithms.popularCategory.PopularCategoryWorker;
-import de.tuberlin.orp.worker.algorithms.popularityTrend.PopularityWorker;
-import oshi.SystemInfo;
-import oshi.hardware.HardwareAbstractionLayer;
-import oshi.hardware.Processor;
-import scala.concurrent.duration.Duration;
-
-import java.util.Arrays;
-import java.util.concurrent.TimeUnit;
 
 /**
  * This actor is the entry point for the Akka application. All Requests received over HTTP are transformed to Akka
@@ -51,7 +43,6 @@ public class WorkerActor extends UntypedActor {
 
   private ActorRef mostPopularWorker;
   private ActorRef mostRecentWorker;
-  private ActorRef popularityWorker;
   private ActorRef popularCategoryWorker;
   private ActorRef filterActor;
   private ActorRef statisticsAggregator;
@@ -76,12 +67,11 @@ public class WorkerActor extends UntypedActor {
 
     mostPopularWorker = getContext().actorOf(MostPopularWorker.create(500, 50), "mp");
     mostRecentWorker = getContext().actorOf(MostRecentWorker.create(500, 10), "mr");
-//    popularityWorker = getContext().actorOf(PopularityWorker.create(500, 10, 50, 30), "p");
 //    popularCategoryWorker = getContext().actorOf(PopularCategoryWorker.create(1000, 50), "pc");
 
     filterActor = getContext().actorOf(RecommendationFilter.create(), "filter");
 
-    requestCoordinator = getContext().actorOf(RequestCoordinator.create(mostPopularWorker, mostRecentWorker, popularityWorker, popularCategoryWorker, filterActor), "coordinator");
+    requestCoordinator = getContext().actorOf(RequestCoordinator.create(mostPopularWorker, mostRecentWorker, popularCategoryWorker, filterActor), "coordinator");
   }
 
   @Override
@@ -111,12 +101,11 @@ public class WorkerActor extends UntypedActor {
           if (!publisherId.equals("") && !itemId.equals("") && !itemId.equals("0")) {
             mostPopularWorker.tell(context, getSelf());
             mostRecentWorker.tell(context, getSelf());
-//            popularityWorker.tell(context, getSelf());
 //            popularCategoryWorker.tell(context, getSelf());
 
-//            if (!userId.equals("0")){
-//              filterActor.tell(new RecommendationFilter.Clicked(userId, itemId), getSelf());
-//            }
+            if (!userId.equals("0")){
+              filterActor.tell(new RecommendationFilter.Clicked(userId, itemId), getSelf());
+            }
           }
 
           break;

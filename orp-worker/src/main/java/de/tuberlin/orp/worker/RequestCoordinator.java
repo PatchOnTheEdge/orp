@@ -59,28 +59,24 @@ public class RequestCoordinator extends UntypedActor {
 
   private ActorRef mostPopularWorker;
   private ActorRef mostRecentWorker;
-  private ActorRef popularityWorker;
   private ActorRef popularCategoryWorker;
   private ActorRef filterActor;
 
   private RankingRepository mostPopularRanking;
   private RankingRepository mostRecentRanking;
-  private RankingRepository trendRanking;
   private RankingRepository popularCategoryRanking;
   private RankingRepository mixedRanking;
 
   private RankingFilter filter;
 
-  public RequestCoordinator(ActorRef mostPopularWorker, ActorRef mostRecentWorker, ActorRef popularityWorker, ActorRef popularCategoryWorker, ActorRef filterActor) {
+  public RequestCoordinator(ActorRef mostPopularWorker, ActorRef mostRecentWorker, ActorRef popularCategoryWorker, ActorRef filterActor) {
     this.mostPopularWorker = mostPopularWorker;
     this.mostRecentWorker = mostRecentWorker;
-    this.popularityWorker = popularityWorker;
     this.popularCategoryWorker = popularCategoryWorker;
     this.filterActor = filterActor;
 
     this.mostPopularRanking = new RankingRepository(new MostPopularRanking());
     this.mostRecentRanking = new RankingRepository(new MostRecentRanking());
-    this.trendRanking = new RankingRepository(new PopularCategoryRanking());
     this.filter = new RankingFilter();
   }
 
@@ -108,12 +104,8 @@ public class RequestCoordinator extends UntypedActor {
 
       Optional<Ranking> mpRanking = this.mostPopularRanking.getRanking(publisherId);
       mpRanking.ifPresent(ranking1 -> filter.filter(ranking1, context));
-//      mpRanking.ifPresent(ranking -> log.info("Sending MP Ranking"+ ranking.toString()));
 
       sender.tell(mpRanking.orElse(new MostPopularRanking()), getSelf());
-
-//      Optional<Ranking> mrRanking = this.mostRecentRanking.getRanking(publisherId);
-//      mrRanking.ifPresent(ranking2 -> filter.filter(ranking2, context).slice(limit));
 
     } else if (message instanceof MostPopularMerger.MergedRanking) {
 
@@ -144,16 +136,6 @@ public class RequestCoordinator extends UntypedActor {
 
       //Get Ranking from Worker
       Future<MostRecentMerger.WorkerResult> workerResultFuture = getMostRecentWorkerResultFuture(intermediateRankingFuture);
-      Patterns.pipe(workerResultFuture, getContext().dispatcher()).to(sender, getSelf());
-
-
-    } else if (message instanceof PopularityMerger.MergedRanking) {
-      ActorRef sender = getSender();
-
-      PopularityMerger.MergedRanking mergedRankingMessage = (PopularityMerger.MergedRanking) message;
-      trendRanking = mergedRankingMessage.getRankingRepository();
-      Future<Object> intermediateRankingFuture = Patterns.ask(popularityWorker, "getIntermediateRanking", 200);
-      Future<PopularityMerger.WorkerResult> workerResultFuture = getPopularityWorkerResultFuture(intermediateRankingFuture);
       Patterns.pipe(workerResultFuture, getContext().dispatcher()).to(sender, getSelf());
 
     } else if (message instanceof FilterMerger.MergedFilter) {
@@ -228,9 +210,9 @@ public class RequestCoordinator extends UntypedActor {
         }, getContext().dispatcher());
   }
 
-  public static Props create(ActorRef mostPopularWorker, ActorRef mostRecentWorker, ActorRef popularityWorker, ActorRef popularCategoryWorker, ActorRef filterActor) {
+  public static Props create(ActorRef mostPopularWorker, ActorRef mostRecentWorker, ActorRef popularCategoryWorker, ActorRef filterActor) {
     return Props.create(RequestCoordinator.class, () -> {
-      return new RequestCoordinator(mostPopularWorker, mostRecentWorker, popularityWorker, popularCategoryWorker, filterActor);
+      return new RequestCoordinator(mostPopularWorker, mostRecentWorker , popularCategoryWorker, filterActor);
     });
   }
 
