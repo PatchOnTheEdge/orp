@@ -194,7 +194,7 @@ public class WorkerServer {
             long responseTime = System.currentTimeMillis() - start;
             statisticsActor.tell(new StatisticsAggregator.ResponseTime(responseTime), ActorRef.noSender());
 
-            log.info("Sending Recommendation = " + result);
+            log.debug("Sending Recommendation = " + result);
             return ok(result);
           }
         }, system.dispatcher());
