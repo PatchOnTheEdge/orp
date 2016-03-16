@@ -110,14 +110,14 @@ public class WorkerServer {
             post("/recommendation").routeAsync(context -> {
               return forwardRecommendationRequest(system, statisticsActor, workerActor, context);
             }))
-        .addHooks(onRequest((context, next) -> {
-          if (LOG_REQUESTS) {
-            String request = requestToString(context.request());
-            printWriter.print(request + "\n");
-            printWriter.flush();
-          }
-          return next.handle(context);
-        }).withDefaultPriority())
+//        .addHooks(onRequest((context, next) -> {
+//          if (LOG_REQUESTS) {
+//            String request = requestToString(context.request());
+//            printWriter.print(request + "\n");
+//            printWriter.flush();
+//          }
+//          return next.handle(context);
+//        }).withDefaultPriority())
         .build()
         .run();
   }
