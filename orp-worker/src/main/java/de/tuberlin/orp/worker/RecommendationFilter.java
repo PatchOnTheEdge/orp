@@ -98,12 +98,8 @@ public class RecommendationFilter extends UntypedActor {
   public void preStart() throws Exception {
     super.preStart();
     log.info("Recommendation filter started");
-    getContext().system().scheduler().schedule(Duration.Zero(), Duration.create(1, TimeUnit.MINUTES), () -> {
-      cleanRecommended();
-    }, getContext().dispatcher());
-    getContext().system().scheduler().schedule(Duration.create(30, TimeUnit.SECONDS), Duration.create(1, TimeUnit.MINUTES), () -> {
-      cleanRemoved();
-    }, getContext().dispatcher());
+    getContext().system().scheduler().schedule(Duration.Zero(), Duration.create(2, TimeUnit.MINUTES), this::cleanRecommended, getContext().dispatcher());
+    getContext().system().scheduler().schedule(Duration.create(30, TimeUnit.SECONDS), Duration.create(2, TimeUnit.MINUTES), this::cleanRemoved, getContext().dispatcher());
   }
 
 
@@ -138,10 +134,11 @@ public class RecommendationFilter extends UntypedActor {
    * For a fixed time period recommended items for users are remembered in a map. Such a map will be cleaned so that its
    * size won't explode.
    */
-  private synchronized void cleanRecommended() {
+  private void cleanRecommended() {
     long now = System.currentTimeMillis();
     Set<String> toRemove = new HashSet<>();
-    for (String key : lastUpdatedRecommended.keySet()) {
+    Set<String> keys = lastUpdatedRecommended.keySet();
+    for (String key : keys) {
       long userLastUpdated = lastUpdatedRecommended.get(key);
       if (now - userLastUpdated > 1000 * 60 * 30) {
         toRemove.add(key);
@@ -152,10 +149,11 @@ public class RecommendationFilter extends UntypedActor {
       recommended.remove(key);
     }
   }
-  private synchronized void cleanRemoved() {
+  private void cleanRemoved() {
     long now = System.currentTimeMillis();
     Set<String> toRemove = new HashSet<>();
-    for (String key : lastUpdatedRemoved.keySet()) {
+    Set<String> keys = lastUpdatedRemoved.keySet();
+    for (String key : keys) {
       long timeLastUpdated = lastUpdatedRemoved.get(key);
       if (now - timeLastUpdated > 1000 * 60 * 30) {
         toRemove.add(key);

@@ -144,9 +144,9 @@ public class RequestCoordinator extends UntypedActor {
       FilterMerger.MergedFilter mergedFilter = (FilterMerger.MergedFilter) message;
       filter = mergedFilter.getFilter();
 
-      Future<Object> intermediateFilterFuture = Patterns.ask(filterActor, "getIntermediateFilter", 200);
-      Future<FilterMerger.FilterResult> workerResultFuture = getFilterWorkerResultFuture(intermediateFilterFuture);
-      Patterns.pipe(workerResultFuture, getContext().dispatcher()).to(sender, getSelf());
+//      Future<Object> intermediateFilterFuture = Patterns.ask(filterActor, "getIntermediateFilter", 200);
+//      Future<FilterMerger.FilterResult> workerResultFuture = getFilterWorkerResultFuture(intermediateFilterFuture);
+//      Patterns.pipe(workerResultFuture, getContext().dispatcher()).to(sender, getSelf());
 
 
     } else {
