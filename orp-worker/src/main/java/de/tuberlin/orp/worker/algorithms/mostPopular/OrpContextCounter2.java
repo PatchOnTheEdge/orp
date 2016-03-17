@@ -24,9 +24,9 @@
 
 package de.tuberlin.orp.worker.algorithms.mostPopular;
 
+import de.tuberlin.orp.common.message.OrpContext;
 import de.tuberlin.orp.common.ranking.MostPopularRanking;
 import de.tuberlin.orp.common.ranking.Ranking;
-import de.tuberlin.orp.common.message.OrpContext;
 import de.tuberlin.orp.common.repository.RankingRepository;
 
 import java.util.ArrayDeque;
@@ -34,18 +34,21 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class OrpContextCounter {
+public class OrpContextCounter2 {
   private int contextWindowSize;
-  private ArrayDeque<OrpContext> contextWindow;
+  private Map<String, ArrayDeque<OrpContext>> contextWindows;
   private int topListSize;
 
-  public OrpContextCounter(int contextWindowSize, int topListSize) {
+  public OrpContextCounter2(int contextWindowSize, int topListSize) {
     this.contextWindowSize = contextWindowSize;
-    this.contextWindow = new ArrayDeque<>(contextWindowSize);
+    this.contextWindows = new HashMap<>();
     this.topListSize = topListSize;
   }
 
   public void add(OrpContext context) {
+    contextWindows.putIfAbsent(context.getPublisherId(), new ArrayDeque<>(contextWindowSize));
+    ArrayDeque<OrpContext> contextWindow = contextWindows.get(context.getPublisherId());
+
     if (contextWindow.size() >= contextWindowSize) {
       contextWindow.removeFirst();
     }
@@ -68,11 +71,12 @@ public class OrpContextCounter {
   }
 
   private Map<String, Map<String, Long>> calculateRankings() {
-    return contextWindow.stream()
-        .collect(
-            Collectors.groupingBy(
-                OrpContext::getPublisherId,
-                Collectors.groupingBy(OrpContext::getItemId, Collectors.counting())
-            ));
+    Map<String, Map<String, Long>> rankings = new HashMap<>();
+
+    for (Map.Entry<String, ArrayDeque<OrpContext>> contextWindow : contextWindows.entrySet()) {
+      Map<String, Long> ranking = contextWindow.getValue().stream().collect(Collectors.groupingBy(OrpContext::getItemId, Collectors.counting()));
+      rankings.put(contextWindow.getKey(), ranking);
+    }
+    return rankings;
   }
 }

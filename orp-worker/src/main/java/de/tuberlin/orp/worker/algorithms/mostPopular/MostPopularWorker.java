@@ -40,9 +40,7 @@ import de.tuberlin.orp.worker.RequestCoordinator;
 public class MostPopularWorker extends UntypedActor {
   private LoggingAdapter log = Logging.getLogger(getContext().system(), this);
 
-  private OrpContextCounter contextCounter;
-
-  private long lastRanking = 0;
+  private OrpContextCounter2 contextCounter;
 
   static class MostPopularActorCreator implements Creator<MostPopularWorker> {
 
@@ -74,30 +72,27 @@ public class MostPopularWorker extends UntypedActor {
    *     The maximum size of the ranking for the publishers.
    */
   public MostPopularWorker(int contextWindowSize, int topListSize) {
-    this.contextCounter = new OrpContextCounter(contextWindowSize, topListSize);
+    this.contextCounter = new OrpContextCounter2(contextWindowSize, topListSize);
   }
 
   @Override
   public void preStart() throws Exception {
     log.info("Most Popular Worker started.");
     super.preStart();
-    log.info(getSelf().toString());
   }
 
   @Override
   public void onReceive(Object message) throws Exception {
     if (message instanceof OrpContext) {
+
       OrpContext context = (OrpContext) message;
-
-//      log.info(String.format("Received OrpArticle from Publisher: %s with ID: %s",
-//          context.getContext(), context.getItemId()));
-
+      log.debug(String.format("Received OrpArticle from Publisher: %s with ID: %s", context.getPublisherId(), context.getItemId()));
       contextCounter.add(context);
 
     } else if (message.equals("getIntermediateRanking")) {
 
-      RankingRepository rankingRepository = contextCounter.getRankingRespository();
-      //log.info("Intermediate ranking requested.");
+      log.debug("Intermediate ranking requested.");
+      RankingRepository rankingRepository = contextCounter.getRankingRepository();
       getSender().tell(new RequestCoordinator.IntermediateRanking(rankingRepository), getSelf());
 
     } else {
