@@ -37,6 +37,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 public class RecommendationFilter extends UntypedActor {
@@ -53,9 +54,9 @@ public class RecommendationFilter extends UntypedActor {
 
   public RecommendationFilter() {
     removed = new HashSet<>();
-    lastUpdatedRemoved = new HashMap<>();
+    lastUpdatedRemoved = new ConcurrentHashMap<>();
     recommended = new HashMap<>();
-    lastUpdatedRecommended = new HashMap<>();
+    lastUpdatedRecommended = new ConcurrentHashMap<>();
   }
 
   public static class Removed implements Serializable {
@@ -137,8 +138,7 @@ public class RecommendationFilter extends UntypedActor {
   private void cleanRecommended() {
     long now = System.currentTimeMillis();
     Set<String> toRemove = new HashSet<>();
-    Set<String> keys = new HashSet<>(lastUpdatedRecommended.keySet());
-    for (String key : keys) {
+    for (String key : lastUpdatedRecommended.keySet()) {
       long userLastUpdated = lastUpdatedRecommended.get(key);
       if (now - userLastUpdated > 1000 * 60 * 30) {
         toRemove.add(key);
@@ -152,8 +152,7 @@ public class RecommendationFilter extends UntypedActor {
   private void cleanRemoved() {
     long now = System.currentTimeMillis();
     Set<String> toRemove = new HashSet<>();
-    Set<String> keys =  new HashSet<>(lastUpdatedRemoved.keySet());
-    for (String key : keys) {
+    for (String key : lastUpdatedRemoved.keySet()) {
       long timeLastUpdated = lastUpdatedRemoved.get(key);
       if (now - timeLastUpdated > 1000 * 60 * 30) {
         toRemove.add(key);
