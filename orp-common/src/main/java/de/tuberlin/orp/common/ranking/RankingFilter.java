@@ -48,6 +48,8 @@ public class RankingFilter implements Serializable {
 
   public void merge(RankingFilter filter) {
     removed.addAll(filter.getRemoved());
+    removed.retainAll(filter.getRemoved());
+
     filter.getRecommended().forEach((key, value) -> {
       recommended.putIfAbsent(key, new HashSet<>());
       Set<String> recs = recommended.get(key);

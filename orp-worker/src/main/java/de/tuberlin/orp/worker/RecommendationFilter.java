@@ -100,6 +100,8 @@ public class RecommendationFilter extends UntypedActor {
     log.info("Recommendation filter started");
     getContext().system().scheduler().schedule(Duration.Zero(), Duration.create(1, TimeUnit.MINUTES), () -> {
       cleanRecommended();
+    }, getContext().dispatcher());
+    getContext().system().scheduler().schedule(Duration.create(30, TimeUnit.SECONDS), Duration.create(1, TimeUnit.MINUTES), () -> {
       cleanRemoved();
     }, getContext().dispatcher());
   }
@@ -136,7 +138,7 @@ public class RecommendationFilter extends UntypedActor {
    * For a fixed time period recommended items for users are remembered in a map. Such a map will be cleaned so that its
    * size won't explode.
    */
-  private void cleanRecommended() {
+  private synchronized void cleanRecommended() {
     long now = System.currentTimeMillis();
     Set<String> toRemove = new HashSet<>();
     for (String key : lastUpdatedRecommended.keySet()) {
@@ -150,7 +152,7 @@ public class RecommendationFilter extends UntypedActor {
       recommended.remove(key);
     }
   }
-  private void cleanRemoved() {
+  private synchronized void cleanRemoved() {
     long now = System.currentTimeMillis();
     Set<String> toRemove = new HashSet<>();
     for (String key : lastUpdatedRemoved.keySet()) {
