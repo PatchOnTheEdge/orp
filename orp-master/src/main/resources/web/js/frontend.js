@@ -65,6 +65,7 @@ function setPublisher(publisher) {
         case "694": document.getElementById("publisher").innerHTML = "Motortalk"; break;
         case "35774" : document.getElementById("publisher").innerHTML = "Gulli"; break;
         case "13554" : document.getElementById("publisher").innerHTML = "Cio"; break;
+        case "3336" : document.getElementById("publisher").innerHTML = "Hm"; break;
     }
 }
 function setMP(publisher){
