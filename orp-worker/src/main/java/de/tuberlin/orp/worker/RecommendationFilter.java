@@ -137,7 +137,7 @@ public class RecommendationFilter extends UntypedActor {
   private void cleanRecommended() {
     long now = System.currentTimeMillis();
     Set<String> toRemove = new HashSet<>();
-    Set<String> keys = lastUpdatedRecommended.keySet();
+    Set<String> keys = new HashSet<>(lastUpdatedRecommended.keySet());
     for (String key : keys) {
       long userLastUpdated = lastUpdatedRecommended.get(key);
       if (now - userLastUpdated > 1000 * 60 * 30) {
@@ -152,7 +152,7 @@ public class RecommendationFilter extends UntypedActor {
   private void cleanRemoved() {
     long now = System.currentTimeMillis();
     Set<String> toRemove = new HashSet<>();
-    Set<String> keys = lastUpdatedRemoved.keySet();
+    Set<String> keys =  new HashSet<>(lastUpdatedRemoved.keySet());
     for (String key : keys) {
       long timeLastUpdated = lastUpdatedRemoved.get(key);
       if (now - timeLastUpdated > 1000 * 60 * 30) {
