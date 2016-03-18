@@ -93,26 +93,22 @@ public class WorkerActor extends UntypedActor {
 
       articleAggregator.tell(new ArticleAggregator.ArticleCategory(publisherId, itemId, category), getSelf());
 
-      switch (notificationType) {
-        case "event_notification":
+      if (notificationType.equals("impression") || notificationType.equals("impression_empty")){
+        statisticsAggregator.tell("notification", getSelf());
 
-          statisticsAggregator.tell("notification", getSelf());
-
-          if (!publisherId.equals("") && !itemId.equals("") && !itemId.equals("0")) {
-            mostPopularWorker.tell(context, getSelf());
-            mostRecentWorker.tell(context, getSelf());
+        if (!publisherId.equals("") && !itemId.equals("") && !itemId.equals("0")) {
+          mostPopularWorker.tell(context, getSelf());
+          mostRecentWorker.tell(context, getSelf());
 //            popularCategoryWorker.tell(context, getSelf());
 
-            if (!userId.equals("0")){
-              filterActor.tell(new RecommendationFilter.Clicked(userId, itemId), getSelf());
-            }
+          if (!userId.equals("0")){
+            filterActor.tell(new RecommendationFilter.Clicked(userId, itemId), getSelf());
           }
-
-          break;
-        case "click":
-          log.info("Click!");
-          statisticsAggregator.tell("click", getSelf());
-          break;
+        }
+      } else if (notificationType.equals("click")){
+        statisticsAggregator.tell("click", getSelf());
+      } else {
+        log.info("unhandled Type = " + notificationType);
       }
 
     } else if (message instanceof OrpRequest) {

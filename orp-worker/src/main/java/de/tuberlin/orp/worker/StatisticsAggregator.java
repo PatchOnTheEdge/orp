@@ -43,6 +43,7 @@ public class StatisticsAggregator extends UntypedActor {
 
   private long requestCounter;
   private long notificationCounter;
+  private long clickCounter;
 
   private Map<Short, Long> responseTimes;
   private ActorSelection statisticsManager;
@@ -78,9 +79,10 @@ public class StatisticsAggregator extends UntypedActor {
 
       double throughput = requestCounter / (double) aggregationInterval.toSeconds();
       statisticsManager.tell(new StatisticsManager.WorkerStatistics(System.currentTimeMillis(),
-          throughput, responseTimes, requestCounter, notificationCounter), getSelf());
+          throughput, responseTimes, requestCounter, notificationCounter, clickCounter), getSelf());
       requestCounter = 0;
       notificationCounter = 0;
+      clickCounter = 0;
       responseTimes = new HashMap<>();
 
     }, getContext().dispatcher());
@@ -101,6 +103,10 @@ public class StatisticsAggregator extends UntypedActor {
     } else if (message.equals("notification")){
 
       ++notificationCounter;
+
+    } else if (message.equals("click")){
+      ++clickCounter;
+      log.info("click!!");
 
     } else {
       unhandled(message);
