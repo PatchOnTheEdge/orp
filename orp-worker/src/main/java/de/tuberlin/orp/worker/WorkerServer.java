@@ -208,7 +208,7 @@ public class WorkerServer {
     Optional<JsonNode> jsonBody = context.request().formParam("body").asJson();
 
     OrpContext orpContext = new OrpContext(jsonBody.get());
-    OrpNotification notification = new OrpNotification(jsonBody.get().get("event_type").asText(), orpContext);
+    OrpNotification notification = new OrpNotification(jsonBody.get().get("type").asText(), orpContext);
 
     workerActor.tell(notification, ActorRef.noSender());
 
