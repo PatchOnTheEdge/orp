@@ -39,7 +39,6 @@ public class OrpContext implements Serializable {
   }
 
   public OrpContext(JsonNode jsonNode) {
-    System.out.println(jsonNode);
     this.publisherId = jsonNode.at("/context/simple/27").asText();
     this.itemId = jsonNode.at("/context/simple/25").asText();
     this.userId = jsonNode.at("/context/simple/57").asText();
