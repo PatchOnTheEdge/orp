@@ -35,7 +35,9 @@ import scala.concurrent.duration.FiniteDuration;
 
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 public class StatisticsAggregator extends UntypedActor {
@@ -45,6 +47,7 @@ public class StatisticsAggregator extends UntypedActor {
   private long notificationCounter;
   private long clickCounter;
 
+  private Map<String, Set<String>> clickEvents;
   private Map<Short, Long> responseTimes;
   private ActorSelection statisticsManager;
 
@@ -68,6 +71,7 @@ public class StatisticsAggregator extends UntypedActor {
 
   public StatisticsAggregator(ActorSelection statisticsManager) {
     this.statisticsManager = statisticsManager;
+    clickEvents = new HashMap<>();
     responseTimes = new HashMap<>();
   }
 
@@ -79,11 +83,12 @@ public class StatisticsAggregator extends UntypedActor {
 
       double throughput = requestCounter / (double) aggregationInterval.toSeconds();
       statisticsManager.tell(new StatisticsManager.WorkerStatistics(System.currentTimeMillis(),
-          throughput, responseTimes, requestCounter, notificationCounter, clickCounter), getSelf());
+          throughput, responseTimes, requestCounter, notificationCounter, clickCounter, clickEvents), getSelf());
       requestCounter = 0;
       notificationCounter = 0;
       clickCounter = 0;
       responseTimes = new HashMap<>();
+      clickEvents = new HashMap<>();
 
     }, getContext().dispatcher());
   }
@@ -104,12 +109,34 @@ public class StatisticsAggregator extends UntypedActor {
 
       ++notificationCounter;
 
-    } else if (message.equals("click")){
+    } else if (message instanceof ClickEvent){
+
       ++clickCounter;
-      log.info("click!!");
+
+      ClickEvent clickEvent = (ClickEvent) message;
+      Set<String> clickedItems = clickEvents.getOrDefault(clickEvent.getPublisherId(), new HashSet<>());
+      clickedItems.add(clickEvent.getItemId());
+      clickEvents.put(clickEvent.getPublisherId(), clickedItems);
 
     } else {
       unhandled(message);
     }
   }
+  public static class ClickEvent implements Serializable{
+    private String publisherId;
+    private String itemId;
+    public ClickEvent(String publisherId, String itemId) {
+      this.publisherId = publisherId;
+      this.itemId = itemId;
+    }
+
+    public String getPublisherId() {
+      return publisherId;
+    }
+
+    public String getItemId() {
+      return itemId;
+    }
+  }
+
 }

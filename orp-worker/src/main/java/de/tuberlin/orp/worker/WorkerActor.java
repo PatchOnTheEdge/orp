@@ -30,6 +30,7 @@ import akka.actor.UntypedActor;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import de.tuberlin.orp.common.message.*;
+import de.tuberlin.orp.master.StatisticsManager;
 import de.tuberlin.orp.worker.algorithms.mostPopular.MostPopularWorker;
 import de.tuberlin.orp.worker.algorithms.mostRecent.MostRecentWorker;
 import de.tuberlin.orp.worker.algorithms.popularCategory.PopularCategoryWorker;
@@ -109,7 +110,7 @@ public class WorkerActor extends UntypedActor {
           }
           break;
         case "click":
-          statisticsAggregator.tell("click", getSelf());
+          statisticsAggregator.tell(new StatisticsAggregator.ClickEvent(publisherId, itemId), getSelf());
           break;
         default:
           log.info("unhandled Type = " + notificationType);

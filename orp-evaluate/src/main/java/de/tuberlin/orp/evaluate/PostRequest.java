@@ -85,16 +85,21 @@ public class PostRequest {
 
     switch (eventType) {
       case "recommendation_request":
-        urlQuery = "recommendation"; break;
+        urlQuery = "recommendation";
+        break;
       case "event_notification":
-        urlQuery = "event"; break;
+        urlQuery = "event";
+        break;
       case "impression":
         urlQuery = "event";
-        eventType = "event_notification"; //TODO: is this right?
+        break;
+      case "click":
+        urlQuery = "event";
         break;
       default:
         System.out.println("Attention! Unhandled event type: " + eventType);
     }
+
 
 //    System.out.println("sending " + eventType);
     Future<HttpResponse<String>> httpResponseFuture = Unirest.post("http://" + HOST + ":9000/" + urlQuery)

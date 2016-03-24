@@ -37,6 +37,7 @@
             throughputChart.streamTo(document.getElementById("throughput"), 1000);
             var throughputLine1 = new TimeSeries();
             var notificationLine1 = new TimeSeries();
+            var clickLine1 = new TimeSeries();
             var requestLine1 = new TimeSeries();
             var throughputLine2 = new TimeSeries();
             setInterval(function() {
@@ -46,6 +47,7 @@
                         throughputLine1.append(workers[0].timestamp, workers[0].throughput);
                         notificationLine1.append(workers[0].timestamp, workers[0].notification);
                         requestLine1.append(workers[0].timestamp, workers[0].request);
+                        clickLine1.append(workers[0].timestamp, workers[0].click);
                     }
                     if (workers.length >= 2) {
                         throughputLine2.append(workers[1].timestamp, workers[1].throughput);
@@ -57,7 +59,8 @@
 //            throughputChart.addTimeSeries(throughputLine1, {lineWidth:1.2,strokeStyle:'#ff2600'});
             throughputChart.addTimeSeries(notificationLine1, {lineWidth:1.2,strokeStyle:'#00ff00'});
             throughputChart.addTimeSeries(requestLine1, {lineWidth:1.2,strokeStyle:'#000000'});
-            throughputChart.addTimeSeries(throughputLine2, {lineWidth:1.2,strokeStyle:'#00ff00'});
+            throughputChart.addTimeSeries(clickLine1, {lineWidth:1.2,strokeStyle:'#ff0000'});
+//            throughputChart.addTimeSeries(throughputLine2, {lineWidth:1.2,strokeStyle:'#00ff00'});
         </script>
 
     </body>

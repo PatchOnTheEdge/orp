@@ -38,14 +38,12 @@ import io.verbit.ski.akka.Akka;
 import io.verbit.ski.core.Ski;
 import io.verbit.ski.core.http.result.Result;
 import io.verbit.ski.core.json.Json;
-import io.verbit.ski.core.plugin.hooks.Hook;
 import scala.concurrent.Future;
 
 import java.util.*;
 
 import static de.tuberlin.orp.common.Utils.itemMapAsJson;
 import static io.verbit.ski.core.http.result.SimpleResult.ok;
-import static io.verbit.ski.core.plugin.hooks.Hooks.onRequest;
 import static io.verbit.ski.core.route.RouteBuilder.get;
 import static io.verbit.ski.template.mustache.MustacheTemplateResult.render;
 
@@ -61,7 +59,7 @@ public class MasterServer {
     ActorRef popularMergerActor = system.actorOf(MostPopularMerger.create(), "popularMerger");
     ActorRef recentMergerActor = system.actorOf(MostRecentMerger.create(), "recentMerger");
     ActorRef popularityMergerActor = system.actorOf(PopularityMerger.create(), "popularityMerger");
-    ActorRef statisticsManager = system.actorOf(StatisticsManager.create(), "statistics");
+    ActorRef statisticsManager = system.actorOf(StatisticsManager.create(popularMergerActor, recentMergerActor), "statistics");
     ActorRef articleMerger = system.actorOf(ArticleMerger.create(),"articles");
     ActorRef searchHandler = system.actorOf(SearchHandler.create(articleMerger), "search");
     ActorRef filterMerger = system.actorOf(FilterMerger.create(), "filterMerger");
@@ -98,6 +96,23 @@ public class MasterServer {
                           ObjectNode result = getStatisticsAsJson((StatisticsManager.StatisticsMessage) parameter);
 
                           return ok(result);
+                        }
+                      }, system.dispatcher());
+              return Akka.wrap(result, system.dispatcher());
+            }),
+
+            get("/clicks").routeAsync(context -> {
+              Future<Result> result =
+                  Patterns.ask(statisticsManager, "getClicks", 100)
+                      .map(new Mapper<Object, Result>() {
+                        @Override
+                        public Result apply(Object parameter) {
+                          Map<String, Integer> clicks = (Map<String, Integer>) parameter;
+                          ObjectNode json = Json.newObject();
+                          for (Map.Entry<String, Integer> entry : clicks.entrySet()) {
+                            json.put(entry.getKey(), entry.getValue());
+                          }
+                          return ok(json);
                         }
                       }, system.dispatcher());
               return Akka.wrap(result, system.dispatcher());
@@ -196,6 +211,7 @@ public class MasterServer {
               .put("throughput", statsEntries.getValue().getThroughput())
               .put("notification", statsEntries.getValue().getNotificationCounter())
               .put("request", statsEntries.getValue().getRequestCounter())
+              .put("click", statsEntries.getValue().getClickCounter())
       );
     }
     return result;
