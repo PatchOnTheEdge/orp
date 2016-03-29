@@ -30,59 +30,82 @@ import de.tuberlin.orp.common.ranking.PopularCategoryRanking;
 import de.tuberlin.orp.common.ranking.Ranking;
 import de.tuberlin.orp.common.repository.RankingRepository;
 
-import java.util.ArrayDeque;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class CategoryContextCounter {
   private int contextWindowSize;
-  private ArrayDeque<OrpContext> contextWindow;
+  private Map<String, ArrayDeque<OrpContext>> contextWindows;
   private int topListSize;
 
   public CategoryContextCounter(int contextWindowSize, int topListSize) {
     this.contextWindowSize = contextWindowSize;
-    this.contextWindow = new ArrayDeque<>(contextWindowSize);
+    this.contextWindows = new HashMap<>();
     this.topListSize = topListSize;
   }
 
-  public boolean isFull() {
-    return contextWindow.size() == contextWindowSize;
-  }
 
   public void add(OrpContext context) {
+    contextWindows.putIfAbsent(context.getPublisherId(), new ArrayDeque<>(contextWindowSize));
+    ArrayDeque<OrpContext> contextWindow = contextWindows.get(context.getPublisherId());
+
     if (contextWindow.size() >= contextWindowSize) {
       contextWindow.removeFirst();
     }
-    contextWindow.add(context);
+    contextWindow.addLast(context);
   }
 
   public RankingRepository getRankingRepository() {
-    Map<String, Map<String, Map<String, Long>>> countMap = calculateRankings();
+    Map<String, Map<String, Long>> countMap = calculateRankings();
+
     Map<String, Ranking> rankings = new HashMap<>(countMap.size());
-
-    for (Map.Entry<String, Map<String, Map<String, Long>>> entry : countMap.entrySet()) {
+    for (Map.Entry<String, Map<String, Long>> entry : countMap.entrySet()) {
       String publisher = entry.getKey();
-      Map<String, Map<String, Long>> categories = entry.getValue();
-      Set<Map.Entry<String, Map<String, Long>>> categoryMap = categories.entrySet();
-
-      for (Map.Entry<String, Map<String, Long>> categoryRank : categoryMap) {
-        PopularCategoryRanking value = new PopularCategoryRanking(categoryRank.getValue());
-        value.sort();
-        value.slice(topListSize);
-        rankings.put(publisher, value);
-      }
+      PopularCategoryRanking ranking = new PopularCategoryRanking(entry.getValue());
+      ranking.sort();
+      ranking.slice(topListSize);
+      rankings.put(publisher, ranking);
     }
+
     return new RankingRepository(rankings, new PopularCategoryRanking());
   }
 
-  private Map<String, Map<String, Map<String, Long>>> calculateRankings() {
-    return contextWindow.stream()
-        .collect(
-            Collectors.groupingBy(OrpContext::getPublisherId,
-                Collectors.groupingBy(OrpContext::getCategory,
-                    Collectors.groupingBy(OrpContext::getItemId, Collectors.counting())
-            )));
+  private Map<String, Map<String, Long>> calculateRankings() {
+    Map<String, Map<String, Long>> rankings = new HashMap<>();
+
+    for (Map.Entry<String, ArrayDeque<OrpContext>> contextWindow : contextWindows.entrySet()) {
+      Map<String, Long> itemRankings = contextWindow.getValue().stream().collect(Collectors.groupingBy(OrpContext::getItemId, Collectors.counting()));
+      Map<String, Set<String>> categories = new HashMap<>();
+
+      for (OrpContext orpContext : contextWindow.getValue()) {
+
+        for (String category : orpContext.getCategory()) {
+          Set<String> items = categories.getOrDefault(category, new HashSet<>());
+          items.add(orpContext.getItemId());
+          categories.put(category, items);
+        }
+      }
+
+      Map<String, Long> categoryRank = new HashMap<>();
+
+      for (Map.Entry<String, Set<String>> categoryItemMap : categories.entrySet()) {
+        Long rank = categoryRank.getOrDefault(categoryItemMap.getValue(), 0L);
+        for (String item : categoryItemMap.getValue()) {
+          rank += itemRankings.get(item);
+        }
+        categoryRank.put(categoryItemMap.getKey(), rank);
+      }
+
+      String mpCategory = Collections.max(categoryRank.entrySet(), (entry1, entry2) -> entry1.getValue() > entry2.getValue() ? 1 : -1).getKey();
+      Map<String, Long> popularItems = new HashMap<>();
+
+      for (String item : categories.get(mpCategory)) {
+        popularItems.put(item, itemRankings.get(item));
+      }
+
+      rankings.put(contextWindow.getKey(), popularItems);
+    }
+    return rankings;
   }
 }
+

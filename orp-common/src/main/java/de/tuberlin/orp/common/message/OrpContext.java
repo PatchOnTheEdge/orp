@@ -25,6 +25,7 @@
 package de.tuberlin.orp.common.message;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.sun.jna.StringArray;
 
 import java.io.Serializable;
 
@@ -32,7 +33,7 @@ public class OrpContext implements Serializable {
   private String publisherId;
   private String itemId;
   private String userId;
-  private String category;
+  private String[] category;
   private int limit;
 
   public OrpContext() {
@@ -42,7 +43,20 @@ public class OrpContext implements Serializable {
     this.publisherId = jsonNode.at("/context/simple/27").asText();
     this.itemId = jsonNode.at("/context/simple/25").asText();
     this.userId = jsonNode.at("/context/simple/57").asText();
-    this.category = jsonNode.at("/context/lists/11/0").asText();
+
+    JsonNode array = jsonNode.at("/context/lists/11");
+//    System.out.println(array.toString());
+
+    if (array.isArray()){
+      int i = 0;
+      this.category = new String[array.size()];
+      for (JsonNode node : array) {
+        this.category[i] = node.asText();
+        ++i;
+      }
+    } else {
+      this.category =  new String[1];
+    }
     this.limit = jsonNode.path("limit").asInt(20);
   }
 
@@ -58,7 +72,7 @@ public class OrpContext implements Serializable {
     return userId;
   }
 
-  public String getCategory() {
+  public String[] getCategory() {
     return category;
   }
 

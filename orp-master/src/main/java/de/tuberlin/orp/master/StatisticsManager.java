@@ -33,6 +33,7 @@ import akka.event.LoggingAdapter;
 import akka.pattern.Patterns;
 import de.tuberlin.orp.common.ranking.MostPopularRanking;
 import de.tuberlin.orp.common.ranking.MostRecentRanking;
+import de.tuberlin.orp.common.ranking.PopularCategoryRanking;
 import io.verbit.ski.core.http.result.Result;
 import io.verbit.ski.core.json.Json;
 import scala.concurrent.Future;
@@ -49,21 +50,24 @@ public class StatisticsManager extends UntypedActor {
   private LoggingAdapter log = Logging.getLogger(getContext().system(), this);
   private LinkedHashMap<ActorRef, ArrayDeque<WorkerStatistics>> workerStatistics;
   private Map<String, Set<String>> mostPopularRecommendations;
+  private Map<String, Set<String>> popularCategoryRecommendations;
   private Map<String, Set<String>> mostRecentRecommendations;
   private ActorRef mostPopularMerger;
   private ActorRef mostRecentMerger;
-  private Map<String, Integer> algorithmClicks;
+  private ActorRef popularCategoryMerger;
+  private Map<String, Map<String, Integer>> publisherClicks;
   private int maxSize = 1000;
 
-  public StatisticsManager(ActorRef mostPopularMerger, ActorRef mostRecentMerger) {
+  public StatisticsManager(ActorRef mostPopularMerger, ActorRef mostRecentMerger, ActorRef popularCategoryMerger) {
     workerStatistics = new LinkedHashMap<>();
     mostPopularRecommendations = new HashMap<>();
     mostRecentRecommendations = new HashMap<>();
-    algorithmClicks = new HashMap<>();
-//    mostRecentMerger = getContext().actorOf(FromConfig.getInstance().props(Props.empty()), "recentMerger");
-//    mostPopularMerger = getContext().actorOf(FromConfig.getInstance().props(Props.empty()), "popularMerger");
+    popularCategoryRecommendations = new HashMap<>();
+    publisherClicks = new HashMap<>();
+
     this.mostPopularMerger = mostPopularMerger;
     this.mostRecentMerger = mostRecentMerger;
+    this.popularCategoryMerger = popularCategoryMerger;
   }
 
   @Override
@@ -76,32 +80,49 @@ public class StatisticsManager extends UntypedActor {
     // asks every 30 seconds for the Most Recent Ranking
     getContext().system().scheduler().schedule(Duration.Zero(), Duration.create(30, TimeUnit.SECONDS), this::getMostRecentMergerResult, getContext().dispatcher());
 
+    getContext().system().scheduler().schedule(Duration.Zero(), Duration.create(30, TimeUnit.SECONDS), this::getPopularCategoryMergerResult, getContext().dispatcher());
+
     //Calculate the number of clicked Recommendations for each Ranking, every 30 Seconds
-    getContext().system().scheduler().schedule(Duration.create(10, TimeUnit.SECONDS), Duration.create(30, TimeUnit.SECONDS), () -> {
+    getContext().system().scheduler().schedule(Duration.create(40, TimeUnit.SECONDS), Duration.create(30, TimeUnit.SECONDS), () -> {
 
-      Integer mostPopularClicks =  0;
-      Integer mostRecentClicks = 0;
-
-      long start = System.currentTimeMillis();
+      Map<String, Integer> algorithmClicks =  new HashMap<>();
 
       for (Map.Entry<ActorRef, ArrayDeque<WorkerStatistics>> entry : workerStatistics.entrySet()) {
+        for (WorkerStatistics statistics : entry.getValue()) {
+          for (Map.Entry<String, Set<String>> clickEntry : statistics.getClickEvents().entrySet()) {
 
-        for (WorkerStatistics statistic : entry.getValue()) {
-          for (Set<String> clickedItems : statistic.getClickEvents().values()) {
-            for (Set<String> items : mostPopularRecommendations.values()) {
-              items.retainAll(clickedItems);
-              mostPopularClicks += items.size();
+            Map<String, Set<String>> copy = new HashMap<>(mostPopularRecommendations);
+            String publisherId = clickEntry.getKey();
+            Set<String> items = copy.get(publisherId);
+            if (!(items == null)) {
+              items.retainAll(clickEntry.getValue());
+              Integer clicks = algorithmClicks.getOrDefault("mp", 0);
+              clicks += items.size();
+              algorithmClicks.put("mp", clicks);
             }
-            for (Set<String> items : mostRecentRecommendations.values()) {
-              items.retainAll(clickedItems);
-              mostRecentClicks += items.size();
+
+            copy = new HashMap<>(mostRecentRecommendations);
+            items = copy.get(publisherId);
+            if (!(items == null)) {
+              items.retainAll(clickEntry.getValue());
+              Integer clicks = algorithmClicks.getOrDefault("mr", 0);
+              clicks += items.size();
+              algorithmClicks.put("mr", clicks);
             }
+
+            copy = new HashMap<>(popularCategoryRecommendations);
+            items = copy.get(publisherId);
+            if (!(items == null)) {
+              items.retainAll(clickEntry.getValue());
+              Integer clicks = algorithmClicks.getOrDefault("pc", 0);
+              clicks += items.size();
+              algorithmClicks.put("pc", clicks);
+            }
+            publisherClicks.put(publisherId, algorithmClicks);
           }
         }
       }
-      algorithmClicks.put("MostPopular", mostPopularClicks );
-      algorithmClicks.put("MostRecent", mostRecentClicks);
-//      log.info("Mp clicks = " + mostPopularClicks + ". MR clicks = " + mostRecentClicks + ". Calculation Time = " + (System.currentTimeMillis() - start) );
+      log.debug(publisherClicks.toString());
 
     }, getContext().dispatcher());
 
@@ -151,7 +172,7 @@ public class StatisticsManager extends UntypedActor {
 
     } else if (message.equals("getClicks")) {
 
-      getSender().tell(this.algorithmClicks, getSelf());
+      getSender().tell(this.publisherClicks, getSelf());
 
 
     } else {
@@ -193,9 +214,25 @@ public class StatisticsManager extends UntypedActor {
         }, getContext().dispatcher());
   }
 
-  public static Props create(ActorRef mostPopularMerger, ActorRef mostRecentMerger) {
+  private Future<Result> getPopularCategoryMergerResult() {
+    return Patterns.ask(popularCategoryMerger, "getMergerResult", 100)
+        .map(new Mapper<Object, Result>() {
+
+          @Override
+          public Result apply(Object object) {
+            Map<String, PopularCategoryRanking> pubRankMap = (Map<String, PopularCategoryRanking>) object;
+
+            for (String publisher : pubRankMap.keySet()) {
+              PopularCategoryRanking ranking = pubRankMap.get(publisher);
+              StatisticsManager.this.popularCategoryRecommendations.put(publisher, ranking.getRanking().keySet());
+            }
+            return ok(Json.newObject());
+          }
+        }, getContext().dispatcher());
+  }
+  public static Props create(ActorRef mostPopularMerger, ActorRef mostRecentMerger, ActorRef popularCategoryMerger) {
     return Props.create(StatisticsManager.class, () -> {
-      return new StatisticsManager(mostPopularMerger, mostRecentMerger);
+      return new StatisticsManager(mostPopularMerger, mostRecentMerger, popularCategoryMerger);
     });
   }
 

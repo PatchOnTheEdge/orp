@@ -92,8 +92,8 @@ public class ArticleAggregator extends UntypedActor {
   public static class ArticleCategory implements Serializable{
     private String publisherId;
     private String itemId;
-    private String category;
-    public ArticleCategory(String publisherId, String itemId, String category) {
+    private String[] category;
+    public ArticleCategory(String publisherId, String itemId, String[] category) {
       this.publisherId = publisherId;
       this.itemId = itemId;
       this.category = category;

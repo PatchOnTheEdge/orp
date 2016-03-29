@@ -74,7 +74,8 @@ public class OrpContextCounter2 {
     Map<String, Map<String, Long>> rankings = new HashMap<>();
 
     for (Map.Entry<String, ArrayDeque<OrpContext>> contextWindow : contextWindows.entrySet()) {
-      Map<String, Long> ranking = contextWindow.getValue().stream().collect(Collectors.groupingBy(OrpContext::getItemId, Collectors.counting()));
+      Map<String, Long> ranking = contextWindow.getValue().stream()
+          .collect(Collectors.groupingBy(OrpContext::getItemId, Collectors.counting()));
       rankings.put(contextWindow.getKey(), ranking);
     }
     return rankings;

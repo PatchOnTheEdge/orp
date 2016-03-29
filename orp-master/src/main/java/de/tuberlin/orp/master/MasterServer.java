@@ -58,8 +58,8 @@ public class MasterServer {
     Cluster cluster = Cluster.get(system);
     ActorRef popularMergerActor = system.actorOf(MostPopularMerger.create(), "popularMerger");
     ActorRef recentMergerActor = system.actorOf(MostRecentMerger.create(), "recentMerger");
-    ActorRef popularityMergerActor = system.actorOf(PopularityMerger.create(), "popularityMerger");
-    ActorRef statisticsManager = system.actorOf(StatisticsManager.create(popularMergerActor, recentMergerActor), "statistics");
+    ActorRef popularCategoryMerger = system.actorOf(PopularCategoryMerger.create(), "popularCategoryMerger");
+    ActorRef statisticsManager = system.actorOf(StatisticsManager.create(popularMergerActor, recentMergerActor, popularCategoryMerger), "statistics");
     ActorRef articleMerger = system.actorOf(ArticleMerger.create(),"articles");
     ActorRef searchHandler = system.actorOf(SearchHandler.create(articleMerger), "search");
     ActorRef filterMerger = system.actorOf(FilterMerger.create(), "filterMerger");
@@ -107,10 +107,14 @@ public class MasterServer {
                       .map(new Mapper<Object, Result>() {
                         @Override
                         public Result apply(Object parameter) {
-                          Map<String, Integer> clicks = (Map<String, Integer>) parameter;
+                          Map<String, Map<String, Integer>> clicks = (Map<String, Map<String, Integer>>) parameter;
                           ObjectNode json = Json.newObject();
-                          for (Map.Entry<String, Integer> entry : clicks.entrySet()) {
-                            json.put(entry.getKey(), entry.getValue());
+                          for (Map.Entry<String, Map<String, Integer>> entry : clicks.entrySet()) {
+                            ObjectNode algorithm = Json.newObject();
+                            for (Map.Entry<String, Integer> algorithmClicks : entry.getValue().entrySet()) {
+                              algorithm.put(algorithmClicks.getKey(), algorithmClicks.getValue());
+                            }
+                            json.put(entry.getKey(), algorithm);
                           }
                           return ok(json);
                         }

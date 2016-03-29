@@ -38,10 +38,7 @@ import de.tuberlin.orp.common.ranking.*;
 import de.tuberlin.orp.common.message.OrpContext;
 import de.tuberlin.orp.common.message.OrpRequest;
 import de.tuberlin.orp.common.repository.RankingRepository;
-import de.tuberlin.orp.master.FilterMerger;
-import de.tuberlin.orp.master.MostPopularMerger;
-import de.tuberlin.orp.master.MostRecentMerger;
-import de.tuberlin.orp.master.PopularityMerger;
+import de.tuberlin.orp.master.*;
 import scala.concurrent.Future;
 import scala.concurrent.duration.Duration;
 
@@ -138,6 +135,21 @@ public class RequestCoordinator extends UntypedActor {
       Future<MostRecentMerger.WorkerResult> workerResultFuture = getMostRecentWorkerResultFuture(intermediateRankingFuture);
       Patterns.pipe(workerResultFuture, getContext().dispatcher()).to(sender, getSelf());
 
+    } else if (message instanceof PopularCategoryMerger.MergedRanking) {
+
+      ActorRef sender = getSender();
+
+      // cache merged results
+      PopularCategoryMerger.MergedRanking mergedRankingMessage = (PopularCategoryMerger.MergedRanking) message;
+      this.popularCategoryRanking = mergedRankingMessage.getRankingRepository();
+
+      // calculate new intermediate results
+      Future<Object> intermediateRankingFuture = Patterns.ask(popularCategoryWorker, "getIntermediateRanking", 200);
+//
+//      //Get Ranking from Worker
+      Future<PopularCategoryMerger.WorkerResult> workerResultFuture = getPopularCategoryWorkerResultFuture(intermediateRankingFuture);
+      Patterns.pipe(workerResultFuture, getContext().dispatcher()).to(sender, getSelf());
+
     } else if (message instanceof FilterMerger.MergedFilter) {
       ActorRef sender = getSender();
 
@@ -195,7 +207,19 @@ public class RequestCoordinator extends UntypedActor {
               }
             }, getContext().dispatcher());
   }
+  private Future<PopularCategoryMerger.WorkerResult> getPopularCategoryWorkerResultFuture(Future<Object> intermediateRankingFuture) {
+    return Futures
+        .sequence(Arrays.asList(intermediateRankingFuture), getContext().dispatcher())
+        .map(new Mapper<Iterable<Object>, PopularCategoryMerger.WorkerResult>() {
+          @Override
+          public PopularCategoryMerger.WorkerResult apply(Iterable<Object> parameter) {
+            Iterator<Object> it = parameter.iterator();
+            IntermediateRanking ranking = (IntermediateRanking) it.next();
 
+            return new PopularCategoryMerger.WorkerResult(ranking.getRankingRepository());
+          }
+        }, getContext().dispatcher());
+  }
   private Future<PopularityMerger.WorkerResult> getPopularityWorkerResultFuture(Future<Object> intermediateRankingFuture) {
     return Futures
         .sequence(Arrays.asList(intermediateRankingFuture), getContext().dispatcher())
