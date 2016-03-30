@@ -99,10 +99,12 @@ public class RequestCoordinator extends UntypedActor {
 
       log.debug(String.format("Received request: publisherId = %s, userId = %s", publisherId, userId));
 
-      Optional<Ranking> mpRanking = this.mostPopularRanking.getRanking(publisherId);
-      mpRanking.ifPresent(ranking1 -> filter.filter(ranking1, context));
+//      Optional<Ranking> mpRanking = this.mostPopularRanking.getRanking(publisherId);
+//      mpRanking.ifPresent(ranking1 -> filter.filter(ranking1, context));
 
-      sender.tell(mpRanking.orElse(new MostPopularRanking()), getSelf());
+      Optional<Ranking> mrRanking = this.mostRecentRanking.getRanking(publisherId);
+      mrRanking.ifPresent(ranking1 -> filter.filter(ranking1, context));
+      sender.tell(mrRanking.orElse(new MostRecentRanking()), getSelf());
 
     } else if (message instanceof MostPopularMerger.MergedRanking) {
 
