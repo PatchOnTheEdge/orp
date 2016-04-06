@@ -93,9 +93,9 @@ public class WorkerServer {
     ActorRef workerActor = system.actorOf(WorkerActor.create(statisticsActor, articleAggregator), "orp");
 
 
-    File itemLogFile = new File("log.txt");
-    PrintWriter printWriter = new PrintWriter(itemLogFile);
-    log.info("Writing Request Log at " + System.getProperty("user.dir"));
+//    File itemLogFile = new File("log.txt");
+//    PrintWriter printWriter = new PrintWriter(itemLogFile);
+//    log.info("Writing Request Log at " + System.getProperty("user.dir"));
 
     Ski.builder()
         .setHost(host)
@@ -113,14 +113,6 @@ public class WorkerServer {
             post("/recommendation").routeAsync(context -> {
               return forwardRecommendationRequest(system, statisticsActor, workerActor, context);
             }))
-//        .addHooks(onRequest((context, next) -> {
-//          if (LOG_REQUESTS) {
-//            String request = requestToString(context.request());
-//            printWriter.print(request + "\n");
-//            printWriter.flush();
-//          }
-//          return next.handle(context);
-//        }).withDefaultPriority())
         .build()
         .run();
   }
@@ -216,9 +208,6 @@ public class WorkerServer {
               }
             }
 
-
-
-
             long responseTime = System.currentTimeMillis() - start;
             statisticsActor.tell(new StatisticsAggregator.ResponseTime(responseTime), ActorRef.noSender());
 
@@ -243,29 +232,5 @@ public class WorkerServer {
     return noContent();
   }
 
-  private static String requestToString(Request request){
-    Map<String, List<String>> bodyForm = new HashMap<>();
-    if (request.contentType() != null){
-      bodyForm = request.body().asForm();
-    }
-    JsonNode json = Json.newObject();
-    String bodyString = "";
-    if (!bodyForm.isEmpty()) {
-      bodyString = queryParamsToString(bodyForm);
-      json = Json.parse(bodyString);
-    }
-    String path = request.path();
-    String queryString = queryParamsToString(request.queryParams());
-    Date date = new Date();
-    ObjectNode result = Json.newObject().put("path", path)
-        .put("queryString", queryString).put("timestamp", date.toString());
-    result.set("body", json);
-    return result.toString();
-  }
 
-  private static String queryParamsToString(Map<String, List<String>> map){
-    return map.entrySet().stream()
-        .flatMap(stringListEntry -> stringListEntry.getValue().stream())
-        .collect(Collectors.joining(","));
-  }
 }

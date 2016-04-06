@@ -24,15 +24,15 @@
 
 package de.tuberlin.orp.common;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import de.tuberlin.orp.common.message.OrpArticle;
 import de.tuberlin.orp.common.message.OrpArticleRemove;
+import io.verbit.ski.core.http.Request;
 import io.verbit.ski.core.json.Json;
 
-import java.util.Comparator;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class Utils {
@@ -66,6 +66,32 @@ public class Utils {
       }
     }
     return result;
+  }
+
+  private static String requestToString(Request request){
+    Map<String, List<String>> bodyForm = new HashMap<>();
+    if (request.contentType() != null){
+      bodyForm = request.body().asForm();
+    }
+    JsonNode json = Json.newObject();
+    String bodyString = "";
+    if (!bodyForm.isEmpty()) {
+      bodyString = queryParamsToString(bodyForm);
+      json = Json.parse(bodyString);
+    }
+    String path = request.path();
+    String queryString = queryParamsToString(request.queryParams());
+    Date date = new Date();
+    ObjectNode result = Json.newObject().put("path", path)
+        .put("queryString", queryString).put("timestamp", date.toString());
+    result.set("body", json);
+    return result.toString();
+  }
+
+  private static String queryParamsToString(Map<String, List<String>> map){
+    return map.entrySet().stream()
+        .flatMap(stringListEntry -> stringListEntry.getValue().stream())
+        .collect(Collectors.joining(","));
   }
 
 }

@@ -39,12 +39,16 @@ import de.tuberlin.orp.common.message.OrpContext;
 import de.tuberlin.orp.common.message.OrpRequest;
 import de.tuberlin.orp.common.repository.RankingRepository;
 import de.tuberlin.orp.master.*;
+import org.apache.hadoop.util.hash.Hash;
 import scala.concurrent.Future;
 import scala.concurrent.duration.Duration;
 
+import java.io.File;
+import java.io.PrintWriter;
 import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * This Actor coordinates requests.
@@ -63,11 +67,14 @@ public class RequestCoordinator extends UntypedActor {
   private RankingRepository mostPopularRanking;
   private RankingRepository mostRecentRanking;
   private RankingRepository popularCategoryRanking;
-  private RankingRepository mixedRanking;
 
   private RankingFilter filter;
 
   private Map<String, Map<String, Integer>> clickStatistic;
+
+  private File requestLogFile;
+  private PrintWriter printWriter;
+
 
   public RequestCoordinator(ActorRef mostPopularWorker, ActorRef mostRecentWorker, ActorRef popularCategoryWorker, ActorRef filterActor, ActorRef statisticAggregator) {
     this.mostPopularWorker = mostPopularWorker;
@@ -83,12 +90,15 @@ public class RequestCoordinator extends UntypedActor {
     this.filter = new RankingFilter();
 
     this.clickStatistic = new HashMap<>();
+    this.requestLogFile = new File("log.txt");
   }
 
   @Override
   public void preStart() throws Exception {
 
-    log.info("Coordinator started");
+    this.printWriter = new PrintWriter(requestLogFile);
+
+    log.info("Coordinator started. Writing Request Log at: " +  System.getProperty("user.dir"));
 
     getContext().system().scheduler().schedule(Duration.create(50, TimeUnit.SECONDS), Duration.create(10, TimeUnit.SECONDS), () -> {
       statisticAggregator.tell("getClickStatistic", getSelf());
@@ -112,13 +122,17 @@ public class RequestCoordinator extends UntypedActor {
 
       if (clicks != null){
 
+        //Find Algorithms with Maximum Clicks and store them in Set
         int maxClick = Collections.max(clicks.values());
+        List<String> maxClicked = clicks.entrySet().stream().filter(entry -> entry.getValue() == maxClick).map(Map.Entry::getKey).collect(Collectors.toList());
 
-        for (Map.Entry<String, Integer> entry : clicks.entrySet()) {
-          if (!entry.getKey().equals("mp") && entry.getValue() == maxClick){
-            algorithmId = entry.getKey();
-          }
-        }
+        //Pick one Algorithm randomly
+        Collections.shuffle(maxClicked);
+        algorithmId = maxClicked.get(0);
+
+        log.info("id = " +algorithmId);
+        printWriter.println(System.currentTimeMillis() + ";" + algorithmId + ";" + maxClicked);
+        printWriter.flush();
       }
 
       switch (algorithmId){
