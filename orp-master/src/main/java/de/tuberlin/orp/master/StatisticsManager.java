@@ -97,11 +97,12 @@ public class StatisticsManager extends UntypedActor {
     //Calculate the number of clicked Recommendations for each Ranking, every 30 Seconds
     getContext().system().scheduler().schedule(Duration.create(40, TimeUnit.SECONDS), Duration.create(30, TimeUnit.SECONDS), () -> {
 
-      Map<String, Integer> algorithmClicks =  new HashMap<>();
 
       for (Map.Entry<ActorRef, ArrayDeque<WorkerStatistics>> entry : workerStatistics.entrySet()) {
         for (WorkerStatistics statistics : entry.getValue()) {
           for (Map.Entry<String, Set<String>> clickEntry : statistics.getClickEvents().entrySet()) {
+
+            Map<String, Integer> algorithmClicks =  new HashMap<>();
 
             Map<String, Set<String>> copy = new HashMap<>(mostPopularRecommendations);
             String publisherId = clickEntry.getKey();
