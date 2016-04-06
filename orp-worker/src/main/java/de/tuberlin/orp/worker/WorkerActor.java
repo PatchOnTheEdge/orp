@@ -66,9 +66,9 @@ public class WorkerActor extends UntypedActor {
     super.preStart();
     log.info("Worker started.");
 
-    mostPopularWorker = getContext().actorOf(MostPopularWorker.create(500, 50), "mp");
-    mostRecentWorker = getContext().actorOf(MostRecentWorker.create(500, 50), "mr");
-    popularCategoryWorker = getContext().actorOf(PopularCategoryWorker.create(500, 50), "pc");
+    mostPopularWorker = getContext().actorOf(MostPopularWorker.create(1000, 100), "mp");
+    mostRecentWorker = getContext().actorOf(MostRecentWorker.create(1000, 100), "mr");
+    popularCategoryWorker = getContext().actorOf(PopularCategoryWorker.create(1000, 100), "pc");
 
     filterActor = getContext().actorOf(RecommendationFilter.create(), "filter");
 
