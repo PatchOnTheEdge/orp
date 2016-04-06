@@ -107,12 +107,38 @@ public class RequestCoordinator extends UntypedActor {
 
       log.debug(String.format("Received request: publisherId = %s, userId = %s", publisherId, userId));
 
-//      Optional<Ranking> mpRanking = this.mostPopularRanking.getRanking(publisherId);
-//      mpRanking.ifPresent(ranking1 -> filter.filter(ranking1, context));
+      Map<String, Integer> clicks = clickStatistic.get(publisherId);
+      String algorithmId = "mp";
 
-      Optional<Ranking> mrRanking = this.mostRecentRanking.getRanking(publisherId);
-      mrRanking.ifPresent(ranking1 -> filter.filter(ranking1, context));
-      sender.tell(mrRanking.orElse(new MostRecentRanking()), getSelf());
+      if (clicks != null){
+
+        int maxClick = Collections.max(clicks.values());
+
+        for (Map.Entry<String, Integer> entry : clicks.entrySet()) {
+          if (!entry.getKey().equals("mp") && entry.getValue() == maxClick){
+            algorithmId = entry.getKey();
+          }
+        }
+      }
+
+      switch (algorithmId){
+        case "mp":
+        default:
+          Optional<Ranking> mpRanking = this.mostPopularRanking.getRanking(publisherId);
+          mpRanking.ifPresent(ranking1 -> filter.filter(ranking1, context));
+          sender.tell(mpRanking.orElse(new MostPopularRanking()), getSelf());
+          break;
+        case "mr":
+          Optional<Ranking> mrRanking = this.mostRecentRanking.getRanking(publisherId);
+          mrRanking.ifPresent(ranking1 -> filter.filter(ranking1, context));
+          sender.tell(mrRanking.orElse(new MostRecentRanking()), getSelf());
+          break;
+        case "pc":
+          Optional<Ranking> pcRanking = this.popularCategoryRanking.getRanking(publisherId);
+          pcRanking.ifPresent(ranking1 -> filter.filter(ranking1, context));
+          sender.tell(pcRanking.orElse(new PopularCategoryRanking()), getSelf());
+          break;
+      }
 
     } else if (message instanceof StatisticsManager.ClickStatistics) {
 
