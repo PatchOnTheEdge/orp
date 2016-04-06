@@ -61,23 +61,4 @@ public class MostPopularRanking extends Ranking<MostPopularRanking> {
     }
     return copy;
   }
-
-  @Override
-  public MostPopularRanking mix(Ranking ranking, double p, int limit) {
-    LinkedHashMap<String, Long> result = new LinkedHashMap<>();
-    Iterator<Map.Entry<String, Long>> iterator1 = ranking.getRanking().entrySet().iterator();
-    Iterator<Map.Entry<String, Long>> iterator2 = this.ranking.entrySet().iterator();
-
-    while (result.size() < limit){
-      double r = Math.random();
-      if (r <= p && iterator1.hasNext()){
-        Map.Entry<String, Long> entry = iterator1.next();
-        result.put(entry.getKey(), entry.getValue());
-      } else if (iterator2.hasNext()){
-        Map.Entry<String, Long> entry = iterator2.next();
-        result.put(entry.getKey(), entry.getValue());
-      }
-    }
-    return new MostPopularRanking(result);
-  }
 }

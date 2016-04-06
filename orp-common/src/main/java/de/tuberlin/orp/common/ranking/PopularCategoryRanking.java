@@ -64,8 +64,4 @@ public class PopularCategoryRanking extends Ranking<PopularCategoryRanking>{
     return copy;
   }
 
-  @Override
-  public Ranking<PopularCategoryRanking> mix(Ranking ranking, double p, int limit) {
-    return null;
-  }
 }

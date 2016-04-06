@@ -41,6 +41,9 @@ import de.tuberlin.orp.common.message.OrpContext;
 import de.tuberlin.orp.common.message.OrpArticleRemove;
 import de.tuberlin.orp.common.message.OrpNotification;
 import de.tuberlin.orp.common.message.OrpRequest;
+import de.tuberlin.orp.common.ranking.MostRecentRanking;
+import de.tuberlin.orp.common.ranking.PopularCategoryRanking;
+import de.tuberlin.orp.common.ranking.Ranking;
 import io.verbit.ski.akka.Akka;
 import io.verbit.ski.core.DefaultSkiListener;
 import io.verbit.ski.core.Ski;
@@ -166,9 +169,9 @@ public class WorkerServer {
               return ok(Json.newObject());
             }
 
-            MostPopularRanking mostPopularRanking = (MostPopularRanking) o;
+            Ranking ranking = (Ranking) o;
 
-            if (mostPopularRanking.getRanking().isEmpty()) {
+            if (ranking.getRanking().isEmpty()) {
               return ok(Json.newObject());
             }
 
@@ -183,13 +186,38 @@ public class WorkerServer {
                 .putObject("floats")
                 .putArray("2");
 
+            if (ranking instanceof MostPopularRanking){
 
-            double max = mostPopularRanking.getRanking().values().stream().mapToLong(l -> l).max().getAsLong();
+              MostPopularRanking mostPopularRanking = ((MostPopularRanking) ranking);
+              double max = mostPopularRanking.getRanking().values().stream().mapToLong(l -> l).max().getAsLong();
 
-            for (Map.Entry<String, Long> entry : mostPopularRanking.getRanking().entrySet()) {
-              items.add(entry.getKey());
-              scores.add(entry.getValue() / max);
+              for (Map.Entry<String, Long> entry : mostPopularRanking.getRanking().entrySet()) {
+                items.add(entry.getKey());
+                scores.add(entry.getValue() / max);
+              }
+
+            } else if (ranking instanceof MostRecentRanking) {
+
+              MostRecentRanking mostRecentRanking = ((MostRecentRanking) ranking);
+              double max = mostRecentRanking.getRanking().values().stream().mapToLong(l -> l).max().getAsLong();
+
+              for (Map.Entry<String, Long> entry : mostRecentRanking.getRanking().entrySet()) {
+                items.add(entry.getKey());
+                scores.add(entry.getValue() / max);
+              }
+            } else if (ranking instanceof PopularCategoryRanking) {
+
+              PopularCategoryRanking popularCategoryRanking = ((PopularCategoryRanking) ranking);
+              double max = popularCategoryRanking.getRanking().values().stream().mapToLong(l -> l).max().getAsLong();
+
+              for (Map.Entry<String, Long> entry : popularCategoryRanking.getRanking().entrySet()) {
+                items.add(entry.getKey());
+                scores.add(entry.getValue() / max);
+              }
             }
+
+
+
 
             long responseTime = System.currentTimeMillis() - start;
             statisticsActor.tell(new StatisticsAggregator.ResponseTime(responseTime), ActorRef.noSender());

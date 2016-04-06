@@ -49,6 +49,7 @@ public class StatisticsAggregator extends UntypedActor {
 
   private Map<String, Set<String>> clickEvents;
   private Map<Short, Long> responseTimes;
+  private Map<String, Map<String, Integer>> clickStatistics;
   private ActorSelection statisticsManager;
 
   public static class ResponseTime implements Serializable {
@@ -73,6 +74,7 @@ public class StatisticsAggregator extends UntypedActor {
     this.statisticsManager = statisticsManager;
     clickEvents = new HashMap<>();
     responseTimes = new HashMap<>();
+    clickStatistics = new HashMap<>();
   }
 
   @Override
@@ -117,6 +119,14 @@ public class StatisticsAggregator extends UntypedActor {
       Set<String> clickedItems = clickEvents.getOrDefault(clickEvent.getPublisherId(), new HashSet<>());
       clickedItems.add(clickEvent.getItemId());
       clickEvents.put(clickEvent.getPublisherId(), clickedItems);
+
+    } else if (message instanceof StatisticsManager.ClickStatistics){
+
+      this.clickStatistics = ((StatisticsManager.ClickStatistics) message).getClickStatistic();
+
+    } else if (message.equals("getClickStatistic")){
+
+      getSender().tell(new StatisticsManager.ClickStatistics(this.clickStatistics), getSelf());
 
     } else {
       unhandled(message);

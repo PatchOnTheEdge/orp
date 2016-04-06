@@ -72,7 +72,7 @@ public class WorkerActor extends UntypedActor {
 
     filterActor = getContext().actorOf(RecommendationFilter.create(), "filter");
 
-    requestCoordinator = getContext().actorOf(RequestCoordinator.create(mostPopularWorker, mostRecentWorker, popularCategoryWorker, filterActor), "coordinator");
+    requestCoordinator = getContext().actorOf(RequestCoordinator.create(mostPopularWorker, mostRecentWorker, popularCategoryWorker, filterActor, statisticsAggregator), "coordinator");
   }
 
   @Override

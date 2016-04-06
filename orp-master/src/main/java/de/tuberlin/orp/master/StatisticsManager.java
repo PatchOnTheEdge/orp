@@ -31,6 +31,8 @@ import akka.dispatch.Mapper;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.pattern.Patterns;
+import akka.routing.Broadcast;
+import akka.routing.FromConfig;
 import de.tuberlin.orp.common.ranking.MostPopularRanking;
 import de.tuberlin.orp.common.ranking.MostRecentRanking;
 import de.tuberlin.orp.common.ranking.PopularCategoryRanking;
@@ -55,6 +57,7 @@ public class StatisticsManager extends UntypedActor {
   private ActorRef mostPopularMerger;
   private ActorRef mostRecentMerger;
   private ActorRef popularCategoryMerger;
+  private ActorRef workerRouter;
   private Map<String, Map<String, Integer>> publisherClicks;
   private int maxSize = 1000;
 
@@ -73,6 +76,15 @@ public class StatisticsManager extends UntypedActor {
   @Override
   public void preStart() throws Exception {
     log.info("Statistics Manager started.");
+
+    workerRouter = getContext().actorOf(FromConfig.getInstance().props(Props.empty()), "workerRouter");
+
+    //Send the Click Statistics to the Statistics Aggregator (worker)
+    getContext().system().scheduler().schedule(Duration.create(45, TimeUnit.SECONDS), Duration.create(10, TimeUnit.SECONDS), () -> {
+
+      workerRouter.tell(new Broadcast(new ClickStatistics(publisherClicks)), getSelf());
+
+    }, getContext().dispatcher());
 
     // asks every 30 seconds for the Most Popular Ranking
     getContext().system().scheduler().schedule(Duration.Zero(), Duration.create(30, TimeUnit.SECONDS), this::getMostPopularMergerResult, getContext().dispatcher());
@@ -314,6 +326,18 @@ public class StatisticsManager extends UntypedActor {
 
     public Map<String, Set<String>> getClickEvents() {
       return clickEvents;
+    }
+  }
+
+  public static class ClickStatistics implements Serializable{
+    private Map<String, Map<String, Integer>> clickStatistic;
+
+    public ClickStatistics(Map<String, Map<String, Integer>> clickStatistic) {
+      this.clickStatistic = clickStatistic;
+    }
+
+    public Map<String, Map<String, Integer>> getClickStatistic() {
+      return clickStatistic;
     }
   }
 }

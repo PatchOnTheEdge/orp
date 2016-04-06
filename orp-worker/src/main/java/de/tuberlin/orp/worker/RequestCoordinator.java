@@ -58,6 +58,7 @@ public class RequestCoordinator extends UntypedActor {
   private ActorRef mostRecentWorker;
   private ActorRef popularCategoryWorker;
   private ActorRef filterActor;
+  private ActorRef statisticAggregator;
 
   private RankingRepository mostPopularRanking;
   private RankingRepository mostRecentRanking;
@@ -66,25 +67,32 @@ public class RequestCoordinator extends UntypedActor {
 
   private RankingFilter filter;
 
-  public RequestCoordinator(ActorRef mostPopularWorker, ActorRef mostRecentWorker, ActorRef popularCategoryWorker, ActorRef filterActor) {
+  private Map<String, Map<String, Integer>> clickStatistic;
+
+  public RequestCoordinator(ActorRef mostPopularWorker, ActorRef mostRecentWorker, ActorRef popularCategoryWorker, ActorRef filterActor, ActorRef statisticAggregator) {
     this.mostPopularWorker = mostPopularWorker;
     this.mostRecentWorker = mostRecentWorker;
     this.popularCategoryWorker = popularCategoryWorker;
     this.filterActor = filterActor;
+    this.statisticAggregator = statisticAggregator;
 
     this.mostPopularRanking = new RankingRepository(new MostPopularRanking());
     this.mostRecentRanking = new RankingRepository(new MostRecentRanking());
+    this.popularCategoryRanking = new RankingRepository(new PopularCategoryRanking());
+
     this.filter = new RankingFilter();
+
+    this.clickStatistic = new HashMap<>();
   }
 
   @Override
   public void preStart() throws Exception {
 
     log.info("Coordinator started");
-//    Calculate Ranking Mix
-//    getContext().system().scheduler().schedule(Duration.create(5, TimeUnit.SECONDS), Duration.create(10, TimeUnit.SECONDS), () -> {
-//      RankingRepository mixedRanking = this.mostPopularRanking.mix(this.mostRecentRanking, 0.5);
-//    }, getContext().dispatcher());
+
+    getContext().system().scheduler().schedule(Duration.create(50, TimeUnit.SECONDS), Duration.create(10, TimeUnit.SECONDS), () -> {
+      statisticAggregator.tell("getClickStatistic", getSelf());
+    }, getContext().dispatcher());
 
   }
   @Override
@@ -105,6 +113,10 @@ public class RequestCoordinator extends UntypedActor {
       Optional<Ranking> mrRanking = this.mostRecentRanking.getRanking(publisherId);
       mrRanking.ifPresent(ranking1 -> filter.filter(ranking1, context));
       sender.tell(mrRanking.orElse(new MostRecentRanking()), getSelf());
+
+    } else if (message instanceof StatisticsManager.ClickStatistics) {
+
+      this.clickStatistic = ((StatisticsManager.ClickStatistics) message).getClickStatistic();
 
     } else if (message instanceof MostPopularMerger.MergedRanking) {
 
@@ -222,23 +234,11 @@ public class RequestCoordinator extends UntypedActor {
           }
         }, getContext().dispatcher());
   }
-  private Future<PopularityMerger.WorkerResult> getPopularityWorkerResultFuture(Future<Object> intermediateRankingFuture) {
-    return Futures
-        .sequence(Arrays.asList(intermediateRankingFuture), getContext().dispatcher())
-        .map(new Mapper<Iterable<Object>, PopularityMerger.WorkerResult>() {
-          @Override
-          public PopularityMerger.WorkerResult apply(Iterable<Object> parameter) {
-            Iterator<Object> it = parameter.iterator();
-            IntermediateRanking ranking = (IntermediateRanking) it.next();
 
-            return new PopularityMerger.WorkerResult(ranking.getRankingRepository());
-          }
-        }, getContext().dispatcher());
-  }
 
-  public static Props create(ActorRef mostPopularWorker, ActorRef mostRecentWorker, ActorRef popularCategoryWorker, ActorRef filterActor) {
+  public static Props create(ActorRef mostPopularWorker, ActorRef mostRecentWorker, ActorRef popularCategoryWorker, ActorRef filterActor, ActorRef statisticAggregator) {
     return Props.create(RequestCoordinator.class, () -> {
-      return new RequestCoordinator(mostPopularWorker, mostRecentWorker , popularCategoryWorker, filterActor);
+      return new RequestCoordinator(mostPopularWorker, mostRecentWorker , popularCategoryWorker, filterActor, statisticAggregator);
     });
   }
 

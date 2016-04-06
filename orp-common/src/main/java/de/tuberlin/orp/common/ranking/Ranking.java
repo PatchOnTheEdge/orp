@@ -46,7 +46,6 @@ public abstract class Ranking<T> implements Serializable {
     return rankings;
   }
 
-  public abstract Ranking<T> mix(Ranking ranking, double p, int limit);
 
   public abstract void merge(Ranking<T> ranking);
 
