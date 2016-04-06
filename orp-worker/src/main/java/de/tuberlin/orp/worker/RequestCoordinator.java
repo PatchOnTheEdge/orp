@@ -131,7 +131,7 @@ public class RequestCoordinator extends UntypedActor {
         algorithmId = maxClicked.get(0);
 
         log.info("id = " +algorithmId);
-        printWriter.println(System.currentTimeMillis() + ";" + algorithmId + ";" + maxClicked);
+        printWriter.println(System.currentTimeMillis() + ";" + publisherId + ";" + algorithmId + ";" + maxClicked);
         printWriter.flush();
       }
 
