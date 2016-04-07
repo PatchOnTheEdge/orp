@@ -126,11 +126,14 @@ public class RequestCoordinator extends UntypedActor {
         int maxClick = Collections.max(clicks.values());
         List<String> maxClicked = clicks.entrySet().stream().filter(entry -> entry.getValue() == maxClick).map(Map.Entry::getKey).collect(Collectors.toList());
 
-        //Pick one Algorithm randomly
-        Collections.shuffle(maxClicked);
-        algorithmId = maxClicked.get(0);
+        //MP is used as the default Recommender
+        if (!maxClicked.contains("mp")){
+          //Pick one Algorithm randomly
+          Collections.shuffle(maxClicked);
+          algorithmId = maxClicked.get(0);
+        }
 
-        printWriter.println(System.currentTimeMillis() + ";" + publisherId + ";" + algorithmId + ";" + maxClicked);
+        printWriter.println(System.currentTimeMillis() + ";" + publisherId + ";" + algorithmId);
         printWriter.flush();
       }
 
