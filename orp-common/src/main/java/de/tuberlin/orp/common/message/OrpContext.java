@@ -25,7 +25,6 @@
 package de.tuberlin.orp.common.message;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.sun.jna.StringArray;
 
 import java.io.Serializable;
 

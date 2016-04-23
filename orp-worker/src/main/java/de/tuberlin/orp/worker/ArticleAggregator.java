@@ -5,14 +5,14 @@ import akka.actor.Props;
 import akka.actor.UntypedActor;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
-import de.tuberlin.orp.common.repository.ArticleRepository;
 import de.tuberlin.orp.common.message.OrpArticle;
 import de.tuberlin.orp.common.message.OrpArticleRemove;
+import de.tuberlin.orp.common.repository.ArticleRepository;
 import de.tuberlin.orp.master.ArticleMerger;
 import scala.concurrent.duration.Duration;
 
 import java.io.Serializable;
-import java.util.*;
+import java.util.HashSet;
 import java.util.concurrent.TimeUnit;
 
 /**

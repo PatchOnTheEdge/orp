@@ -25,7 +25,6 @@
 package de.tuberlin.orp.worker.algorithms.popularCategory;
 
 import de.tuberlin.orp.common.message.OrpContext;
-import de.tuberlin.orp.common.ranking.MostPopularRanking;
 import de.tuberlin.orp.common.ranking.PopularCategoryRanking;
 import de.tuberlin.orp.common.ranking.Ranking;
 import de.tuberlin.orp.common.repository.RankingRepository;

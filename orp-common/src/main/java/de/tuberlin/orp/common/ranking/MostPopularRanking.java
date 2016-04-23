@@ -24,7 +24,9 @@
 
 package de.tuberlin.orp.common.ranking;
 
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * MostPopularRanking represents a Mapping from OrpArticle to Number of Clicks

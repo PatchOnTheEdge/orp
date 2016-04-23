@@ -30,7 +30,6 @@ import akka.actor.UntypedActor;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import de.tuberlin.orp.common.message.*;
-import de.tuberlin.orp.master.StatisticsManager;
 import de.tuberlin.orp.worker.algorithms.mostPopular.MostPopularWorker;
 import de.tuberlin.orp.worker.algorithms.mostRecent.MostRecentWorker;
 import de.tuberlin.orp.worker.algorithms.popularCategory.PopularCategoryWorker;

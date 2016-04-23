@@ -9,15 +9,12 @@ import akka.japi.Creator;
 import akka.routing.Broadcast;
 import akka.routing.FromConfig;
 import de.tuberlin.orp.common.message.OrpArticle;
-import de.tuberlin.orp.common.repository.ArticleRepository;
 import de.tuberlin.orp.common.message.OrpArticleRemove;
+import de.tuberlin.orp.common.repository.ArticleRepository;
 import scala.concurrent.duration.Duration;
 
 import java.io.Serializable;
-import java.util.ArrayDeque;
 import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**

@@ -7,10 +7,7 @@ import akka.event.LoggingAdapter;
 import akka.japi.Creator;
 import de.tuberlin.orp.common.message.OrpContext;
 import de.tuberlin.orp.common.repository.RankingRepository;
-import de.tuberlin.orp.master.MostRecentMerger;
 import de.tuberlin.orp.worker.RequestCoordinator;
-
-import java.util.HashMap;
 
 /**
  * Created by Patch on 21.08.2015.

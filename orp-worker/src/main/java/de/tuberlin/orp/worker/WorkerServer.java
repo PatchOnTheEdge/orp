@@ -29,41 +29,30 @@ import akka.actor.ActorSelection;
 import akka.actor.ActorSystem;
 import akka.cluster.Cluster;
 import akka.dispatch.Mapper;
-import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.pattern.Patterns;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import de.tuberlin.orp.common.message.OrpArticle;
+import de.tuberlin.orp.common.message.*;
 import de.tuberlin.orp.common.ranking.MostPopularRanking;
-import de.tuberlin.orp.common.message.OrpContext;
-import de.tuberlin.orp.common.message.OrpArticleRemove;
-import de.tuberlin.orp.common.message.OrpNotification;
-import de.tuberlin.orp.common.message.OrpRequest;
 import de.tuberlin.orp.common.ranking.MostRecentRanking;
 import de.tuberlin.orp.common.ranking.PopularCategoryRanking;
 import de.tuberlin.orp.common.ranking.Ranking;
 import io.verbit.ski.akka.Akka;
-import io.verbit.ski.core.DefaultSkiListener;
 import io.verbit.ski.core.Ski;
-import io.verbit.ski.core.http.Request;
-import io.verbit.ski.core.http.RequestBody;
-import io.verbit.ski.core.http.result.AsyncResult;
 import io.verbit.ski.core.http.context.RequestContext;
+import io.verbit.ski.core.http.result.AsyncResult;
 import io.verbit.ski.core.http.result.Result;
 import io.verbit.ski.core.json.Json;
 import scala.concurrent.Future;
 
-import java.io.File;
-import java.io.PrintWriter;
 import java.time.Instant;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Map;
+import java.util.Optional;
 
 import static io.verbit.ski.core.http.result.SimpleResult.noContent;
 import static io.verbit.ski.core.http.result.SimpleResult.ok;
-import static io.verbit.ski.core.plugin.hooks.Hooks.onRequest;
 import static io.verbit.ski.core.route.RouteBuilder.post;
 
 public class WorkerServer {

@@ -32,14 +32,11 @@ import akka.dispatch.Mapper;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.pattern.Patterns;
-import akka.routing.Broadcast;
-import akka.routing.FromConfig;
-import de.tuberlin.orp.common.ranking.*;
 import de.tuberlin.orp.common.message.OrpContext;
 import de.tuberlin.orp.common.message.OrpRequest;
+import de.tuberlin.orp.common.ranking.*;
 import de.tuberlin.orp.common.repository.RankingRepository;
 import de.tuberlin.orp.master.*;
-import org.apache.hadoop.util.hash.Hash;
 import scala.concurrent.Future;
 import scala.concurrent.duration.Duration;
 

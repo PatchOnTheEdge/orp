@@ -28,7 +28,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import de.tuberlin.orp.common.message.OrpArticle;
-import de.tuberlin.orp.common.message.OrpArticleRemove;
 import io.verbit.ski.core.http.Request;
 import io.verbit.ski.core.json.Json;
 

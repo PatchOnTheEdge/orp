@@ -33,7 +33,6 @@ import akka.japi.Creator;
 import akka.routing.Broadcast;
 import akka.routing.FromConfig;
 import de.tuberlin.orp.common.ranking.MostPopularRanking;
-import de.tuberlin.orp.common.ranking.RankingFilter;
 import de.tuberlin.orp.common.repository.RankingRepository;
 import scala.concurrent.duration.Duration;
 

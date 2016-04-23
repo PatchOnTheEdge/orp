@@ -61,7 +61,6 @@ public class MasterServer {
     ActorRef popularCategoryMerger = system.actorOf(PopularCategoryMerger.create(), "popularCategoryMerger");
     ActorRef statisticsManager = system.actorOf(StatisticsManager.create(popularMergerActor, recentMergerActor, popularCategoryMerger), "statistics");
     ActorRef articleMerger = system.actorOf(ArticleMerger.create(),"articles");
-    ActorRef searchHandler = system.actorOf(SearchHandler.create(articleMerger), "search");
     ActorRef filterMerger = system.actorOf(FilterMerger.create(), "filterMerger");
 
     Ski.builder()

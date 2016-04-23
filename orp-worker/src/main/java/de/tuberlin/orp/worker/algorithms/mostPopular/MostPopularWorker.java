@@ -29,8 +29,8 @@ import akka.actor.UntypedActor;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.japi.Creator;
-import de.tuberlin.orp.common.repository.RankingRepository;
 import de.tuberlin.orp.common.message.OrpContext;
+import de.tuberlin.orp.common.repository.RankingRepository;
 import de.tuberlin.orp.worker.RequestCoordinator;
 
 /**

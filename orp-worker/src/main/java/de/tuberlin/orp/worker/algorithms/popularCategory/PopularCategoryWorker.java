@@ -8,9 +8,6 @@ import akka.japi.Creator;
 import de.tuberlin.orp.common.message.OrpContext;
 import de.tuberlin.orp.common.repository.RankingRepository;
 import de.tuberlin.orp.worker.RequestCoordinator;
-import de.tuberlin.orp.worker.algorithms.mostPopular.OrpContextCounter;
-
-import java.util.Arrays;
 
 /**
  * Created by Patch on 13.01.2016.
