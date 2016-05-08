@@ -87,13 +87,13 @@ public class RequestCoordinator extends UntypedActor {
     this.filter = new RankingFilter();
 
     this.clickStatistic = new HashMap<>();
-    this.requestLogFile = new File("log.txt");
+//    this.requestLogFile = new File("log.txt");
   }
 
   @Override
   public void preStart() throws Exception {
 
-    this.printWriter = new PrintWriter(requestLogFile);
+//    this.printWriter = new PrintWriter(requestLogFile);
 
     log.info("Coordinator started. Writing Request Log at: " +  System.getProperty("user.dir"));
 
@@ -130,8 +130,8 @@ public class RequestCoordinator extends UntypedActor {
           algorithmId = maxClicked.get(0);
         }
 
-        printWriter.println(System.currentTimeMillis() + ";" + publisherId + ";" + algorithmId);
-        printWriter.flush();
+//        printWriter.println(System.currentTimeMillis() + ";" + publisherId + ";" + algorithmId);
+//        printWriter.flush();
       }
 
       switch (algorithmId){
